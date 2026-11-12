@@ -767,15 +767,19 @@ REM تشغيل الدردشة المحلية (واجهة ويب/طرفية حس�
 "%USERPROFILE%\mozilla\ai\bin\Qwen3.5-0.8B-Q8_0.llamafile.exe"
 
 REM بديل: ثنائي llamafile + أوزان GGUF منفصلة (للنماذج الأكبر)
+REM الخادم على 127.0.0.1 فقط. Qwen يكتب العربية وليس نموذجاً عربياً من صنع موزيلا.
 curl -L -o "%USERPROFILE%\mozilla\ai\bin\llamafile.exe" "https://github.com/mozilla-ai/llamafile/releases/latest/download/llamafile.exe"
 curl -L -o "%USERPROFILE%\mozilla\ai\models\model.gguf" "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q5_k_m.gguf"
 "%USERPROFILE%\mozilla\ai\bin\llamafile.exe" -m "%USERPROFILE%\mozilla\ai\models\model.gguf" --server --port 8080
 start http://127.0.0.1:8080/
 
-REM whisperfile — تحويل كلام إلى نص
+REM whisperfile — كلام إلى نص. الملف tiny.en إنجليزي ولا يفرّغ العربية.
 curl -L -o "%USERPROFILE%\mozilla\ai\bin\whisperfile.exe" "https://github.com/mozilla-ai/llamafile/releases/latest/download/whisperfile.exe"
 curl -L -o "%USERPROFILE%\mozilla\ai\models\whisper-tiny.en-q5_1.bin" "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en-q5_1.bin"
 "%USERPROFILE%\mozilla\ai\bin\whisperfile.exe" -m "%USERPROFILE%\mozilla\ai\models\whisper-tiny.en-q5_1.bin" -f "%USERPROFILE%\mozilla\ai\audio\input.wav" --no-prints
+
+REM ما لا تصدره موزيلا للمطورين: توليد الصور، وتوليد الفيديو.
+REM لا تستدعِ DeepInfra ولا Together ولا HeyGen API من هذا الملف.
 
 REM أي-LLM / أي-Agent (يتطلب Python داخل المجلد)
 cd /d %USERPROFILE%\mozilla\ai\any-llm
@@ -808,4 +812,24 @@ cd /d %USERPROFILE%\mozilla\extensions
 git clone https://github.com/mdn/browser-compat-data.git
 git clone https://github.com/mozilla/web-ext.git
 npm install -g web-ext
+```
+
+```bat
+REM === 9) HeyGen — ما هو مفتوح المصدر فعلاً، بلا حساب ===
+REM مذكور على الموقع كمصدر مفتوح:
+REM HyperFrames Apache-2.0  https://github.com/heygen-com/hyperframes
+REM HeyGen Skills MIT        https://github.com/heygen-com/skills
+REM auto-model-optim         https://github.com/heygen-com/auto-model-optim
+REM hyperframes-launches Apache-2.0  https://github.com/heygen-com/hyperframes-launches
+REM LiveAvatar Web SDK MIT   https://github.com/heygen-com/liveavatar-web-sdk
+REM LiveAvatar Agent Skills MIT  https://github.com/heygen-com/liveavatar-agent-skills
+REM مغلق رغم ظهوره على الموقع: MCP و API و Video Agent و Avatar V و Voice.
+REM لا مستودع عام لـ MCP. لا استدعاء لـ mcp.heygen.com ولا لواجهة البرمجة.
+mkdir %USERPROFILE%\mozilla\ai\heygen-oss
+cd /d %USERPROFILE%\mozilla\ai\heygen-oss
+git clone https://github.com/heygen-com/hyperframes.git
+git clone https://github.com/heygen-com/skills.git
+git clone https://github.com/heygen-com/hyperframes-launches.git
+git clone https://github.com/heygen-com/liveavatar-web-sdk.git
+git clone https://github.com/heygen-com/liveavatar-agent-skills.git
 ```
