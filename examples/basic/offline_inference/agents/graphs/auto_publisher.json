@@ -1,0 +1,558 @@
+{
+  "id": "ded64c44-994b-4d78-913c-e2a80f04e754",
+  "name": "Auto Publisher (images + video, 6 platforms)",
+  "description": "Takes a client brief, writes captions, generates an image and a vertical video, and publishes to X, Instagram, Facebook, TikTok, YouTube and Snapchat through the client's Ayrshare profile.",
+  "version": 21,
+  "is_active": true,
+  "nodes": [
+    {
+      "id": "9e1a22a6-b22e-4188-b1a3-c59b8dba2019",
+      "block_id": "aeb08fc1-2fc1-4141-bc8e-f758f183a822",
+      "input_default": {
+        "list": [],
+        "entries": []
+      },
+      "metadata": {
+        "position": {
+          "x": 1291.25,
+          "y": 1578
+        }
+      }
+    },
+    {
+      "id": "40cbfdfd-c25a-4a66-bc9c-c09f5ecdb529",
+      "block_id": "aeb08fc1-2fc1-4141-bc8e-f758f183a822",
+      "input_default": {
+        "list": []
+      },
+      "metadata": {
+        "position": {
+          "x": 2446.84814453125,
+          "y": 600
+        },
+        "customized_name": "Video list"
+      }
+    },
+    {
+      "id": "5cb12008-3f3e-4a2b-a793-fafc853dfae3",
+      "block_id": "fff86bcd-e001-4bad-a7f6-2eae4720c8dc",
+      "input_default": {
+        "url": "https://api.ayrshare.com/api/post",
+        "body": {
+          "platforms": [
+            "twitter"
+          ]
+        },
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "files_name": "file",
+        "credentials": {
+          "id": "848f4c15-27a9-43fc-b486-3939495feb16",
+          "type": "host_scoped",
+          "title": "api.ayrshare.com",
+          "provider": "http"
+        },
+        "json_format": true
+      },
+      "metadata": {
+        "position": {
+          "x": 3200,
+          "y": -375.47867671776424
+        },
+        "customized_name": "Post to X",
+        "credentials_optional": true
+      }
+    },
+    {
+      "id": "3cb0710a-4621-4330-a970-b1dc7df14afe",
+      "block_id": "aeb08fc1-2fc1-4141-bc8e-f758f183a822",
+      "input_default": {
+        "list": []
+      },
+      "metadata": {
+        "position": {
+          "x": 2400,
+          "y": 0
+        },
+        "customized_name": "Image list"
+      }
+    },
+    {
+      "id": "b8913777-e6ae-43dd-a309-7c1c886d5ddd",
+      "block_id": "c0a8e994-ebf1-4a9c-a4d8-89d09c86741b",
+      "input_default": {
+        "name": "client",
+        "title": "Client name",
+        "value": "Demo Brand",
+        "advanced": false,
+        "description": "Client or brand name"
+      },
+      "metadata": {
+        "position": {
+          "x": -190,
+          "y": -16.40625
+        }
+      }
+    },
+    {
+      "id": "be985d12-03a5-4789-9603-8b2da56b8541",
+      "block_id": "c0a8e994-ebf1-4a9c-a4d8-89d09c86741b",
+      "input_default": {
+        "name": "brief",
+        "title": "Brief",
+        "value": "New summer offer: 20% off all services this week",
+        "advanced": false,
+        "description": "What to post about: product, offer, idea or article text"
+      },
+      "metadata": {
+        "position": {
+          "x": 285,
+          "y": 381.5
+        }
+      }
+    },
+    {
+      "id": "ee54b585-8c00-42be-86c6-b99eff883b2e",
+      "block_id": "c0a8e994-ebf1-4a9c-a4d8-89d09c86741b",
+      "input_default": {
+        "name": "pkey",
+        "title": "Ayrshare Profile Key",
+        "advanced": false,
+        "description": "The client's Ayrshare profile key (from your Ayrshare dashboard)"
+      },
+      "metadata": {
+        "position": {
+          "x": -95,
+          "y": 804.59375
+        }
+      }
+    },
+    {
+      "id": "e3091709-2c87-46a3-88b8-d4846c662e1c",
+      "block_id": "c0a8e994-ebf1-4a9c-a4d8-89d09c86741b",
+      "input_default": {
+        "name": "lang",
+        "title": "Language",
+        "value": "Arabic",
+        "advanced": false,
+        "description": "Language of the posts"
+      },
+      "metadata": {
+        "position": {
+          "x": 0,
+          "y": 1230.3125
+        }
+      }
+    },
+    {
+      "id": "d53f2e7d-bda5-4a6e-9351-2f95436adc04",
+      "block_id": "ed55ac19-356e-4243-a6cb-bc599e9b716f",
+      "input_default": {
+        "model": "gpt-5.6-terra",
+        "retry": 3,
+        "prompt": "You are a social media manager for the brand {{client_name}}. Write fresh social content in {{language}} based on this brief:\n{{brief}}\n\nProduce: short_caption (max 250 chars, one or two hashtags, for X), long_caption (engaging caption with a call to action and 5 relevant hashtags, for Instagram, Facebook, TikTok, YouTube, Snapchat), youtube_title (max 90 chars), image_prompt (detailed English prompt for a scroll-stopping square social image, no text in the image unless essential), video_prompt (detailed English prompt for an 8 second vertical social video with motion, camera and mood).",
+        "credentials": {
+          "id": "53c25cb8-e3ee-465c-a4d1-e75a4c899c2a",
+          "type": "api_key",
+          "title": "Use Credits for OpenAI",
+          "provider": "openai"
+        },
+        "list_result": false,
+        "ollama_host": "localhost:11434",
+        "prompt_values": {},
+        "expected_format": {
+          "image_prompt": "English image prompt",
+          "long_caption": "Long caption with hashtags",
+          "video_prompt": "English video prompt",
+          "short_caption": "Caption for X, max 250 characters",
+          "youtube_title": "YouTube title"
+        },
+        "force_json_output": false,
+        "compress_prompt_to_fit": true
+      },
+      "metadata": {
+        "position": {
+          "x": 800,
+          "y": 0
+        },
+        "customized_name": "Write content"
+      }
+    },
+    {
+      "id": "6aa0bb59-93af-4693-bee7-d35910474cdf",
+      "block_id": "c40d75a2-d0ea-44c9-a4f6-634bb3bdab1a",
+      "input_default": {
+        "model_name": "google/nano-banana-2",
+        "credentials": {
+          "id": "6b9fc200-4726-4973-86c9-cd526f5ce5db",
+          "type": "api_key",
+          "title": "Use Credits for Replicate",
+          "provider": "replicate"
+        },
+        "model_inputs": {
+          "aspect_ratio": "1:1",
+          "output_format": "jpg"
+        },
+        "file_input_field": "image"
+      },
+      "metadata": {
+        "position": {
+          "x": 1307.52685546875,
+          "y": -27
+        },
+        "customized_name": "Generate image"
+      }
+    },
+    {
+      "id": "b3bf3eb4-d604-4102-8f42-5c164c8dbb5f",
+      "block_id": "c40d75a2-d0ea-44c9-a4f6-634bb3bdab1a",
+      "input_default": {
+        "model_name": "xai/grok-imagine-video",
+        "credentials": {
+          "id": "6b9fc200-4726-4973-86c9-cd526f5ce5db",
+          "type": "api_key",
+          "title": "Use Credits for Replicate",
+          "provider": "replicate"
+        },
+        "model_inputs": {
+          "duration": 8,
+          "aspect_ratio": "9:16"
+        },
+        "file_input_field": "image"
+      },
+      "metadata": {
+        "position": {
+          "x": 1687.1875,
+          "y": 600
+        },
+        "customized_name": "Generate video"
+      }
+    },
+    {
+      "id": "189a0454-5865-4a91-aebf-2e2b580da227",
+      "block_id": "aeb08fc1-2fc1-4141-bc8e-f758f183a822",
+      "input_default": {
+        "list": [],
+        "entries": []
+      },
+      "metadata": {
+        "position": {
+          "x": 2067.1875,
+          "y": 649
+        }
+      }
+    },
+    {
+      "id": "a3475aa2-a859-4c82-928a-e0d0808564f3",
+      "block_id": "fff86bcd-e001-4bad-a7f6-2eae4720c8dc",
+      "input_default": {
+        "url": "https://api.ayrshare.com/api/post",
+        "body": {
+          "platforms": [
+            "instagram",
+            "facebook"
+          ]
+        },
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "files_name": "file",
+        "credentials": {
+          "id": "848f4c15-27a9-43fc-b486-3939495feb16",
+          "type": "host_scoped",
+          "title": "api.ayrshare.com",
+          "provider": "http"
+        },
+        "json_format": true
+      },
+      "metadata": {
+        "position": {
+          "x": 3200,
+          "y": 314.52132328223576
+        },
+        "customized_name": "Post to Instagram + Facebook",
+        "credentials_optional": true
+      }
+    },
+    {
+      "id": "82da38a0-1f16-4ff6-9bb6-6d1f732243d1",
+      "block_id": "fff86bcd-e001-4bad-a7f6-2eae4720c8dc",
+      "input_default": {
+        "url": "https://api.ayrshare.com/api/post",
+        "body": {
+          "platforms": [
+            "tiktok",
+            "youtube",
+            "snapchat"
+          ],
+          "youTubeOptions": {}
+        },
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "files_name": "file",
+        "credentials": {
+          "id": "848f4c15-27a9-43fc-b486-3939495feb16",
+          "type": "host_scoped",
+          "title": "api.ayrshare.com",
+          "provider": "http"
+        },
+        "json_format": true
+      },
+      "metadata": {
+        "position": {
+          "x": 3185.5982009401864,
+          "y": 1004.162750614968
+        },
+        "customized_name": "Post video to TikTok, YouTube, Snapchat",
+        "credentials_optional": true
+      }
+    },
+    {
+      "id": "3e1eefb2-dc30-4efa-91a8-018d91a006cf",
+      "block_id": "363ae599-353e-4804-937e-b2ee3cef3da4",
+      "input_default": {
+        "name": "x_result",
+        "title": "x_result",
+        "advanced": false,
+        "escape_html": false
+      },
+      "metadata": {
+        "position": {
+          "x": 4000,
+          "y": -300
+        }
+      }
+    },
+    {
+      "id": "e71eeb25-6be1-4518-ad9a-5923a7d8d3c3",
+      "block_id": "363ae599-353e-4804-937e-b2ee3cef3da4",
+      "input_default": {
+        "name": "instagram_facebook_result",
+        "title": "instagram_facebook_result",
+        "advanced": false,
+        "escape_html": false
+      },
+      "metadata": {
+        "position": {
+          "x": 4000,
+          "y": 100
+        }
+      }
+    },
+    {
+      "id": "94b81693-375a-4b2c-8f94-abe3523c1993",
+      "block_id": "363ae599-353e-4804-937e-b2ee3cef3da4",
+      "input_default": {
+        "name": "video_platforms_result",
+        "title": "video_platforms_result",
+        "advanced": false,
+        "escape_html": false
+      },
+      "metadata": {
+        "position": {
+          "x": 4000,
+          "y": 500
+        }
+      }
+    }
+  ],
+  "links": [
+    {
+      "id": "98d0336c-c110-4a6c-b157-791d3b17fdbe",
+      "source_id": "9e1a22a6-b22e-4188-b1a3-c59b8dba2019",
+      "sink_id": "40cbfdfd-c25a-4a66-bc9c-c09f5ecdb529",
+      "source_name": "updated_list",
+      "sink_name": "list",
+      "is_static": false
+    },
+    {
+      "id": "a9999b58-e8bf-49e5-8963-5b61236cefdf",
+      "source_id": "40cbfdfd-c25a-4a66-bc9c-c09f5ecdb529",
+      "sink_id": "40cbfdfd-c25a-4a66-bc9c-c09f5ecdb529",
+      "source_name": "updated_list",
+      "sink_name": "list",
+      "is_static": false
+    },
+    {
+      "id": "80855045-7ce3-4f24-a58b-c93160d4df6f",
+      "source_id": "40cbfdfd-c25a-4a66-bc9c-c09f5ecdb529",
+      "sink_id": "82da38a0-1f16-4ff6-9bb6-6d1f732243d1",
+      "source_name": "updated_list",
+      "sink_name": "body_#_mediaUrls",
+      "is_static": false
+    },
+    {
+      "id": "f03177e3-6313-4995-a47a-a149b4a75172",
+      "source_id": "5cb12008-3f3e-4a2b-a793-fafc853dfae3",
+      "sink_id": "3e1eefb2-dc30-4efa-91a8-018d91a006cf",
+      "source_name": "response",
+      "sink_name": "value",
+      "is_static": false
+    },
+    {
+      "id": "ccfff83c-e97f-4e78-b623-19c5e72253d4",
+      "source_id": "3cb0710a-4621-4330-a970-b1dc7df14afe",
+      "sink_id": "5cb12008-3f3e-4a2b-a793-fafc853dfae3",
+      "source_name": "updated_list",
+      "sink_name": "body_#_mediaUrls",
+      "is_static": false
+    },
+    {
+      "id": "23d66457-0842-400f-886b-2cc3368f3095",
+      "source_id": "3cb0710a-4621-4330-a970-b1dc7df14afe",
+      "sink_id": "3cb0710a-4621-4330-a970-b1dc7df14afe",
+      "source_name": "updated_list",
+      "sink_name": "list",
+      "is_static": false
+    },
+    {
+      "id": "e1bf0103-d6f2-4ac6-b3e6-adfcc92178d9",
+      "source_id": "3cb0710a-4621-4330-a970-b1dc7df14afe",
+      "sink_id": "a3475aa2-a859-4c82-928a-e0d0808564f3",
+      "source_name": "updated_list",
+      "sink_name": "body_#_mediaUrls",
+      "is_static": false
+    },
+    {
+      "id": "07633daf-ff5f-44b7-8211-accf3a2e3ea7",
+      "source_id": "b8913777-e6ae-43dd-a309-7c1c886d5ddd",
+      "sink_id": "d53f2e7d-bda5-4a6e-9351-2f95436adc04",
+      "source_name": "result",
+      "sink_name": "prompt_values_#_client_name",
+      "is_static": true
+    },
+    {
+      "id": "83ca1378-0811-4056-a978-f1b2121912fc",
+      "source_id": "be985d12-03a5-4789-9603-8b2da56b8541",
+      "sink_id": "d53f2e7d-bda5-4a6e-9351-2f95436adc04",
+      "source_name": "result",
+      "sink_name": "prompt_values_#_brief",
+      "is_static": true
+    },
+    {
+      "id": "cffbafef-7e77-4ce5-8f51-d8b565e1e83d",
+      "source_id": "ee54b585-8c00-42be-86c6-b99eff883b2e",
+      "sink_id": "5cb12008-3f3e-4a2b-a793-fafc853dfae3",
+      "source_name": "result",
+      "sink_name": "headers_#_Profile-Key",
+      "is_static": true
+    },
+    {
+      "id": "aaac6e3b-bce9-427e-8764-2d2bac0f0c5d",
+      "source_id": "ee54b585-8c00-42be-86c6-b99eff883b2e",
+      "sink_id": "82da38a0-1f16-4ff6-9bb6-6d1f732243d1",
+      "source_name": "result",
+      "sink_name": "headers_#_Profile-Key",
+      "is_static": true
+    },
+    {
+      "id": "cf47d76f-6244-402a-b042-5f4418dfb097",
+      "source_id": "ee54b585-8c00-42be-86c6-b99eff883b2e",
+      "sink_id": "a3475aa2-a859-4c82-928a-e0d0808564f3",
+      "source_name": "result",
+      "sink_name": "headers_#_Profile-Key",
+      "is_static": true
+    },
+    {
+      "id": "789d6bff-c85e-41ef-9e79-287fa3a06c83",
+      "source_id": "e3091709-2c87-46a3-88b8-d4846c662e1c",
+      "sink_id": "d53f2e7d-bda5-4a6e-9351-2f95436adc04",
+      "source_name": "result",
+      "sink_name": "prompt_values_#_language",
+      "is_static": true
+    },
+    {
+      "id": "5316abb6-7c42-4842-8080-c102811b276e",
+      "source_id": "d53f2e7d-bda5-4a6e-9351-2f95436adc04",
+      "sink_id": "82da38a0-1f16-4ff6-9bb6-6d1f732243d1",
+      "source_name": "response_#_youtube_title",
+      "sink_name": "body_#_youTubeOptions_#_title",
+      "is_static": false
+    },
+    {
+      "id": "e4b6f72c-a8f5-4566-b649-4f13d0cde8b9",
+      "source_id": "d53f2e7d-bda5-4a6e-9351-2f95436adc04",
+      "sink_id": "a3475aa2-a859-4c82-928a-e0d0808564f3",
+      "source_name": "response_#_long_caption",
+      "sink_name": "body_#_post",
+      "is_static": false
+    },
+    {
+      "id": "20d8b62e-5d8b-4584-a448-3ff401c89ea0",
+      "source_id": "d53f2e7d-bda5-4a6e-9351-2f95436adc04",
+      "sink_id": "82da38a0-1f16-4ff6-9bb6-6d1f732243d1",
+      "source_name": "response_#_long_caption",
+      "sink_name": "body_#_post",
+      "is_static": false
+    },
+    {
+      "id": "0baab545-a5e0-43bd-85af-9f86962c2a67",
+      "source_id": "d53f2e7d-bda5-4a6e-9351-2f95436adc04",
+      "sink_id": "b3bf3eb4-d604-4102-8f42-5c164c8dbb5f",
+      "source_name": "response_#_video_prompt",
+      "sink_name": "model_inputs_#_prompt",
+      "is_static": false
+    },
+    {
+      "id": "af8bedeb-3b72-4159-877a-0dc2b4f5bdc7",
+      "source_id": "d53f2e7d-bda5-4a6e-9351-2f95436adc04",
+      "sink_id": "5cb12008-3f3e-4a2b-a793-fafc853dfae3",
+      "source_name": "response_#_short_caption",
+      "sink_name": "body_#_post",
+      "is_static": false
+    },
+    {
+      "id": "b22a7aee-023a-461d-bacb-888071454e48",
+      "source_id": "d53f2e7d-bda5-4a6e-9351-2f95436adc04",
+      "sink_id": "6aa0bb59-93af-4693-bee7-d35910474cdf",
+      "source_name": "response_#_image_prompt",
+      "sink_name": "model_inputs_#_prompt",
+      "is_static": false
+    },
+    {
+      "id": "05d3bcb4-b216-4834-a44c-70ff4ee16a52",
+      "source_id": "6aa0bb59-93af-4693-bee7-d35910474cdf",
+      "sink_id": "3cb0710a-4621-4330-a970-b1dc7df14afe",
+      "source_name": "result",
+      "sink_name": "entry",
+      "is_static": false
+    },
+    {
+      "id": "8b3cf645-2dbe-4e26-8a65-5087e418ac8b",
+      "source_id": "b3bf3eb4-d604-4102-8f42-5c164c8dbb5f",
+      "sink_id": "40cbfdfd-c25a-4a66-bc9c-c09f5ecdb529",
+      "source_name": "result",
+      "sink_name": "entry",
+      "is_static": false
+    },
+    {
+      "id": "b155a0f3-b293-4611-865f-c9f4b8556300",
+      "source_id": "189a0454-5865-4a91-aebf-2e2b580da227",
+      "sink_id": "3cb0710a-4621-4330-a970-b1dc7df14afe",
+      "source_name": "updated_list",
+      "sink_name": "list",
+      "is_static": false
+    },
+    {
+      "id": "112471da-0890-431e-b99b-158196b45065",
+      "source_id": "a3475aa2-a859-4c82-928a-e0d0808564f3",
+      "sink_id": "e71eeb25-6be1-4518-ad9a-5923a7d8d3c3",
+      "source_name": "response",
+      "sink_name": "value",
+      "is_static": false
+    },
+    {
+      "id": "fa0c13e0-f7d7-4c10-a12d-461cf5203d64",
+      "source_id": "82da38a0-1f16-4ff6-9bb6-6d1f732243d1",
+      "sink_id": "94b81693-375a-4b2c-8f94-abe3523c1993",
+      "source_name": "response",
+      "sink_name": "value",
+      "is_static": false
+    }
+  ]
+}
