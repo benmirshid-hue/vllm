@@ -34,6 +34,12 @@ python examples/basic/offline_inference/chat.py
 python examples/basic/offline_inference/generate.py
 ```
 
+`wakil.py` ingests JSONL into a training manifest, then runs the Arabic reproduce and construct flow. The guide is `وكيل.md`.
+
+```bash
+python examples/basic/offline_inference/wakil.py --task ingest --input corpus.jsonl
+```
+
 ## Features
 
 In the scripts that support passing arguments, you can experiment with the following features.
