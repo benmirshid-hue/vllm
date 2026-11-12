@@ -1,0 +1,703 @@
+{
+  "id": "d212d957-8203-4548-a604-689af90740cd",
+  "name": "استوديو الفيديو (30 ثانية حتى 3 دقائق + صوت)",
+  "description": "يحوّل فكرتك إلى فيديو طويل (30 ثانية إلى 3 دقائق) بصوت مدمج: يقسمها إلى 6 مشاهد متصلة، يولّدها بـ Seedance 2.5 ثم يدمجها في فيديو واحد.",
+  "version": 10,
+  "is_active": true,
+  "nodes": [
+    {
+      "id": "7b304a43-f4cf-48f3-b6cc-72c55af7998c",
+      "block_id": "90a56ffb-7024-4b2b-ab50-e26c5e5ab8ba",
+      "input_default": {
+        "name": "prompt",
+        "title": "فكرة الفيديو / القصة",
+        "value": "A lone astronaut discovers a glowing garden on Mars and befriends a small robot.",
+        "advanced": false,
+        "description": "اكتب الفكرة بأي لغة. سيقسمها الوكيل إلى 6 مشاهد متصلة بنفس الشخصيات والأسلوب."
+      },
+      "metadata": {
+        "position": {
+          "x": -451.5892344920633,
+          "y": -41
+        }
+      }
+    },
+    {
+      "id": "d3304fdb-7e99-4b6a-b134-2f83a950319e",
+      "block_id": "96dae2bb-97a2-41c2-bd2f-13a3b5a8ea98",
+      "input_default": {
+        "name": "scene_seconds",
+        "title": "مدة كل مشهد بالثواني (من 5 إلى 30). المجموع = المدة × 6 مشاهد، يعني من 30 ثانية إلى 180 ثانية",
+        "value": 10,
+        "advanced": false
+      },
+      "metadata": {
+        "position": {
+          "x": 307.7024639409491,
+          "y": 290.5
+        }
+      }
+    },
+    {
+      "id": "f2b8d777-7e7b-4254-8e49-b451a04835d8",
+      "block_id": "655d6fdf-a334-421c-b733-520549c07cd1",
+      "input_default": {
+        "name": "aspect_ratio",
+        "title": "أبعاد الفيديو",
+        "value": "16:9",
+        "options": [
+          "16:9",
+          "9:16",
+          "1:1",
+          "4:3",
+          "3:4",
+          "21:9"
+        ],
+        "advanced": false
+      },
+      "metadata": {
+        "position": {
+          "x": -71.9214912642183,
+          "y": 600
+        }
+      }
+    },
+    {
+      "id": "9e8702c6-dc61-4e03-b1e8-7ccc0bb9e5c9",
+      "block_id": "655d6fdf-a334-421c-b733-520549c07cd1",
+      "input_default": {
+        "name": "resolution",
+        "title": "الدقة",
+        "value": "720p",
+        "options": [
+          "720p",
+          "480p"
+        ],
+        "advanced": false
+      },
+      "metadata": {
+        "position": {
+          "x": -451.49239677746124,
+          "y": 941
+        }
+      }
+    },
+    {
+      "id": "e805be3a-06b4-4f43-bb09-aaebd5a714c6",
+      "block_id": "cbf36ab5-df4a-43b6-8a7f-f7ed8652116e",
+      "input_default": {
+        "name": "generate_audio",
+        "title": "توليد الصوت (حوار + مؤثرات + موسيقى)",
+        "value": true,
+        "advanced": false
+      },
+      "metadata": {
+        "position": {
+          "x": -831.1606848044995,
+          "y": 1209.5
+        }
+      }
+    },
+    {
+      "id": "a28ef196-e29e-4da1-87fe-663b0e536594",
+      "block_id": "ed55ac19-356e-4243-a6cb-bc599e9b716f",
+      "input_default": {
+        "model": "google/gemma-4-31b-it",
+        "retry": 3,
+        "prompt": "Split this video idea into exactly 6 consecutive scenes that tell one coherent story from beginning to end, each lasting {{seconds}} seconds. Idea: {{idea}}",
+        "sys_prompt": "You are a film director writing prompts for an AI video model. Always write prompts in English (dialogue may stay in the user's language, inside double quotes). Keep characters, setting, lighting and visual style identical across scenes by restating a short shared description in every scene.",
+        "credentials": {
+          "id": "b5a0e27d-0c98-4df3-a4b9-10193e1f3c40",
+          "type": "api_key",
+          "title": "Use Credits for Open Router",
+          "provider": "open_router"
+        },
+        "list_result": false,
+        "ollama_host": "localhost:11434",
+        "prompt_values": {},
+        "expected_format": {
+          "scene_1": "Full Seedance production-brief prompt for scene 1: repeat the shared character and style description, camera, action, ambient sound, music and any spoken dialogue in double quotes. Must continue directly from the previous scene.",
+          "scene_2": "Full Seedance production-brief prompt for scene 2: repeat the shared character and style description, camera, action, ambient sound, music and any spoken dialogue in double quotes. Must continue directly from the previous scene.",
+          "scene_3": "Full Seedance production-brief prompt for scene 3: repeat the shared character and style description, camera, action, ambient sound, music and any spoken dialogue in double quotes. Must continue directly from the previous scene.",
+          "scene_4": "Full Seedance production-brief prompt for scene 4: repeat the shared character and style description, camera, action, ambient sound, music and any spoken dialogue in double quotes. Must continue directly from the previous scene.",
+          "scene_5": "Full Seedance production-brief prompt for scene 5: repeat the shared character and style description, camera, action, ambient sound, music and any spoken dialogue in double quotes. Must continue directly from the previous scene.",
+          "scene_6": "Full Seedance production-brief prompt for scene 6: repeat the shared character and style description, camera, action, ambient sound, music and any spoken dialogue in double quotes. Must continue directly from the previous scene."
+        },
+        "force_json_output": false,
+        "compress_prompt_to_fit": true
+      },
+      "metadata": {
+        "position": {
+          "x": 687.297256600448,
+          "y": 133.4043424622639
+        },
+        "customized_name": "مخطط المشاهد"
+      }
+    },
+    {
+      "id": "1374c3d7-3cb3-4880-a12d-a7734e07b66e",
+      "block_id": "9b0f531a-1118-487f-aeec-3fa63ea8900a",
+      "input_default": {
+        "videos": [],
+        "transition": "none",
+        "output_format": "mp4",
+        "transition_duration": 1
+      },
+      "metadata": {
+        "position": {
+          "x": 4863.1146266479545,
+          "y": 500
+        },
+        "customized_name": "دمج المشاهد"
+      }
+    },
+    {
+      "id": "d12f3879-0755-47b5-91d7-5474fb7d3881",
+      "block_id": "c40d75a2-d0ea-44c9-a4f6-634bb3bdab1a",
+      "input_default": {
+        "model_name": "bytedance/seedance-2.5",
+        "credentials": {
+          "id": "6b9fc200-4726-4973-86c9-cd526f5ce5db",
+          "type": "api_key",
+          "title": "Use Credits for Replicate",
+          "provider": "replicate"
+        },
+        "model_inputs": {
+          "watermark": false,
+          "output_format": "mp4"
+        },
+        "file_input_field": "image"
+      },
+      "metadata": {
+        "position": {
+          "x": 1446.874478496603,
+          "y": 38.19041799138671
+        },
+        "customized_name": "مشهد 1"
+      }
+    },
+    {
+      "id": "605c2c0a-8826-4686-84a9-b4c32bc33ca9",
+      "block_id": "c40d75a2-d0ea-44c9-a4f6-634bb3bdab1a",
+      "input_default": {
+        "model_name": "bytedance/seedance-2.5",
+        "credentials": {
+          "id": "6b9fc200-4726-4973-86c9-cd526f5ce5db",
+          "type": "api_key",
+          "title": "Use Credits for Replicate",
+          "provider": "replicate"
+        },
+        "model_inputs": {
+          "watermark": false,
+          "output_format": "mp4"
+        },
+        "file_input_field": "image"
+      },
+      "metadata": {
+        "position": {
+          "x": 2965.121274935773,
+          "y": 350
+        },
+        "customized_name": "مشهد 2"
+      }
+    },
+    {
+      "id": "72eb2eb2-6362-4a66-a270-bad12c95a742",
+      "block_id": "c40d75a2-d0ea-44c9-a4f6-634bb3bdab1a",
+      "input_default": {
+        "model_name": "bytedance/seedance-2.5",
+        "credentials": {
+          "id": "6b9fc200-4726-4973-86c9-cd526f5ce5db",
+          "type": "api_key",
+          "title": "Use Credits for Replicate",
+          "provider": "replicate"
+        },
+        "model_inputs": {
+          "watermark": false,
+          "output_format": "mp4"
+        },
+        "file_input_field": "image"
+      },
+      "metadata": {
+        "position": {
+          "x": 2585.56502367736,
+          "y": 700
+        },
+        "customized_name": "مشهد 3"
+      }
+    },
+    {
+      "id": "de559dca-2833-4a09-855c-e4cfa5cf00d5",
+      "block_id": "c40d75a2-d0ea-44c9-a4f6-634bb3bdab1a",
+      "input_default": {
+        "model_name": "bytedance/seedance-2.5",
+        "credentials": {
+          "id": "6b9fc200-4726-4973-86c9-cd526f5ce5db",
+          "type": "api_key",
+          "title": "Use Credits for Replicate",
+          "provider": "replicate"
+        },
+        "model_inputs": {
+          "watermark": false,
+          "output_format": "mp4"
+        },
+        "file_input_field": "image"
+      },
+      "metadata": {
+        "position": {
+          "x": 2206.0113515255684,
+          "y": 1050
+        },
+        "customized_name": "مشهد 4"
+      }
+    },
+    {
+      "id": "657fd2a6-2853-4507-8be2-dabbe1de9128",
+      "block_id": "c40d75a2-d0ea-44c9-a4f6-634bb3bdab1a",
+      "input_default": {
+        "model_name": "bytedance/seedance-2.5",
+        "credentials": {
+          "id": "6b9fc200-4726-4973-86c9-cd526f5ce5db",
+          "type": "api_key",
+          "title": "Use Credits for Replicate",
+          "provider": "replicate"
+        },
+        "model_inputs": {
+          "watermark": false,
+          "output_format": "mp4"
+        },
+        "file_input_field": "image"
+      },
+      "metadata": {
+        "position": {
+          "x": 1826.4517003927576,
+          "y": 1490.5
+        },
+        "customized_name": "مشهد 5"
+      }
+    },
+    {
+      "id": "d2e4058c-ee00-497b-87fd-d4e2607bf45a",
+      "block_id": "c40d75a2-d0ea-44c9-a4f6-634bb3bdab1a",
+      "input_default": {
+        "model_name": "bytedance/seedance-2.5",
+        "credentials": {
+          "id": "6b9fc200-4726-4973-86c9-cd526f5ce5db",
+          "type": "api_key",
+          "title": "Use Credits for Replicate",
+          "provider": "replicate"
+        },
+        "model_inputs": {
+          "watermark": false,
+          "output_format": "mp4"
+        },
+        "file_input_field": "image"
+      },
+      "metadata": {
+        "position": {
+          "x": 1066.874478496603,
+          "y": 1759.3944337811902
+        },
+        "customized_name": "مشهد 6"
+      }
+    },
+    {
+      "id": "617f10c2-aed3-472d-9323-ff215780d4af",
+      "block_id": "363ae599-353e-4804-937e-b2ee3cef3da4",
+      "input_default": {
+        "name": "video",
+        "title": "الفيديو النهائي",
+        "advanced": false,
+        "escape_html": false
+      },
+      "metadata": {
+        "position": {
+          "x": 4483.494422825064,
+          "y": 256.1335096761359
+        }
+      }
+    },
+    {
+      "id": "515ea8bd-d4bc-4154-ac1e-df34153285c6",
+      "block_id": "363ae599-353e-4804-937e-b2ee3cef3da4",
+      "input_default": {
+        "name": "total_seconds",
+        "title": "المدة الكلية بالثواني",
+        "advanced": false,
+        "escape_html": false
+      },
+      "metadata": {
+        "position": {
+          "x": 4103.874582196272,
+          "y": 718
+        }
+      }
+    },
+    {
+      "id": "7f71a961-2873-478d-804a-4d2ef452e721",
+      "block_id": "db7d8f02-2f44-4c55-ab7a-eae0941f0c30",
+      "input_default": {
+        "format": "[\"{{v1}}\",\"{{v2}}\",\"{{v3}}\",\"{{v4}}\",\"{{v5}}\",\"{{v6}}\"]",
+        "values": {},
+        "escape_html": false
+      },
+      "metadata": {
+        "position": {
+          "x": 3344.688188056223,
+          "y": 500
+        },
+        "customized_name": "تجميع الروابط"
+      }
+    },
+    {
+      "id": "34e2e84e-9823-4ced-8429-86b1cb0934e6",
+      "block_id": "2b935639-65bc-48fd-9f88-823cd706fcd9",
+      "input_default": {},
+      "metadata": {
+        "position": {
+          "x": 3724.2714646203585,
+          "y": 500
+        },
+        "customized_name": "قائمة الفيديوهات"
+      }
+    }
+  ],
+  "links": [
+    {
+      "id": "75c07681-2f4b-489c-a6c0-0dba7b184705",
+      "source_id": "7b304a43-f4cf-48f3-b6cc-72c55af7998c",
+      "sink_id": "a28ef196-e29e-4da1-87fe-663b0e536594",
+      "source_name": "result",
+      "sink_name": "prompt_values_#_idea",
+      "is_static": true
+    },
+    {
+      "id": "fb3ff2d0-7543-4060-b426-412b7f687047",
+      "source_id": "d3304fdb-7e99-4b6a-b134-2f83a950319e",
+      "sink_id": "de559dca-2833-4a09-855c-e4cfa5cf00d5",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_duration",
+      "is_static": true
+    },
+    {
+      "id": "091cc872-36c9-4424-a762-e3a3267a83af",
+      "source_id": "d3304fdb-7e99-4b6a-b134-2f83a950319e",
+      "sink_id": "d2e4058c-ee00-497b-87fd-d4e2607bf45a",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_duration",
+      "is_static": true
+    },
+    {
+      "id": "f311e90d-b1c9-48cf-b305-99aae7669d3e",
+      "source_id": "d3304fdb-7e99-4b6a-b134-2f83a950319e",
+      "sink_id": "d12f3879-0755-47b5-91d7-5474fb7d3881",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_duration",
+      "is_static": true
+    },
+    {
+      "id": "71a8e587-d93d-4768-9d07-7a2363bba5ea",
+      "source_id": "d3304fdb-7e99-4b6a-b134-2f83a950319e",
+      "sink_id": "72eb2eb2-6362-4a66-a270-bad12c95a742",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_duration",
+      "is_static": true
+    },
+    {
+      "id": "0202aef3-45e6-4f88-89b8-725a486dbe26",
+      "source_id": "d3304fdb-7e99-4b6a-b134-2f83a950319e",
+      "sink_id": "657fd2a6-2853-4507-8be2-dabbe1de9128",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_duration",
+      "is_static": true
+    },
+    {
+      "id": "2933bda6-a8b8-459c-aa07-7db2165aab19",
+      "source_id": "d3304fdb-7e99-4b6a-b134-2f83a950319e",
+      "sink_id": "605c2c0a-8826-4686-84a9-b4c32bc33ca9",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_duration",
+      "is_static": true
+    },
+    {
+      "id": "0de37c92-7684-431c-bd1c-a348969d9c7d",
+      "source_id": "d3304fdb-7e99-4b6a-b134-2f83a950319e",
+      "sink_id": "a28ef196-e29e-4da1-87fe-663b0e536594",
+      "source_name": "result",
+      "sink_name": "prompt_values_#_seconds",
+      "is_static": true
+    },
+    {
+      "id": "d688339e-84cf-4aa2-9439-ba376dab934b",
+      "source_id": "f2b8d777-7e7b-4254-8e49-b451a04835d8",
+      "sink_id": "657fd2a6-2853-4507-8be2-dabbe1de9128",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_aspect_ratio",
+      "is_static": true
+    },
+    {
+      "id": "3f30fc75-1516-45c3-976c-22ee82e8ac73",
+      "source_id": "f2b8d777-7e7b-4254-8e49-b451a04835d8",
+      "sink_id": "605c2c0a-8826-4686-84a9-b4c32bc33ca9",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_aspect_ratio",
+      "is_static": true
+    },
+    {
+      "id": "a18ea308-b1a6-4918-8da1-aa7528c5fef0",
+      "source_id": "f2b8d777-7e7b-4254-8e49-b451a04835d8",
+      "sink_id": "de559dca-2833-4a09-855c-e4cfa5cf00d5",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_aspect_ratio",
+      "is_static": true
+    },
+    {
+      "id": "5f055929-bc2a-4826-9797-183c97646cd9",
+      "source_id": "f2b8d777-7e7b-4254-8e49-b451a04835d8",
+      "sink_id": "72eb2eb2-6362-4a66-a270-bad12c95a742",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_aspect_ratio",
+      "is_static": true
+    },
+    {
+      "id": "390670a6-3962-4fac-acb2-7053903da60c",
+      "source_id": "f2b8d777-7e7b-4254-8e49-b451a04835d8",
+      "sink_id": "d2e4058c-ee00-497b-87fd-d4e2607bf45a",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_aspect_ratio",
+      "is_static": true
+    },
+    {
+      "id": "2e0c1590-dc87-47a2-8095-3a152755c43f",
+      "source_id": "f2b8d777-7e7b-4254-8e49-b451a04835d8",
+      "sink_id": "d12f3879-0755-47b5-91d7-5474fb7d3881",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_aspect_ratio",
+      "is_static": true
+    },
+    {
+      "id": "215302bb-48aa-432a-bdce-88e49f55dfbe",
+      "source_id": "9e8702c6-dc61-4e03-b1e8-7ccc0bb9e5c9",
+      "sink_id": "d12f3879-0755-47b5-91d7-5474fb7d3881",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_resolution",
+      "is_static": true
+    },
+    {
+      "id": "57feab05-1de6-41d7-ab73-1e508b717a5b",
+      "source_id": "9e8702c6-dc61-4e03-b1e8-7ccc0bb9e5c9",
+      "sink_id": "d2e4058c-ee00-497b-87fd-d4e2607bf45a",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_resolution",
+      "is_static": true
+    },
+    {
+      "id": "f5578c96-479d-496d-854c-f5ad9bcffd19",
+      "source_id": "9e8702c6-dc61-4e03-b1e8-7ccc0bb9e5c9",
+      "sink_id": "de559dca-2833-4a09-855c-e4cfa5cf00d5",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_resolution",
+      "is_static": true
+    },
+    {
+      "id": "c2933780-b95e-4e9f-ba0e-d80fa40bcd54",
+      "source_id": "9e8702c6-dc61-4e03-b1e8-7ccc0bb9e5c9",
+      "sink_id": "657fd2a6-2853-4507-8be2-dabbe1de9128",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_resolution",
+      "is_static": true
+    },
+    {
+      "id": "4f91e5a0-ac98-47ca-b894-8e56346f515f",
+      "source_id": "9e8702c6-dc61-4e03-b1e8-7ccc0bb9e5c9",
+      "sink_id": "605c2c0a-8826-4686-84a9-b4c32bc33ca9",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_resolution",
+      "is_static": true
+    },
+    {
+      "id": "8f6a318d-13bd-4a24-8fbc-160f6c82ac08",
+      "source_id": "9e8702c6-dc61-4e03-b1e8-7ccc0bb9e5c9",
+      "sink_id": "72eb2eb2-6362-4a66-a270-bad12c95a742",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_resolution",
+      "is_static": true
+    },
+    {
+      "id": "ebe822a7-c9d3-4c11-bfee-ea6c16505349",
+      "source_id": "e805be3a-06b4-4f43-bb09-aaebd5a714c6",
+      "sink_id": "d2e4058c-ee00-497b-87fd-d4e2607bf45a",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_generate_audio",
+      "is_static": true
+    },
+    {
+      "id": "7ebeac22-e2d1-40a1-bef9-3b75828a8dae",
+      "source_id": "e805be3a-06b4-4f43-bb09-aaebd5a714c6",
+      "sink_id": "de559dca-2833-4a09-855c-e4cfa5cf00d5",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_generate_audio",
+      "is_static": true
+    },
+    {
+      "id": "34e2d23e-c679-44bf-9356-95c56b41a300",
+      "source_id": "e805be3a-06b4-4f43-bb09-aaebd5a714c6",
+      "sink_id": "72eb2eb2-6362-4a66-a270-bad12c95a742",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_generate_audio",
+      "is_static": true
+    },
+    {
+      "id": "57b3189f-823d-463b-b760-26f5305b95f5",
+      "source_id": "e805be3a-06b4-4f43-bb09-aaebd5a714c6",
+      "sink_id": "657fd2a6-2853-4507-8be2-dabbe1de9128",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_generate_audio",
+      "is_static": true
+    },
+    {
+      "id": "9d1a6173-d4d9-48a9-8c7e-c77da472ead2",
+      "source_id": "e805be3a-06b4-4f43-bb09-aaebd5a714c6",
+      "sink_id": "605c2c0a-8826-4686-84a9-b4c32bc33ca9",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_generate_audio",
+      "is_static": true
+    },
+    {
+      "id": "2529c872-15d6-4d4e-9c26-e17f257d9504",
+      "source_id": "e805be3a-06b4-4f43-bb09-aaebd5a714c6",
+      "sink_id": "d12f3879-0755-47b5-91d7-5474fb7d3881",
+      "source_name": "result",
+      "sink_name": "model_inputs_#_generate_audio",
+      "is_static": true
+    },
+    {
+      "id": "d235e435-3b8c-491c-88c5-f006d34c00f5",
+      "source_id": "a28ef196-e29e-4da1-87fe-663b0e536594",
+      "sink_id": "657fd2a6-2853-4507-8be2-dabbe1de9128",
+      "source_name": "response_#_scene_5",
+      "sink_name": "model_inputs_#_prompt",
+      "is_static": false
+    },
+    {
+      "id": "105b4d74-83c6-48cd-82c4-00feffe47702",
+      "source_id": "a28ef196-e29e-4da1-87fe-663b0e536594",
+      "sink_id": "605c2c0a-8826-4686-84a9-b4c32bc33ca9",
+      "source_name": "response_#_scene_2",
+      "sink_name": "model_inputs_#_prompt",
+      "is_static": false
+    },
+    {
+      "id": "d79b8245-9af0-4d4a-bdc9-0b7f24158994",
+      "source_id": "a28ef196-e29e-4da1-87fe-663b0e536594",
+      "sink_id": "72eb2eb2-6362-4a66-a270-bad12c95a742",
+      "source_name": "response_#_scene_3",
+      "sink_name": "model_inputs_#_prompt",
+      "is_static": false
+    },
+    {
+      "id": "e75e9b5c-8335-4327-a44e-685d8505ba98",
+      "source_id": "a28ef196-e29e-4da1-87fe-663b0e536594",
+      "sink_id": "d12f3879-0755-47b5-91d7-5474fb7d3881",
+      "source_name": "response_#_scene_1",
+      "sink_name": "model_inputs_#_prompt",
+      "is_static": false
+    },
+    {
+      "id": "165795d0-7195-4df7-8899-ba85d7a83175",
+      "source_id": "a28ef196-e29e-4da1-87fe-663b0e536594",
+      "sink_id": "de559dca-2833-4a09-855c-e4cfa5cf00d5",
+      "source_name": "response_#_scene_4",
+      "sink_name": "model_inputs_#_prompt",
+      "is_static": false
+    },
+    {
+      "id": "aa7fe0a3-0f38-413c-8062-7bd8db2e0d81",
+      "source_id": "a28ef196-e29e-4da1-87fe-663b0e536594",
+      "sink_id": "d2e4058c-ee00-497b-87fd-d4e2607bf45a",
+      "source_name": "response_#_scene_6",
+      "sink_name": "model_inputs_#_prompt",
+      "is_static": false
+    },
+    {
+      "id": "5f50f9b5-9304-4f86-9b74-a9a3353ce645",
+      "source_id": "1374c3d7-3cb3-4880-a12d-a7734e07b66e",
+      "sink_id": "617f10c2-aed3-472d-9323-ff215780d4af",
+      "source_name": "video_out",
+      "sink_name": "value",
+      "is_static": false
+    },
+    {
+      "id": "908dc77b-18cc-4a81-afe7-6abc2ad32695",
+      "source_id": "1374c3d7-3cb3-4880-a12d-a7734e07b66e",
+      "sink_id": "515ea8bd-d4bc-4154-ac1e-df34153285c6",
+      "source_name": "total_duration",
+      "sink_name": "value",
+      "is_static": false
+    },
+    {
+      "id": "141e1252-3bc6-4ae5-a1f8-e2113839ec4f",
+      "source_id": "d12f3879-0755-47b5-91d7-5474fb7d3881",
+      "sink_id": "7f71a961-2873-478d-804a-4d2ef452e721",
+      "source_name": "result",
+      "sink_name": "values_#_v1",
+      "is_static": false
+    },
+    {
+      "id": "1fc0f8e1-a609-451d-a697-07a41eebd0e4",
+      "source_id": "605c2c0a-8826-4686-84a9-b4c32bc33ca9",
+      "sink_id": "7f71a961-2873-478d-804a-4d2ef452e721",
+      "source_name": "result",
+      "sink_name": "values_#_v2",
+      "is_static": false
+    },
+    {
+      "id": "b2e22ecb-04b3-45f4-81eb-f52955eded47",
+      "source_id": "72eb2eb2-6362-4a66-a270-bad12c95a742",
+      "sink_id": "7f71a961-2873-478d-804a-4d2ef452e721",
+      "source_name": "result",
+      "sink_name": "values_#_v3",
+      "is_static": false
+    },
+    {
+      "id": "bc8b511e-369f-4acb-935f-fc5e2b1d3567",
+      "source_id": "de559dca-2833-4a09-855c-e4cfa5cf00d5",
+      "sink_id": "7f71a961-2873-478d-804a-4d2ef452e721",
+      "source_name": "result",
+      "sink_name": "values_#_v4",
+      "is_static": false
+    },
+    {
+      "id": "3f45d8ba-8359-4e9a-90d7-ef1b7df3fe67",
+      "source_id": "657fd2a6-2853-4507-8be2-dabbe1de9128",
+      "sink_id": "7f71a961-2873-478d-804a-4d2ef452e721",
+      "source_name": "result",
+      "sink_name": "values_#_v5",
+      "is_static": false
+    },
+    {
+      "id": "000dd22e-a732-4d68-ac7a-04ec57bf7159",
+      "source_id": "d2e4058c-ee00-497b-87fd-d4e2607bf45a",
+      "sink_id": "7f71a961-2873-478d-804a-4d2ef452e721",
+      "source_name": "result",
+      "sink_name": "values_#_v6",
+      "is_static": false
+    },
+    {
+      "id": "f92e9240-a244-4fe9-a1b6-cc35b39e5cab",
+      "source_id": "7f71a961-2873-478d-804a-4d2ef452e721",
+      "sink_id": "34e2e84e-9823-4ced-8429-86b1cb0934e6",
+      "source_name": "output",
+      "sink_name": "json_str",
+      "is_static": false
+    },
+    {
+      "id": "b217d548-c844-4757-b408-30557b1eae37",
+      "source_id": "34e2e84e-9823-4ced-8429-86b1cb0934e6",
+      "sink_id": "1374c3d7-3cb3-4880-a12d-a7734e07b66e",
+      "source_name": "data",
+      "sink_name": "videos",
+      "is_static": false
+    }
+  ]
+}

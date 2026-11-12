@@ -1,0 +1,2497 @@
+[
+  {
+    "name": "Build Studio (AQL)",
+    "id": "a0f52067-641e-4799-8d3b-5471d7161d45",
+    "graph_id": "73e521fc-081a-4b3a-81ad-9161d77b410a",
+    "graph_version": 8,
+    "description": "Two-stage studio: an architect plans the whole project (site map, design system, copy), then a builder produces a complete responsive site in one HTML file.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "contact": {
+          "advanced": false,
+          "title": "Contact details",
+          "secret": false
+        },
+        "lang": {
+          "advanced": false,
+          "title": "Language",
+          "secret": false,
+          "default": "Arabic"
+        },
+        "idea": {
+          "advanced": false,
+          "title": "Project idea (what to build and for whom)",
+          "secret": false
+        },
+        "kind": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Project type",
+          "enum": [
+            "website",
+            "online_store",
+            "web_app",
+            "landing_page",
+            "portfolio",
+            "booking_site"
+          ],
+          "secret": false,
+          "default": "website"
+        },
+        "style": {
+          "advanced": false,
+          "title": "Style (modern, luxury, minimal, bold)",
+          "secret": false,
+          "default": "modern"
+        }
+      },
+      "required": [
+        "contact",
+        "idea"
+      ]
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "project_plan": {
+          "advanced": false,
+          "title": "project_plan",
+          "secret": false
+        },
+        "html": {
+          "advanced": false,
+          "title": "html",
+          "secret": false
+        },
+        "title": {
+          "advanced": false,
+          "title": "title",
+          "secret": false
+        }
+      },
+      "required": [
+        "project_plan",
+        "html",
+        "title"
+      ]
+    }
+  },
+  {
+    "name": "Page Generator (AQL)",
+    "id": "57968f55-719c-40ca-9d25-8638122a0b38",
+    "graph_id": "305e0dd5-3d8b-4084-adbc-fede6e3a71d8",
+    "graph_version": 2,
+    "description": "Creates a complete single-file responsive landing page (HTML) for a business, RTL-ready for Arabic.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "business": {
+          "advanced": false,
+          "title": "Business name and what it does",
+          "secret": false,
+          "default": ""
+        },
+        "goal": {
+          "advanced": false,
+          "title": "Goal of the page (sell, book, collect leads)",
+          "secret": false,
+          "default": "book"
+        },
+        "style": {
+          "advanced": false,
+          "title": "Style (modern, luxury, playful, minimal)",
+          "secret": false,
+          "default": "modern"
+        },
+        "contact": {
+          "advanced": false,
+          "title": "Contact details (phone, WhatsApp, email)",
+          "secret": false,
+          "default": ""
+        },
+        "lang": {
+          "advanced": false,
+          "title": "Language",
+          "secret": false,
+          "default": "Arabic"
+        }
+      },
+      "required": []
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "html": {
+          "advanced": false,
+          "title": "html",
+          "secret": false
+        },
+        "title": {
+          "advanced": false,
+          "title": "title",
+          "secret": false
+        }
+      },
+      "required": [
+        "html",
+        "title"
+      ]
+    }
+  },
+  {
+    "name": "Service Maestro (key-gated)",
+    "id": "e88058a1-e9f7-4a1d-8c2b-4be68dff68a1",
+    "graph_id": "614ce970-58b4-42a3-b0ed-e8850a88b917",
+    "graph_version": 5,
+    "description": "Client gives a service key and a service name. The maestro validates the key and routes to the matching service (publisher). Invalid keys or unknown services return an error.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "client_key": {
+          "advanced": false,
+          "title": "Service key",
+          "secret": false,
+          "description": "Service key",
+          "default": ""
+        },
+        "service": {
+          "advanced": false,
+          "title": "Service name (publisher or external)",
+          "secret": false,
+          "description": "Service name (publisher or external)",
+          "default": "publisher"
+        },
+        "client": {
+          "advanced": false,
+          "title": "Client name",
+          "secret": false,
+          "description": "Client name",
+          "default": "Client"
+        },
+        "brief": {
+          "advanced": false,
+          "title": "Brief",
+          "secret": false,
+          "description": "Brief",
+          "default": ""
+        },
+        "lang": {
+          "advanced": false,
+          "title": "Language",
+          "secret": false,
+          "description": "Language",
+          "default": "Arabic"
+        }
+      },
+      "required": []
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "x_result": {
+          "advanced": false,
+          "title": "x_result",
+          "secret": false
+        },
+        "instagram_facebook_result": {
+          "advanced": false,
+          "title": "instagram_facebook_result",
+          "secret": false
+        },
+        "video_platforms_result": {
+          "advanced": false,
+          "title": "video_platforms_result",
+          "secret": false
+        },
+        "error": {
+          "advanced": false,
+          "title": "Error",
+          "secret": false
+        }
+      },
+      "required": [
+        "x_result",
+        "instagram_facebook_result",
+        "video_platforms_result",
+        "error"
+      ]
+    }
+  },
+  {
+    "name": "Auto Publisher (images + video, 6 platforms)",
+    "id": "83f4a3b5-56c3-4c9b-b323-f9545f0563f9",
+    "graph_id": "ded64c44-994b-4d78-913c-e2a80f04e754",
+    "graph_version": 21,
+    "description": "Takes a client brief, writes captions, generates an image and a vertical video, and publishes to X, Instagram, Facebook, TikTok, YouTube and Snapchat through the client's Ayrshare profile.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "client": {
+          "advanced": false,
+          "title": "Client name",
+          "secret": false,
+          "description": "Client or brand name",
+          "default": "Demo Brand"
+        },
+        "brief": {
+          "advanced": false,
+          "title": "Brief",
+          "secret": false,
+          "description": "What to post about: product, offer, idea or article text",
+          "default": "New summer offer: 20% off all services this week"
+        },
+        "pkey": {
+          "advanced": false,
+          "title": "Ayrshare Profile Key",
+          "secret": false,
+          "description": "The client's Ayrshare profile key (from your Ayrshare dashboard)"
+        },
+        "lang": {
+          "advanced": false,
+          "title": "Language",
+          "secret": false,
+          "description": "Language of the posts",
+          "default": "Arabic"
+        }
+      },
+      "required": [
+        "pkey"
+      ]
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "x_result": {
+          "advanced": false,
+          "title": "x_result",
+          "secret": false
+        },
+        "instagram_facebook_result": {
+          "advanced": false,
+          "title": "instagram_facebook_result",
+          "secret": false
+        },
+        "video_platforms_result": {
+          "advanced": false,
+          "title": "video_platforms_result",
+          "secret": false
+        }
+      },
+      "required": [
+        "x_result",
+        "instagram_facebook_result",
+        "video_platforms_result"
+      ]
+    }
+  },
+  {
+    "name": "موقع إلى فيديو (أدخل الرابط وينتج فيديو)",
+    "id": "7fc2d9aa-7b12-43a9-b4ac-54cb96a902d0",
+    "graph_id": "1b7ac947-5a52-4b0b-852a-8c6a5a46d979",
+    "graph_version": 5,
+    "description": "تحوّل وصف موقعك (أو أي نص تلصقه) إلى فيديو دعائي متصل بصوت مدمج: 6 مشاهد × المدة التي تختارها. الافتراضي: موقع AQL4.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "extra": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "long-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "تعليمات إضافية (اختياري)",
+          "secret": false,
+          "default": "اجعل الفيديو دعائياً احترافياً"
+        },
+        "scene_seconds": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "مدة كل مشهد بالثواني (من 5 إلى 30). المجموع = المدة × 6 مشاهد، يعني من 30 ثانية إلى 180 ثانية",
+          "secret": false,
+          "default": 10
+        },
+        "aspect_ratio": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "أبعاد الفيديو",
+          "enum": [
+            "16:9",
+            "9:16",
+            "1:1",
+            "4:3",
+            "3:4",
+            "21:9"
+          ],
+          "secret": false,
+          "default": "16:9"
+        },
+        "resolution": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "الدقة",
+          "enum": [
+            "720p",
+            "480p"
+          ],
+          "secret": false,
+          "default": "720p"
+        },
+        "generate_audio": {
+          "advanced": false,
+          "title": "توليد الصوت (حوار + مؤثرات + موسيقى)",
+          "type": "boolean",
+          "secret": false,
+          "default": true
+        },
+        "site_text": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "long-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "وصف الموقع أو الفكرة (الافتراضي: AQL4)",
+          "secret": false,
+          "default": "AQL4 (آقطار): منصة سعودية للخدمات الرقمية بالذكاء الاصطناعي. مساعد رقمي ذكي بالعربية، دفتر AQL لاستوديو المعرفة، استوديو بناء كامل للمواقع والتطبيقات والوكلاء الأذكياء، مولّد تسويق، عقود ذكية بالذكاء الاصطناعي، نشر المواقع، ووكيل ذكاء حي. الإعلانات التجارية والخدمات الذكية والمدن الذكية والعمل الحر داخل المملكة العربية السعودية. توفير فرص عمل حر للشباب والمرأة في بيتها ودعم السائقين والحرفيين والتجار الصغار. شفافية كاملة عبر رموز AQL و AQ المشفرة. تحويل المدن السعودية إلى مدن ذكية بمعايير عالمية. منصة غير هادفة للربح، وخدماتها الأساسية مجانية."
+        }
+      },
+      "required": []
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "video": {
+          "advanced": false,
+          "title": "الفيديو النهائي",
+          "secret": false
+        },
+        "total_seconds": {
+          "advanced": false,
+          "title": "المدة بالثواني",
+          "secret": false
+        }
+      },
+      "required": [
+        "video",
+        "total_seconds"
+      ]
+    }
+  },
+  {
+    "name": "استوديو الفيديو (30 ثانية حتى 3 دقائق + صوت)",
+    "id": "411274d5-9013-4992-a6b8-3699c86984b6",
+    "graph_id": "d212d957-8203-4548-a604-689af90740cd",
+    "graph_version": 11,
+    "description": "يحوّل فكرتك إلى فيديو طويل (30 ثانية إلى 3 دقائق) بصوت مدمج: يقسمها إلى 6 مشاهد متصلة، يولّدها بـ Seedance 2.5 ثم يدمجها في فيديو واحد.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "prompt": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "long-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "فكرة الفيديو / القصة",
+          "secret": false,
+          "description": "اكتب الفكرة بأي لغة. سيقسمها الوكيل إلى 6 مشاهد متصلة بنفس الشخصيات والأسلوب.",
+          "default": "A lone astronaut discovers a glowing garden on Mars and befriends a small robot."
+        },
+        "scene_seconds": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "مدة كل مشهد بالثواني (من 5 إلى 30). المجموع = المدة × 6 مشاهد، يعني من 30 ثانية إلى 180 ثانية",
+          "secret": false,
+          "default": 10
+        },
+        "aspect_ratio": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "أبعاد الفيديو",
+          "enum": [
+            "16:9",
+            "9:16",
+            "1:1",
+            "4:3",
+            "3:4",
+            "21:9"
+          ],
+          "secret": false,
+          "default": "16:9"
+        },
+        "resolution": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "الدقة",
+          "enum": [
+            "720p",
+            "480p"
+          ],
+          "secret": false,
+          "default": "720p"
+        },
+        "generate_audio": {
+          "advanced": false,
+          "title": "توليد الصوت (حوار + مؤثرات + موسيقى)",
+          "type": "boolean",
+          "secret": false,
+          "default": true
+        }
+      },
+      "required": []
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "video": {
+          "advanced": false,
+          "title": "الفيديو النهائي",
+          "secret": false
+        },
+        "total_seconds": {
+          "advanced": false,
+          "title": "المدة الكلية بالثواني",
+          "secret": false
+        }
+      },
+      "required": [
+        "video",
+        "total_seconds"
+      ]
+    }
+  },
+  {
+    "name": "Key Issuer (register client key)",
+    "id": "16364b2f-940f-42ef-afe6-e97b1cd242c0",
+    "graph_id": "275886d8-80de-43fa-a75f-460e764802fb",
+    "graph_version": 1,
+    "description": "Admin tool: registers a client service key and links it to the client's Ayrshare profile key. The Maestro agent reads these keys.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "client_key": {
+          "advanced": false,
+          "title": "Client service key",
+          "secret": false,
+          "description": "The key you give the client",
+          "default": ""
+        },
+        "pkey": {
+          "advanced": false,
+          "title": "Ayrshare Profile Key",
+          "secret": false,
+          "description": "This client's Ayrshare profile key",
+          "default": ""
+        }
+      },
+      "required": []
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "registered": {
+          "advanced": false,
+          "title": "Registered key",
+          "secret": false
+        }
+      },
+      "required": [
+        "registered"
+      ]
+    }
+  },
+  {
+    "name": "صورة إلى فيديو (حرّك صورتك بصوت)",
+    "id": "b66f5fa9-7598-4719-bf13-f08c79cd19e1",
+    "graph_id": "7cc4b50d-c32c-41a7-a0a0-f9697f640f51",
+    "graph_version": 1,
+    "description": "ارفع صورة واكتب ما تريد أن يحدث، فيحوّلها إلى فيديو (حتى 30 ثانية) بصوت مدمج.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "file",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "الصورة",
+          "secret": false
+        },
+        "prompt": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "long-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "ماذا تريد أن يحدث في الفيديو؟",
+          "secret": false,
+          "default": "حرّك الصورة بحركة سينمائية واقعية مع صوت طبيعي"
+        },
+        "scene_seconds": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "مدة كل مشهد بالثواني (من 5 إلى 30). المجموع = المدة × 6 مشاهد، يعني من 30 ثانية إلى 180 ثانية",
+          "secret": false,
+          "default": 10
+        },
+        "aspect_ratio": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "أبعاد الفيديو",
+          "enum": [
+            "16:9",
+            "9:16",
+            "1:1",
+            "4:3",
+            "3:4",
+            "21:9"
+          ],
+          "secret": false,
+          "default": "16:9"
+        },
+        "resolution": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "الدقة",
+          "enum": [
+            "720p",
+            "480p"
+          ],
+          "secret": false,
+          "default": "720p"
+        },
+        "generate_audio": {
+          "advanced": false,
+          "title": "توليد الصوت (حوار + مؤثرات + موسيقى)",
+          "type": "boolean",
+          "secret": false,
+          "default": true
+        }
+      },
+      "required": [
+        "image"
+      ]
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "video": {
+          "advanced": false,
+          "title": "الفيديو",
+          "secret": false
+        }
+      },
+      "required": [
+        "video"
+      ]
+    }
+  },
+  {
+    "name": "تعديل فيديو (ارفع فيديو وغيّره)",
+    "id": "8131278b-a88a-4575-a04d-615dc495836a",
+    "graph_id": "6776633f-e510-4d1c-b15c-992ec828af69",
+    "graph_version": 1,
+    "description": "ارفع فيديو (حتى 30 ثانية) واكتب التعديل المطلوب: تغيير الأسلوب أو العناصر أو الحركة، مع صوت.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "video": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "file",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "الفيديو المراد تعديله",
+          "secret": false
+        },
+        "prompt": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "long-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "ما التعديل المطلوب؟",
+          "secret": false,
+          "default": "غيّر الأسلوب إلى سينمائي ليلي مع الحفاظ على الحركة"
+        },
+        "scene_seconds": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "مدة كل مشهد بالثواني (من 5 إلى 30). المجموع = المدة × 6 مشاهد، يعني من 30 ثانية إلى 180 ثانية",
+          "secret": false,
+          "default": 10
+        },
+        "aspect_ratio": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "أبعاد الفيديو",
+          "enum": [
+            "16:9",
+            "9:16",
+            "1:1",
+            "4:3",
+            "3:4",
+            "21:9"
+          ],
+          "secret": false,
+          "default": "16:9"
+        },
+        "resolution": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "الدقة",
+          "enum": [
+            "720p",
+            "480p"
+          ],
+          "secret": false,
+          "default": "720p"
+        },
+        "generate_audio": {
+          "advanced": false,
+          "title": "توليد الصوت (حوار + مؤثرات + موسيقى)",
+          "type": "boolean",
+          "secret": false,
+          "default": true
+        }
+      },
+      "required": [
+        "video"
+      ]
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "video": {
+          "advanced": false,
+          "title": "الفيديو المعدّل",
+          "secret": false
+        }
+      },
+      "required": [
+        "video"
+      ]
+    }
+  },
+  {
+    "name": "تعديل صورة (ارفع صورة وغيّرها)",
+    "id": "4c7d48c9-3579-4f24-bc90-cad7925e0193",
+    "graph_id": "2f8547a6-6e3f-4b32-bbc7-cffcf510f940",
+    "graph_version": 1,
+    "description": "ارفع صورة واكتب التعديل (إزالة، إضافة، تغيير الأسلوب...) وتحصل على الصورة المعدّلة.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "file",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "الصورة",
+          "secret": false
+        },
+        "prompt": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "long-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "ما التعديل؟",
+          "secret": false,
+          "default": "حسّن الجودة والإضاءة"
+        }
+      },
+      "required": [
+        "image"
+      ]
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "advanced": false,
+          "title": "الصورة المعدّلة",
+          "secret": false
+        }
+      },
+      "required": [
+        "image"
+      ]
+    }
+  },
+  {
+    "name": "Contract Drafter (AQL)",
+    "id": "4e9b5827-85a0-42b7-9f1d-7530a14211e1",
+    "graph_id": "dcc1458a-cbee-4f63-829f-ea8de3924630",
+    "graph_version": 1,
+    "description": "Drafts a clear contract from the parties and terms, in Arabic or any language, following Saudi practice. Draft only, needs lawyer review.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "contract_type": {
+          "advanced": false,
+          "title": "Contract type (e.g. service, rent, sale, partnership)",
+          "secret": false,
+          "default": "service"
+        },
+        "party_a": {
+          "advanced": false,
+          "title": "First party",
+          "secret": false,
+          "default": ""
+        },
+        "party_b": {
+          "advanced": false,
+          "title": "Second party",
+          "secret": false,
+          "default": ""
+        },
+        "terms": {
+          "advanced": false,
+          "title": "Terms: price, duration, duties, payment, penalties",
+          "secret": false,
+          "default": ""
+        },
+        "lang": {
+          "advanced": false,
+          "title": "Language",
+          "secret": false,
+          "default": "Arabic"
+        }
+      },
+      "required": []
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "contract_text": {
+          "advanced": false,
+          "title": "contract_text",
+          "secret": false
+        },
+        "notes": {
+          "advanced": false,
+          "title": "notes",
+          "secret": false
+        }
+      },
+      "required": [
+        "contract_text",
+        "notes"
+      ]
+    }
+  },
+  {
+    "name": "AQL Ledger (v1)",
+    "id": "974d0584-6957-4abf-b94f-919fc349a79c",
+    "graph_id": "bd1f4e5e-9de9-478f-935c-a49d5beeaa40",
+    "graph_version": 1,
+    "description": "Turns a plain description of a transaction or note into a clean ledger entry with category, normalized amount and a review note.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "advanced": false,
+          "title": "Client / account name",
+          "secret": false,
+          "default": ""
+        },
+        "entry": {
+          "advanced": false,
+          "title": "Describe the transaction or note",
+          "secret": false,
+          "default": ""
+        },
+        "lang": {
+          "advanced": false,
+          "title": "Language",
+          "secret": false,
+          "default": "Arabic"
+        }
+      },
+      "required": []
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "advanced": false,
+          "title": "amount",
+          "secret": false
+        },
+        "summary": {
+          "advanced": false,
+          "title": "summary",
+          "secret": false
+        },
+        "review_note": {
+          "advanced": false,
+          "title": "review_note",
+          "secret": false
+        },
+        "title": {
+          "advanced": false,
+          "title": "title",
+          "secret": false
+        },
+        "category": {
+          "advanced": false,
+          "title": "category",
+          "secret": false
+        }
+      },
+      "required": [
+        "amount",
+        "summary",
+        "review_note",
+        "title",
+        "category"
+      ]
+    }
+  },
+  {
+    "name": "Smart Notebook (AQL)",
+    "id": "79f778d6-8781-4642-87c9-eac211cb7955",
+    "graph_id": "66bc9776-7b71-468b-a70f-511fc49b17b7",
+    "graph_version": 3,
+    "description": "Turns any text into a summary, quiz, article, marketing post, study notes or key ideas.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "advanced": false,
+          "title": "Source text or content",
+          "secret": false
+        },
+        "task": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "What do you want?",
+          "enum": [
+            "summary",
+            "quiz",
+            "article",
+            "marketing_post",
+            "study_notes",
+            "key_ideas",
+            "faq"
+          ],
+          "secret": false,
+          "default": "summary"
+        },
+        "lang": {
+          "advanced": false,
+          "title": "Language",
+          "secret": false,
+          "default": "Arabic"
+        }
+      },
+      "required": [
+        "source"
+      ]
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "advanced": false,
+          "title": "result",
+          "secret": false
+        }
+      },
+      "required": [
+        "result"
+      ]
+    }
+  },
+  {
+    "name": "باع",
+    "id": "a5f631b5-4c67-4c4f-905b-7e6908dff85e",
+    "graph_id": "031cbeab-92dc-4a23-b29b-116fc35be5e5",
+    "graph_version": 1,
+    "description": "لاا",
+    "input_schema": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    }
+  },
+  {
+    "name": "Resume Rater",
+    "id": "20b2a649-43f1-48fc-81a1-2ee950ffc4d5",
+    "graph_id": "b4ab3460-f3bb-4381-b501-71af9116196e",
+    "graph_version": 55,
+    "description": "Before you apply, know exactly how your resume stacks up.\nThe Resume Rater Agent reviews your experience through the lens of your chosen industry, comparing your background, skills, and achievements to top professionals. It highlights what stands out, what’s missing, and where you can improve — giving you a clear, data-driven score and personalized feedback before you hit submit.\n\nHow It Works\n1. Paste your resume text or share a public link, then select your target industry.\n2. The agent evaluates your resume against recruiter expectations and current hiring trends.\n3. It assesses relevance, skills, achievements, and clarity to pinpoint strengths and blind spots.\n4. You receive a recruiter-style report with tailored recommendations and a score from 1–100.\n\n✅ Perfect for professionals who want recruiter-grade insights before sending their next application.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "What industry is your resume?": {
+          "advanced": false,
+          "title": "What industry is your resume?",
+          "secret": false,
+          "default": "Sales Associate"
+        },
+        "Resume": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "long-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Resume",
+          "secret": false,
+          "description": "Paste in your resume text or url",
+          "default": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Resume.pdf"
+        }
+      },
+      "required": []
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "Review": {
+          "advanced": false,
+          "title": "Review",
+          "secret": false
+        },
+        "Error": {
+          "advanced": false,
+          "title": "Error",
+          "secret": false
+        }
+      },
+      "required": [
+        "Review",
+        "Error"
+      ]
+    }
+  },
+  {
+    "name": "Automated Support Agent",
+    "id": "d559e700-f252-48b8-8f5c-79c65ef4cfad",
+    "graph_id": "00ffe635-c92d-456c-aca0-9119fdc06cf9",
+    "graph_version": 369,
+    "description": "Overview:\nSupport teams spend countless hours on basic tickets. This agent automates repetitive customer support tasks. It reads incoming requests, researches your knowledge base, and responds automatically when confident. When unsure, it escalates to a human for final resolution.\n\nHow it Works:\nNew support emails are routed to the agent.\nThe agent checks internal documentation for answers.\nIt measures confidence in the answer found and either replies directly or escalates to a human.\n\nBusiness Value:\nAutomating the easy 80 percent of support tickets allows your team to focus on high-value, complex customer issues, improving efficiency and response times.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "Documentation URL": {
+          "advanced": false,
+          "title": "Documentation URL",
+          "secret": false,
+          "default": ""
+        },
+        "Company Tone": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Company Tone",
+          "enum": [
+            "Professional",
+            "Friendly",
+            "Casual",
+            "Technical"
+          ],
+          "secret": false,
+          "default": ""
+        },
+        "Confidence Threshold": {
+          "advanced": false,
+          "title": "Auto-Reply Confidence Threshold",
+          "secret": false,
+          "description": "Minimum confidence score (0-100) required for automatic responses",
+          "default": ""
+        },
+        "Escalation Email": {
+          "advanced": false,
+          "title": "Human Escalation Email Address",
+          "secret": false,
+          "description": "Email address where complex support requests that require human attention will be forwarded",
+          "default": ""
+        },
+        "Email Signature": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "long-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Email Signature",
+          "secret": false,
+          "default": ""
+        },
+        "Airtable Workspace ID": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "short-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Airtable Workspace ID",
+          "secret": false,
+          "description": "To get your Airtable workspace ID is to open Airtable in a browser, select your workspace, and check the URL in your browser’s address bar. The workspace ID is the string that starts with \"wsp\" in the URL (for example, https://airtable.com/workspaces/wspsqMNxxxxxxxxxxxxx). Do not include the trailing question mark if present.",
+          "default": ""
+        }
+      },
+      "required": []
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "Error Reading Emails": {
+          "advanced": false,
+          "title": "Error Reading Emails",
+          "secret": false
+        },
+        "No New Support Tickets": {
+          "advanced": false,
+          "title": "No New Support Tickets",
+          "secret": false
+        },
+        "Error Crawling Documentation": {
+          "advanced": false,
+          "title": "Error Crawling Documentation",
+          "secret": false
+        },
+        "Error Gmail Auto-Reply": {
+          "advanced": false,
+          "title": "Error Gmail Auto-Reply",
+          "secret": false
+        },
+        "Dictionary Creation Failed": {
+          "advanced": false,
+          "title": "Dictionary Creation Failed",
+          "secret": false
+        },
+        "Adding to List Process Failed": {
+          "advanced": false,
+          "title": "Adding to List Process Failed",
+          "secret": false
+        },
+        "Success": {
+          "advanced": false,
+          "title": "Success",
+          "secret": false
+        },
+        "Error in Gmail Escalation Process": {
+          "advanced": false,
+          "title": "Error in Gmail Escalation Process",
+          "secret": false
+        },
+        "Error adding to Airtable Write payload": {
+          "advanced": false,
+          "title": "Error adding to Airtable Write payload",
+          "secret": false
+        },
+        "Error Type Conversion": {
+          "advanced": false,
+          "title": "Error Type Conversion",
+          "secret": false
+        }
+      },
+      "required": [
+        "Error Reading Emails",
+        "No New Support Tickets",
+        "Error Crawling Documentation",
+        "Error Gmail Auto-Reply",
+        "Dictionary Creation Failed",
+        "Adding to List Process Failed",
+        "Success",
+        "Error in Gmail Escalation Process",
+        "Error adding to Airtable Write payload",
+        "Error Type Conversion"
+      ]
+    }
+  },
+  {
+    "name": "AI Webpage Copy Improver",
+    "id": "2017da5c-bfbb-467d-9be0-a3b9388f2fde",
+    "graph_id": "7edf1803-0bb5-47bd-b493-fc497e30edbb",
+    "graph_version": 12,
+    "description": "Elevate your web content with this powerful AI Webpage Copy Improver. Designed for marketers, SEO specialists, and web developers, this tool analyses and enhances website copy for maximum impact. Using advanced language models, it optimizes text for better clarity, SEO performance, and increased conversion rates. The AI examines your existing content, identifies areas for improvement, and generates refined copy that maintains your brand voice while boosting engagement. From homepage headlines to product descriptions, transform your web presence with AI-driven insights. Improve readability, incorporate targeted keywords, and craft compelling calls-to-action - all with the click of a button. Take your digital marketing to the next level with the AI Webpage Copy Improver.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "Homepage URL": {
+          "advanced": false,
+          "title": "Homepage URL",
+          "secret": false,
+          "description": "Enter the URL of the homepage you want to improve",
+          "default": "https://agpt.co"
+        }
+      },
+      "required": []
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "Improved Webpage Copy": {
+          "advanced": false,
+          "title": "Improved Webpage Copy",
+          "secret": false
+        },
+        "Original Page Analysis": {
+          "advanced": false,
+          "title": "Original Page Analysis",
+          "secret": false,
+          "description": "Analysis of the webpage as it currently stands."
+        }
+      },
+      "required": [
+        "Improved Webpage Copy",
+        "Original Page Analysis"
+      ]
+    }
+  },
+  {
+    "name": "AI Video Generator",
+    "id": "6195e294-78c9-4e62-b257-2158779b7844",
+    "graph_id": "f078dcb6-6123-49df-a153-12aaf6dbd10f",
+    "graph_version": 57,
+    "description": "OVERVIEW\nTransform any trending headline or broad topic into a polished, vertical short-form video in a single run.  \nThe agent automates research, scriptwriting, metadata creation, and Revid.ai rendering, returning one ready-to-publish MP4 plus its title, script and hashtags.\n\nHOW IT WORKS\n1. Input a topic or an exact news headline.  \n2. The agent fetches live search results and selects the most engaging related story.  \n3. Key facts are summarised into concise research notes.  \n4. Claude writes a 30–35 second script with visual cues, a three-second hook, tension loops, and a call-to-action.  \n5. GPT-4o generates an eye-catching title and one or two discoverability hashtags.  \n6. The script is sent to a state-of-the-art AI video generator to render a single 9:16 MP4 (default: 720 p, 30 fps, voice “Brian”, style “movingImage”, music “Bladerunner 2049”).  \n   – All voice, style and resolution settings can be adjusted in the Builder before you press \"Run\".  \n7. Output delivered: Title, Script, Hashtags, Video URL.\n\nKEY USE CASES\n- Broad-topic explainers (e.g. “Artificial Intelligence” or “Climate Tech”).  \n- Real-time newsjacking with a specific breaking headline.  \n- Product-launch spotlights and quick event recaps while interest is high.  \n\nBUSINESS VALUE\n- One-click speed: from idea to finished video in minutes.  \n- Consistent brand look: Revid presets keep voice, style and aspect ratio on spec.  \n- No-code workflow: marketers create social video without design or development queues.  \n- Cloud convenience: Auto-GPT Cloud users are pre-configured with all required keys.  \n  Self-hosted users simply add OpenAI, Anthropic, Perplexity (OpenRouter/Jina) and Revid keys once.\n\nIMPORTANT NOTES\n- The agent outputs exactly one video per execution. Run it again for additional shorts.  \n- Video rendering time varies; AI-generated footage may take several minutes.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "Video Topic / Headline": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "short-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Video Topic / Headline",
+          "secret": false,
+          "description": "Type a broad topic (e.g. ‘Climate Tech’) or paste an exact headline (e.g. ‘IBM unveils quantum roadmap’) to generate a short-form video about it.",
+          "default": "AutoGPT"
+        }
+      },
+      "required": []
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "Short-Form Video Title": {
+          "advanced": false,
+          "title": "Short-Form Video Title",
+          "secret": false,
+          "description": "Hook-driven title optimised for TikTok, Instagram Reels & YouTube Shorts."
+        },
+        "Video Script (+Visual Cues)": {
+          "advanced": false,
+          "title": "Video Script (+Visual Cues)",
+          "secret": false,
+          "description": "Complete spoken script with [visual directions] for your short-form video."
+        },
+        "Optimised Hashtags": {
+          "advanced": false,
+          "title": "Optimised Hashtags",
+          "secret": false,
+          "description": "One or two high-reach hashtags to boost discoverability."
+        },
+        "Video": {
+          "advanced": false,
+          "title": "Video",
+          "secret": false,
+          "description": "The finished video created by the Agent"
+        }
+      },
+      "required": [
+        "Short-Form Video Title",
+        "Video Script (+Visual Cues)",
+        "Optimised Hashtags",
+        "Video"
+      ]
+    }
+  },
+  {
+    "name": "Product Launch Tracker & Reporter",
+    "id": "de5bc3a1-820d-4aa3-ae4d-29508efe2bac",
+    "graph_id": "9e66896c-de30-450f-8195-8f2e613d5cf6",
+    "graph_version": 30,
+    "description": "New products appear every day—often before the market even notices. This AI-powered agent makes sure **you** are the first to know.\n\n### What it does for you\n\n* **Scans the web every morning** across tech sites, startup databases and industry publications, looking only for items that launched within your chosen time window.\n* **Verifies every date** against multiple sources, so rumours and “coming-soon” posts never clutter your feed.\n* **Packages the intel in a clean email** with product name, company, launch date and a one-line summary—ready to forward to teammates or drop into your roadmap.\n\n### Three-step setup\n\n1. **Pick your focus.** Enter a topic such as “AI dev tools” or “sustainable beauty.”\n2. **Tell us where to send it.** Add any email address—your own, a shared inbox, even a Slack channel email.\n3. **Connect once, relax forever.** Provide an OpenRouter API key and grant Gmail send access; the agent handles scheduling, search and delivery from then on.\n\n### Why teams love it\n\n* **Instant competitive intelligence** – spot emerging rivals and partnership opportunities the day they launch.\n* **Hours back every week** – no more manual Googling, RSS trawling or tab overload.\n* **Action-ready subject lines** – e.g. “Weekly *{Topic}* Launch Trend Report – *{Date}*” so you can scan and share in seconds.\n* **Error reporting built-in** – the agent flags any delivery issues, so you’re never left guessing.\n\n### Inputs\n\n* **Recipient Email** (required) – where the report lands.\n* **Topic** (required) – the niche you care about.\n* **Day Range** (optional) – how many days back to look (default 7).\n\n### Output\n\n* **Daily email briefing** + real-time status updates.\n\nPerfect for product managers, founders, marketers, investors and analysts who need up-to-the-minute launch data without adding another task to the to-do list. Install now and **turn product-launch monitoring into an automatic habit.**",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "Recipient Email": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "short-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Recipient Email",
+          "secret": false,
+          "description": "Enter the email address to send the daily report to.",
+          "default": ""
+        },
+        "Topic": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "short-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Topic",
+          "secret": false,
+          "default": ""
+        },
+        "Day Range": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Day Range",
+          "secret": false,
+          "description": "The number of days ago to include in the search. i.e. 7 will find products that launched in the past week.",
+          "default": 7
+        }
+      },
+      "required": []
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "Email Status": {
+          "advanced": false,
+          "title": "Agent Status",
+          "secret": false,
+          "description": "Reports the status of the email sending operation or any errors encountered."
+        },
+        "Email Content": {
+          "advanced": false,
+          "title": "Email Content",
+          "secret": false
+        },
+        "Error": {
+          "advanced": false,
+          "title": "Error",
+          "secret": false
+        }
+      },
+      "required": [
+        "Email Status",
+        "Email Content",
+        "Error"
+      ]
+    }
+  },
+  {
+    "name": "Decision Maker Lead Finder",
+    "id": "203a928a-32c2-4226-a6f8-d7c73f134b7e",
+    "graph_id": "16db664e-9284-4cf2-9bca-5a0972171409",
+    "graph_version": 173,
+    "description": "Find the key decision-makers you need, fast.\n\nThis agent identifies business owners or CEOs of local companies in any area you choose. Simply enter what kind of businesses you’re looking for and where, and it will:\n\n* Search the area and gather public information\n* Return names, roles, and contact details when available\n* Provide smart Google search suggestions if details aren’t found\n\nPerfect for:\n\n* B2B sales teams seeking verified leads\n* Recruiters sourcing local talent\n* Researchers looking to connect with business leaders\n\nSave hours of manual searching and get straight to the people who matter most.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "Location": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "short-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Location",
+          "secret": false,
+          "description": "Enter a specific location (e.g. city, neighborhood, or address). For example: “San Francisco”, “Palo Alto”, or “SoHo, NYC”. This helps narrow the search to a specific area.",
+          "default": "Edinburgh"
+        },
+        "Search Radius (meters, max 50,000)": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Search Radius (meters, max 50,000)",
+          "secret": false,
+          "description": "Defines how far around the specified location we’ll look for businesses. For example, 5000 meters covers a large neighborhood or small city.",
+          "default": 10000
+        },
+        "Max Number of Businesses to Analyze (max 60)": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Max Number of Businesses to Analyze (max 60)",
+          "secret": false,
+          "description": "The maximum number of businesses the agent will analyze from the search results. We’ll attempt to identify the CEO or owner for each one.",
+          "default": 3
+        },
+        "Business Type": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "short-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Business Type",
+          "secret": false,
+          "description": "Describe the kind of businesses you're targeting. For example: “AI startups”, “digital marketing agencies”, or “coffee roasters”. This will be used in a Google Maps search.",
+          "default": "coffee roasters"
+        }
+      },
+      "required": []
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "Results": {
+          "advanced": false,
+          "title": "Results",
+          "secret": false
+        },
+        "Error": {
+          "advanced": false,
+          "title": "Error",
+          "secret": false
+        }
+      },
+      "required": [
+        "Results",
+        "Error"
+      ]
+    }
+  },
+  {
+    "name": "Domain Name Finder",
+    "id": "cfaed50d-0143-4102-97f4-0f8f426c603e",
+    "graph_id": "f0321fd3-4a50-4a82-ad36-4fa5b11bc99e",
+    "graph_version": 31,
+    "description": "Finding a domain name that fits your brand shouldn’t take hours of searching and failed checks. The Domain Name Finder Agent turns your pitch into hundreds of creative, brand-ready domain ideas—filtered by live availability so every result is actionable.\n\nHow It Works\n1. Input your product pitch, company name, or core keywords.\n2. The agent analyzes brand tone, audience, and industry context.\n3. It generates a list of unique, memorable domains that match your criteria.\n4. All names are pre-filtered for real-time availability, so you can register immediately.\n\n\nBusiness Value\nSave hours of guesswork and eliminate dead ends. Accelerate brand launches, startup naming, and campaign creation with ready-to-claim domains.\n\n\nKey Use Cases\n• Startup Founders: Quickly find brand-ready domains for MVP launches or rebrands.\n• Marketers: Test name options across campaigns with instant availability data.\n• Entrepreneurs: Validate ideas faster with instant domain options.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "Product Pitch": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "long-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Product Pitch",
+          "secret": false,
+          "description": "Pitch your product!"
+        }
+      },
+      "required": [
+        "Product Pitch"
+      ]
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "Domain Suggestions": {
+          "advanced": false,
+          "title": "Domain Suggestions",
+          "secret": false
+        },
+        "Error": {
+          "advanced": false,
+          "title": "Error",
+          "secret": false
+        }
+      },
+      "required": [
+        "Domain Suggestions",
+        "Error"
+      ]
+    }
+  },
+  {
+    "name": "YouTube Video to SEO Blog Writer",
+    "id": "ed902271-300f-43f8-a279-385d9abfcc57",
+    "graph_id": "72a81253-8cfa-4f9c-afea-0940b1156891",
+    "graph_version": 17,
+    "description": "Effortlessly transform your YouTube videos into high-quality, SEO-optimized blog posts.\n\nYour videos deserve a second life—in writing.  \nMake your content work twice as hard by repurposing it into engaging, searchable articles.\n\nPerfect for content creators, marketers, and bloggers, this tool analyzes video content and generates well-structured blog posts tailored to your tone, audience, and word count. Just paste a YouTube URL and let the AI handle the rest.\n\nFEATURES\n\n• CONTENT ANALYSIS  \n  Extracts key points from the video while preserving your message and intent.\n\n• CUSTOMIZABLE OUTPUT  \n  Select a tone that fits your audience: casual, professional, educational, or formal.\n\n• SEO OPTIMIZATION  \n  Automatically creates engaging titles and structured subheadings for better search visibility.\n\n• USER-FRIENDLY  \n  Repurpose your videos into written content to expand your reach and improve accessibility.\n\nWhether you're looking to grow your blog, boost SEO, or simply get more out of your content, the AI YouTube-to-Blog Converter makes it effortless.\n",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "YouTube URL": {
+          "advanced": false,
+          "title": "YouTube URL",
+          "secret": false,
+          "description": "Enter the URL of the YouTube video you want to convert to a blog post",
+          "default": "https://www.youtube.com/watch?v=J1Mzd1ZeSaU"
+        },
+        "Blog Tone": {
+          "advanced": false,
+          "title": "Blog Tone",
+          "secret": false,
+          "description": "Select the desired tone for the blog post",
+          "default": "Educational"
+        },
+        "Blog Length": {
+          "advanced": false,
+          "title": "Blog Length",
+          "secret": false,
+          "description": "Enter the desired word count for the blog post",
+          "default": "4000"
+        }
+      },
+      "required": []
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "Blog Post": {
+          "advanced": false,
+          "title": "Blog Post",
+          "secret": false,
+          "description": "The main body of the newly written blog post."
+        },
+        "Error": {
+          "advanced": false,
+          "title": "Error",
+          "secret": false
+        },
+        "Title": {
+          "advanced": false,
+          "title": "Title",
+          "secret": false,
+          "description": "The title of the blog post."
+        },
+        "Target Keywords": {
+          "advanced": false,
+          "title": "Target Keywords",
+          "secret": false,
+          "description": "Target keywords used in the blog post."
+        }
+      },
+      "required": [
+        "Blog Post",
+        "Error",
+        "Title",
+        "Target Keywords"
+      ]
+    }
+  },
+  {
+    "name": "Automated SEO Blog Writer",
+    "id": "7d5b3948-8e63-4d52-b208-7afe3d88a371",
+    "graph_id": "b219c250-8654-46a4-b7dc-8defc71f7e7b",
+    "graph_version": 252,
+    "description": "Scale your blog with a fully automated content engine. The Automated SEO Blog Writer learns your brand voice, finds high-demand keywords, and creates SEO-optimized articles that attract organic traffic and boost visibility.\r\n\r\nHow it works:\r\n\r\n1. Share your pitch, website, and values.\r\n2. The agent studies your site and uncovers proven SEO opportunities.\r\n3. It spends two hours researching and drafting each post.\r\n4. You set the cadence—publishing runs on autopilot.\r\n\r\nBusiness value: Consistently publish research-backed, optimized posts that build domain authority, rankings, and thought leadership while you focus on what matters most.\r\n\r\nUse cases:\r\n• Founders: Keep your blog active with no time drain.\r\n• Agencies: Deliver scalable SEO content for clients.\r\n• Strategists: Automate execution, focus on strategy.\r\n• Marketers: Drive steady organic growth.\r\n• Local businesses: Capture nearby search traffic.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "Website Primary Topic": {
+          "advanced": false,
+          "title": "Website Primary Topic",
+          "secret": false,
+          "description": "The main subject or theme your blog is about (e.g., 'AI Automation', 'Viral Marketing')"
+        },
+        "Website Description": {
+          "advanced": false,
+          "title": "Website Description",
+          "secret": false,
+          "description": "Describe your website, including its purpose, tone, and approach. \n\nFor example: \"A blog that makes AI approachable for the average person. We share clear, easy-to-follow guides and curated recommendations on which models and tools to use.\""
+        },
+        "brand_tone": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Brand Tone",
+          "enum": [
+            "Friendly",
+            "Professional",
+            "Technical",
+            "Casual"
+          ],
+          "secret": false,
+          "description": "The voice and style for your content - choose the tone that best matches your brand and audience"
+        },
+        "target_word_count": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Blog Post Length",
+          "enum": [
+            "500",
+            "1000",
+            "1500",
+            "2000"
+          ],
+          "secret": false,
+          "description": "Blog post length (500=quick reads, 1000=standard posts, 1500=detailed guides, 2000=comprehensive content)"
+        },
+        "blog_url": {
+          "advanced": false,
+          "title": "WordPress Blog URL",
+          "secret": false,
+          "description": "Your WordPress.com blog URL (e.g., https://yourblog.wordpress.com) - used for posting content via API"
+        }
+      },
+      "required": [
+        "Website Primary Topic",
+        "Website Description",
+        "brand_tone",
+        "target_word_count",
+        "blog_url"
+      ]
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "BLOG_PUBLISHED_SUCCESS": {
+          "advanced": false,
+          "title": "Blog Post Published Successfully",
+          "secret": false,
+          "description": "The blog post has been successfully generated, published to WordPress, and logged to Airtable. The SEO-optimized article is now live and tracking data has been recorded."
+        },
+        "ERROR_CONVERTING_TYPE": {
+          "advanced": false,
+          "title": "ERROR_CONVERTING_TYPE",
+          "secret": false
+        },
+        "DICTIONARY_CREATE_FAILED": {
+          "advanced": false,
+          "title": "DICTIONARY_CREATE_FAILED",
+          "secret": false
+        },
+        "ERROR_DEEP_RESEARCH": {
+          "advanced": false,
+          "title": "ERROR_DEEP_RESEARCH",
+          "secret": false
+        },
+        "ERROR_GENERATING_IMAGE": {
+          "advanced": false,
+          "title": "ERROR_GENERATING_IMAGE",
+          "secret": false
+        },
+        "Error Humanizing Text": {
+          "advanced": false,
+          "title": "Error Humanizing Text",
+          "secret": false
+        },
+        "Hmm… that doesn’t look like a valid WordPress blog address.  \nIt should look like this: yourname.wordpress.com": {
+          "advanced": false,
+          "title": "Hmm… that doesn’t look like a valid WordPress blog address.  \nIt should look like this: yourname.wordpress.com",
+          "secret": false
+        },
+        "Secondary Keyword Error": {
+          "advanced": false,
+          "title": "Secondary Keyword Error",
+          "secret": false
+        },
+        "CONTENT_GENERATION_FAILED": {
+          "advanced": false,
+          "title": "Content Generation Failed",
+          "secret": false,
+          "description": "The AI was unable to generate the blog article content. This may occur due to LLM API issues, invalid keyword input, or content policy restrictions. The agent cannot proceed with publishing without generated content.",
+          "default": "CONTENT_GENERATION_FAILED"
+        },
+        "Error": {
+          "advanced": false,
+          "title": "Error",
+          "secret": false
+        }
+      },
+      "required": [
+        "BLOG_PUBLISHED_SUCCESS",
+        "ERROR_CONVERTING_TYPE",
+        "ERROR_CONVERTING_TYPE",
+        "DICTIONARY_CREATE_FAILED",
+        "ERROR_DEEP_RESEARCH",
+        "ERROR_GENERATING_IMAGE",
+        "Error Humanizing Text",
+        "Hmm… that doesn’t look like a valid WordPress blog address.  \nIt should look like this: yourname.wordpress.com",
+        "Secondary Keyword Error",
+        "Error"
+      ]
+    }
+  },
+  {
+    "name": "Auto Publisher (images + video, 6 platforms)",
+    "id": "e907cab9-8191-45ae-963d-2f9ef1538217",
+    "graph_id": "2214e0c7-f933-4622-bee2-c64d559cdc8e",
+    "graph_version": 7,
+    "description": "Takes a client brief, writes captions, generates an image and a vertical video, and publishes to X, Instagram, Facebook, TikTok, YouTube and Snapchat through the client's Ayrshare profile.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "client": {
+          "advanced": false,
+          "title": "Client name",
+          "secret": false,
+          "description": "Client or brand name",
+          "default": "Demo Brand"
+        },
+        "brief": {
+          "advanced": false,
+          "title": "Brief",
+          "secret": false,
+          "description": "What to post about: product, offer, idea or article text",
+          "default": "New summer offer: 20% off all services this week"
+        },
+        "pkey": {
+          "advanced": false,
+          "title": "Ayrshare Profile Key",
+          "secret": false,
+          "description": "The client's Ayrshare profile key (from your Ayrshare dashboard)"
+        },
+        "lang": {
+          "advanced": false,
+          "title": "Language",
+          "secret": false,
+          "description": "Language of the posts",
+          "default": "Arabic"
+        }
+      },
+      "required": [
+        "pkey"
+      ]
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "x_result": {
+          "advanced": false,
+          "title": "x_result",
+          "secret": false
+        },
+        "instagram_facebook_result": {
+          "advanced": false,
+          "title": "instagram_facebook_result",
+          "secret": false
+        },
+        "video_platforms_result": {
+          "advanced": false,
+          "title": "video_platforms_result",
+          "secret": false
+        }
+      },
+      "required": [
+        "x_result",
+        "instagram_facebook_result",
+        "video_platforms_result"
+      ]
+    }
+  },
+  {
+    "name": "YouTube to LinkedIn Post Converter",
+    "id": "19f2749d-b9e5-442d-a632-b137fd2f0ff5",
+    "graph_id": "63997a66-d111-4aa9-9a25-64bcccbc2270",
+    "graph_version": 51,
+    "description": "WHAT IT DOES: \nThis agent converts YouTube video content into a LinkedIn post by analyzing the video's transcript. It provides you with a tailored post that reflects the core ideas, key takeaways, and tone of the original video, optimizing it for engagement on LinkedIn.\n\nHOW IT WORKS:\n- You provide the URL to the YouTube video (required)\n- You can choose the structure for the LinkedIn post (e.g., Personal Achievement Story, Lesson Learned, Thought Leadership, etc.)\n- You can also select the tone (e.g., Inspirational, Analytical, Conversational, etc.)\n- The transcript of the video is analyzed by the GPT-4 model and the Claude 3.5 Sonnet model\n- The models extract key insights, memorable quotes, and the main points from the video\n- You’ll receive a LinkedIn post, formatted according to your chosen structure and tone, optimized for professional engagement\n\nINPUTS:\n- Source YouTube Video – Provide the URL to the YouTube video\n- Structure – Choose the post format (e.g., Personal Achievement Story, Thought Leadership, etc.)\n- Content – Specify the main message or idea of the post (e.g., Hot Take, Key Takeaways, etc.)\n- Tone – Select the tone for the post (e.g., Conversational, Inspirational, etc.)\n\nOUTPUT:\n- LinkedIn Post – A well-crafted, AI-generated LinkedIn post with a professional tone, based on the video content and your specified preferences\n\nPerfect for content creators, marketers, and professionals who want to repurpose YouTube videos for LinkedIn and boost their professional branding.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "Structure: How do you want to present your LinkedIn Post?": {
+          "advanced": false,
+          "title": "Structure: How do you want to present your LinkedIn Post?",
+          "secret": false,
+          "description": "The *format or structure* in which you present your content. It's about *how* you package your message to make it engaging and accessible.",
+          "default": "Curated Content"
+        },
+        "Content: What is the main idea or message you want to convey.": {
+          "advanced": false,
+          "title": "Content: What is the main idea or message you want to convey.",
+          "secret": false,
+          "description": "The main message or purpose of your post—the core idea or topic you want to convey to your audience.",
+          "default": "Recommendation"
+        },
+        "Tone: How do you want to express yourself in your post?": {
+          "advanced": false,
+          "title": "Tone: How do you want to express yourself in your post?",
+          "secret": false,
+          "description": "Focuses on the tone, voice, and language used in your post—the manner in which you express your ideas. It's about the way you communicate.",
+          "default": "Inspirational"
+        },
+        "Source YouTube Video": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "short-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Source YouTube Video",
+          "secret": false,
+          "description": "Add the URL of the YouTube video you want to write a LinkedIn Post about.",
+          "default": "https://www.youtube.com/watch?v=KWonAsyKF3g"
+        }
+      },
+      "required": []
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "LinkedIn Post": {
+          "advanced": false,
+          "title": "LinkedIn Post",
+          "secret": false
+        }
+      },
+      "required": [
+        "LinkedIn Post"
+      ]
+    }
+  },
+  {
+    "name": "Keyword SEO Expert",
+    "id": "b6b6eb77-ad2d-49b1-bcb7-e9017912ee16",
+    "graph_id": "2a65b19f-4c82-4756-8884-8159a614486b",
+    "graph_version": 43,
+    "description": "",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "Domain": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "short-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Domain",
+          "secret": false
+        },
+        "Website Primary Topic": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "short-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Website Primary Topic",
+          "secret": false,
+          "description": "A short phrase summarizing your main subject or niche. Example: “AI for Everyday People.”"
+        },
+        "Website Description": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "long-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Website Description",
+          "secret": false,
+          "description": "A brief explanation of your site’s purpose, audience, and value. Example: “A blog that makes AI approachable and easy to benefit from for the average person.”"
+        },
+        "Previous Posts": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "long-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Previous Posts",
+          "secret": false,
+          "description": "A list of your website's previous blog post titles"
+        }
+      },
+      "required": [
+        "Domain",
+        "Website Primary Topic",
+        "Website Description",
+        "Previous Posts"
+      ]
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "Primary Keyword": {
+          "advanced": false,
+          "title": "Primary Keyword",
+          "secret": false
+        },
+        "Error": {
+          "advanced": false,
+          "title": "Error",
+          "secret": false
+        },
+        "Proposed Title": {
+          "advanced": false,
+          "title": "Proposed Title",
+          "secret": false
+        },
+        "Justification": {
+          "advanced": false,
+          "title": "Justification",
+          "secret": false
+        },
+        "Keyword Difficulty": {
+          "advanced": false,
+          "title": "Keyword Difficulty",
+          "secret": false
+        },
+        "Search Volume": {
+          "advanced": false,
+          "title": "Search Volume",
+          "secret": false
+        }
+      },
+      "required": [
+        "Primary Keyword",
+        "Error",
+        "Proposed Title",
+        "Justification",
+        "Keyword Difficulty",
+        "Search Volume"
+      ]
+    }
+  },
+  {
+    "name": "Lead Finder",
+    "id": "c56b97ba-9c06-428d-8e9b-8618b24a3e11",
+    "graph_id": "f4027695-097d-4964-abbd-578ac338d33a",
+    "graph_version": 81,
+    "description": "Turbo-charge your local lead generation with the AutoGPT Marketplace’s top Google Maps prospecting agent. “Lead Finder: Local Businesses” delivers verified, ready-to-contact prospects in any niche and city—so you can focus on closing, not searching.\n\n**WHAT IT DOES**\n• Searches Google Maps via the official API (no scraping)\n• Prompts like “dentists in Chicago” or “coffee shops near me”\n• Returns: Name, Website, Rating, Reviews, **Phone & Address**\n• Exports instantly to your CRM, sheet, or outreach workflow\n\n**WHY YOU’LL LOVE IT**\n✓ Hyper-targeted leads in minutes\n✓ Unlimited searches & locations\n✓ Zero CAPTCHAs or IP blocks\n✓ Works on AutoGPT Cloud or self-hosted (with your API key)\n✓ Cut prospecting time by 90%\n\n**PERFECT FOR**\n— Marketers & PPC agencies\n— SEO consultants & designers\n— SaaS founders & sales teams\n\nStop scrolling directories—start filling your pipeline. Start now and let AI prospect while you profit.\n\n→ Click *Add to Library* and own your market today.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "What business type you want to look for?": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "short-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "What business type you want to look for?",
+          "secret": false,
+          "description": "The type of Business you're looking for, for example Hotels, Gyms or Restaurants.",
+          "default": "Coffee Roasters"
+        },
+        "Where do you want to search?": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "short-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Where do you want to search?",
+          "secret": false,
+          "description": "The area you want to search, for example London, New York or Tokyo.",
+          "default": "Edinburgh, UK"
+        },
+        "Search Distance (metres)": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Search Distance (metres)",
+          "secret": false,
+          "description": "How far around the are to look for results (Max 50000 metres)",
+          "default": 50000
+        },
+        "Number of Results": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Number of Results",
+          "secret": false,
+          "description": "The maximum number of results to return from the search, the actual result may be less. (max 60).",
+          "default": 3
+        }
+      },
+      "required": []
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "Name": {
+          "advanced": false,
+          "title": "Name",
+          "secret": false
+        },
+        "Website": {
+          "advanced": false,
+          "title": "Website",
+          "secret": false
+        },
+        "Rating": {
+          "advanced": false,
+          "title": "Rating",
+          "secret": false
+        },
+        "Number of Reviews": {
+          "advanced": false,
+          "title": "Number of Reviews",
+          "secret": false
+        },
+        "Phone Number": {
+          "advanced": false,
+          "title": "Phone Number",
+          "secret": false
+        },
+        "Address": {
+          "advanced": false,
+          "title": "Address",
+          "secret": false
+        }
+      },
+      "required": [
+        "Name",
+        "Website",
+        "Rating",
+        "Number of Reviews",
+        "Phone Number",
+        "Address"
+      ]
+    }
+  },
+  {
+    "name": "New Workflow 2026-10-16T02:21:21.952Z",
+    "id": "4ae59519-7723-4f93-b48b-692babe391f7",
+    "graph_id": "0a64153e-0176-4772-905f-4fc889a5edbf",
+    "graph_version": 1,
+    "description": "",
+    "input_schema": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    }
+  },
+  {
+    "name": "New Workflow 2026-10-15T11:20:55.632Z",
+    "id": "2bdce3a1-4184-41e6-b331-f2c2b9dc692e",
+    "graph_id": "3b9fa866-1208-4c6b-92de-3ed695affbb5",
+    "graph_version": 1,
+    "description": "",
+    "input_schema": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    }
+  },
+  {
+    "name": "Personal Newsletter",
+    "id": "9d9adde4-1737-43ed-b266-866f91711aab",
+    "graph_id": "d4cd69ae-c578-4fc9-bacf-51b7825ff5bb",
+    "graph_version": 58,
+    "description": "This Personal Newsletter Agent provides a bespoke daily digest on your favorite topics and tone. Whether you prefer industry insights, lighthearted reads, or breaking news, this agent crafts your own unique newsletter to keep you informed and entertained.\n\n\nHow It Works\n1. Enter your favorite topics, industries, or areas of interest.\n2. Choose your tone—professional, casual, or humorous.\n3. Set your preferred delivery cadence: daily or weekly.\n4. The agent scans top sources and compiles 3–5 engaging stories, insights, and fun facts into a conversational newsletter.\n\nSkip the morning scroll and enjoy a thoughtfully curated newsletter designed just for you. Stay ahead of trends, spark creative ideas, and enjoy an effortless, informed start to your day.\n\n\nUse Cases\n• Executives: Get a daily digest of market updates and leadership insights.\n• Marketers: Receive curated creative trends and campaign inspiration.\n• Entrepreneurs: Stay updated on your industry without information overload.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "Writing Style": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "long-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Writing Style",
+          "secret": false,
+          "description": "How would you like the newsletter to be written? ",
+          "default": " Engaging, witty, and informative"
+        },
+        "Topics of Interest": {
+          "advanced": false,
+          "title": "Topics of Interest",
+          "secret": false,
+          "description": "Enter your topics of interest, separated by commas",
+          "default": "Space"
+        },
+        "Your Email Address": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "short-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Your Email Address",
+          "secret": false,
+          "description": "Enter the email address at which you would like to receive the newsletter."
+        },
+        "What time range would you like each newsletter edition to cover?": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "short-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "What time range would you like each newsletter edition to cover?",
+          "secret": false,
+          "description": "For example, you could say one day to only receive news stories that happened in the past 24 hours before at the time of sending the newsletter, or you could say one week to receive news from that week"
+        }
+      },
+      "required": [
+        "Your Email Address",
+        "What time range would you like each newsletter edition to cover?"
+      ]
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "Newsletter": {
+          "advanced": false,
+          "title": "Newsletter",
+          "secret": false
+        },
+        "Error": {
+          "advanced": false,
+          "title": "Error",
+          "secret": false
+        }
+      },
+      "required": [
+        "Newsletter",
+        "Error"
+      ]
+    }
+  },
+  {
+    "name": "Research Scraper – Agentic Quick-Start",
+    "id": "8db6b3b9-4fc9-44b3-969c-970201fe321c",
+    "graph_id": "cb6a3ad8-e2b1-4bf5-8055-4bd139cddeef",
+    "graph_version": 16,
+    "description": "A minimal, fully agentic research agent that searches, scrapes, and summarizes online content. Ideal as a quick-start template and learning resource for building agents on the AutoGPT Platform. Perfect “Hello World” for new agent developers.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "Topic to research": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "long-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Topic to research",
+          "secret": false,
+          "description": "The question you would like the Agent to answer."
+        }
+      },
+      "required": [
+        "Topic to research"
+      ]
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "Answer": {
+          "advanced": false,
+          "title": "Answer",
+          "secret": false
+        }
+      },
+      "required": [
+        "Answer"
+      ]
+    }
+  },
+  {
+    "name": "New Workflow 2026-10-15T06:47:20.821Z",
+    "id": "1ca1eb45-2e6e-4772-a81c-5db44f842b5e",
+    "graph_id": "775e2238-6158-4dd1-825d-d4c88f7d56ae",
+    "graph_version": 1,
+    "description": "",
+    "input_schema": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    }
+  },
+  {
+    "name": "Flux AI Image Generator (copy)",
+    "id": "a6f163c6-336a-44df-b1ac-eecfe9fbe69d",
+    "graph_id": "cc478340-abc7-4db6-8116-c6c74817e255",
+    "graph_version": 13,
+    "description": "Transform ideas into breathtaking images with this AI-powered Image Generator. Using cutting-edge Flux AI technology, the tool crafts highly detailed, photorealistic visuals from simple text prompts. Perfect for artists, marketers, and content creators, this generator produces unique images tailored to user specifications. From fantastical scenes to lifelike portraits, users can unleash creativity with professional-quality results in seconds. Easy to use and endlessly versatile, bring imagination to life with the AI Image Generator today!",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "Image Subject": {
+          "advanced": false,
+          "title": "Image Subject",
+          "secret": false,
+          "description": "The subject of the image",
+          "default": "Otto the friendly, purple \"Chief Automation Octopus\" helping people automate their tedious tasks."
+        }
+      },
+      "required": []
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "Generated Image": {
+          "advanced": false,
+          "title": "Generated Image",
+          "secret": false
+        }
+      },
+      "required": [
+        "Generated Image"
+      ]
+    }
+  },
+  {
+    "name": "Flux AI Image Generator",
+    "id": "3a8773dc-a8f3-490c-a390-030f181bd20e",
+    "graph_id": "96260d6a-3f39-472e-b96d-0483296c9d6d",
+    "graph_version": 12,
+    "description": "Transform ideas into breathtaking images with this AI-powered Image Generator. Using cutting-edge Flux AI technology, the tool crafts highly detailed, photorealistic visuals from simple text prompts. Perfect for artists, marketers, and content creators, this generator produces unique images tailored to user specifications. From fantastical scenes to lifelike portraits, users can unleash creativity with professional-quality results in seconds. Easy to use and endlessly versatile, bring imagination to life with the AI Image Generator today!",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "Image Subject": {
+          "advanced": false,
+          "title": "Image Subject",
+          "secret": false,
+          "description": "The subject of the image",
+          "default": "Otto the friendly, purple \"Chief Automation Octopus\" helping people automate their tedious tasks."
+        }
+      },
+      "required": []
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "Generated Image": {
+          "advanced": false,
+          "title": "Generated Image",
+          "secret": false
+        }
+      },
+      "required": [
+        "Generated Image"
+      ]
+    }
+  },
+  {
+    "name": "Staff Engineer Plan Reviewer",
+    "id": "8ab6837d-6860-4c37-975e-970e63856b9c",
+    "graph_id": "a2869c6a-98b7-4b7a-9040-3a2959970ec6",
+    "graph_version": 6,
+    "description": "The most expensive bugs aren't in code — they're in the plan. A missing requirement, an unverified assumption, or quiet scope expansion can cost days of rework.\n\nThis agent reviews your implementation plan against the original ticket before coding starts. It checks whether the plan addresses what the ticket asks for, whether it contradicts itself, and whether codebase assumptions have been verified.\n\nEspecially valuable when using AI coding agents to implement tickets. A good plan should let the agent produce a correct implementation on the first try. If the agent's PR needs revisions, the problem is usually the plan. Fix it, scrap the attempt, start fresh. This reviewer helps get the plan right first.\n\nHow it works: submit your plan and ticket, get back a review of gaps, contradictions, and unverified assumptions. If it finds things to verify, it tells you what to check and how to record the result. Resubmit and it won't repeat itself. When the plan is solid, it says so.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "linear_ticket_identifier": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "short-text",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Linear Ticket ID or URL",
+          "secret": false,
+          "description": "The Linear ticket ID (e.g., ENG-123) or URL containing the requirements.",
+          "default": "ENG-123"
+        },
+        "implementation_plan": {
+          "advanced": false,
+          "anyOf": [
+            {
+              "format": "file",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Implementation Plan",
+          "secret": false,
+          "description": "The implementation plan text written by the junior engineer."
+        }
+      },
+      "required": [
+        "implementation_plan"
+      ]
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "Staff Engineer Review": {
+          "advanced": false,
+          "title": "Staff Engineer Review",
+          "secret": false,
+          "description": "The detailed review of the implementation plan."
+        }
+      },
+      "required": [
+        "Staff Engineer Review"
+      ]
+    }
+  }
+]

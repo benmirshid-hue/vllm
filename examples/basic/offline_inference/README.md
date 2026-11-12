@@ -34,7 +34,7 @@ python examples/basic/offline_inference/chat.py
 python examples/basic/offline_inference/generate.py
 ```
 
-`wakil.py` ingests JSONL into a training manifest, then runs the Arabic reproduce and construct flow. The guide is `وكيل.md`.
+`wakil.py` ingests JSONL into a training manifest, then runs the Arabic reproduce and construct flow. The guide is `وكيل.md`. The 35-agent studio is `agents/studio.py`, described in `agents/README.md`.
 
 ```bash
 python examples/basic/offline_inference/wakil.py --task ingest --input corpus.jsonl

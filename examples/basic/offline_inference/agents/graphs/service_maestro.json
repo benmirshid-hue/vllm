@@ -1,0 +1,377 @@
+{
+  "id": "614ce970-58b4-42a3-b0ed-e8850a88b917",
+  "name": "Service Maestro (key-gated)",
+  "description": "Client gives a service key and a service name. The maestro validates the key and routes to the matching service (publisher). Invalid keys or unknown services return an error.",
+  "version": 3,
+  "is_active": true,
+  "nodes": [
+    {
+      "id": "d7ffc472-7ea0-440b-b760-6baa897dc0dd",
+      "block_id": "363ae599-353e-4804-937e-b2ee3cef3da4",
+      "input_default": {
+        "name": "x_result",
+        "title": "x_result"
+      },
+      "metadata": {
+        "position": {
+          "x": 4800,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": "2557b119-9901-4afa-9134-1afe343fba76",
+      "block_id": "c0a8e994-ebf1-4a9c-a4d8-89d09c86741b",
+      "input_default": {
+        "name": "client_key",
+        "title": "Service key",
+        "value": "",
+        "description": "Service key"
+      },
+      "metadata": {
+        "position": {
+          "x": 0,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": "2b9bed00-bd75-45bb-abed-47a31ced252f",
+      "block_id": "c0a8e994-ebf1-4a9c-a4d8-89d09c86741b",
+      "input_default": {
+        "name": "service",
+        "title": "Service name (publisher or external)",
+        "value": "publisher",
+        "description": "Service name (publisher or external)"
+      },
+      "metadata": {
+        "position": {
+          "x": 0,
+          "y": 400
+        }
+      }
+    },
+    {
+      "id": "3bdc0842-939e-4ae3-be75-4f52ac4178c5",
+      "block_id": "c0a8e994-ebf1-4a9c-a4d8-89d09c86741b",
+      "input_default": {
+        "name": "client",
+        "title": "Client name",
+        "value": "Client",
+        "description": "Client name"
+      },
+      "metadata": {
+        "position": {
+          "x": 0,
+          "y": 800
+        }
+      }
+    },
+    {
+      "id": "f8783d9c-a54b-4727-94e1-e0e11873f7ea",
+      "block_id": "c0a8e994-ebf1-4a9c-a4d8-89d09c86741b",
+      "input_default": {
+        "name": "brief",
+        "title": "Brief",
+        "value": "",
+        "description": "Brief"
+      },
+      "metadata": {
+        "position": {
+          "x": 0,
+          "y": 1200
+        }
+      }
+    },
+    {
+      "id": "d4103b41-26c8-40a7-b7e4-a02af61ad471",
+      "block_id": "c0a8e994-ebf1-4a9c-a4d8-89d09c86741b",
+      "input_default": {
+        "name": "lang",
+        "title": "Language",
+        "value": "Arabic",
+        "description": "Language"
+      },
+      "metadata": {
+        "position": {
+          "x": 0,
+          "y": 1600
+        }
+      }
+    },
+    {
+      "id": "ce0eb8cc-74b0-4c0f-9015-9523e75d7af2",
+      "block_id": "db7d8f02-2f44-4c55-ab7a-eae0941f0c30",
+      "input_default": {
+        "format": "client:{{k}}",
+        "values": {}
+      },
+      "metadata": {
+        "position": {
+          "x": 800,
+          "y": 0
+        },
+        "customized_name": "Build storage key"
+      }
+    },
+    {
+      "id": "f1af9e9b-e6b0-447f-8b6f-8d2c84064507",
+      "block_id": "d8710fc9-6e29-481e-a7d5-165eb16f8471",
+      "input_default": {
+        "scope": "across_agents",
+        "default_value": ""
+      },
+      "metadata": {
+        "position": {
+          "x": 1600,
+          "y": 0
+        },
+        "customized_name": "Look up key"
+      }
+    },
+    {
+      "id": "9bde2116-9f36-4915-9f79-c1640b59c3c6",
+      "block_id": "715696a0-e1da-45c8-b209-c2fa9c3b0be6",
+      "input_default": {
+        "value2": "",
+        "no_value": "Invalid or inactive service key",
+        "operator": "!="
+      },
+      "metadata": {
+        "position": {
+          "x": 2400,
+          "y": 0
+        },
+        "customized_name": "Key valid?"
+      }
+    },
+    {
+      "id": "23d95760-1c1b-4dc0-9a6a-a4acee001824",
+      "block_id": "715696a0-e1da-45c8-b209-c2fa9c3b0be6",
+      "input_default": {
+        "value2": "publisher",
+        "no_value": "Unknown service name",
+        "operator": "=="
+      },
+      "metadata": {
+        "position": {
+          "x": 3200,
+          "y": 0
+        },
+        "customized_name": "Service = publisher?"
+      }
+    },
+    {
+      "id": "6c3f239b-d8ae-459a-a60f-3ad0f1785278",
+      "block_id": "e189baac-8c20-45a1-94a7-55177ea42565",
+      "input_default": {
+        "inputs": {},
+        "user_id": "f35383ca-7ec0-426a-9cb5-4e20b5e43285",
+        "graph_id": "ded64c44-994b-4d78-913c-e2a80f04e754",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "lang": {
+              "title": "Language"
+            },
+            "pkey": {
+              "title": "Ayrshare Profile Key"
+            },
+            "brief": {
+              "title": "Brief"
+            },
+            "client": {
+              "title": "Client name"
+            }
+          }
+        },
+        "graph_version": 21,
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "x_result": {
+              "title": "x_result"
+            },
+            "video_platforms_result": {
+              "title": "video_platforms_result"
+            },
+            "instagram_facebook_result": {
+              "title": "instagram_facebook_result"
+            }
+          }
+        }
+      },
+      "metadata": {
+        "position": {
+          "x": 4000,
+          "y": 0
+        },
+        "customized_name": "Slot: Auto Publisher"
+      }
+    },
+    {
+      "id": "686e1c17-bfe7-492e-a949-5200dbcecc36",
+      "block_id": "363ae599-353e-4804-937e-b2ee3cef3da4",
+      "input_default": {
+        "name": "instagram_facebook_result",
+        "title": "instagram_facebook_result"
+      },
+      "metadata": {
+        "position": {
+          "x": 4800,
+          "y": 300
+        }
+      }
+    },
+    {
+      "id": "1869c685-1ec0-401d-b747-5d16014032d3",
+      "block_id": "363ae599-353e-4804-937e-b2ee3cef3da4",
+      "input_default": {
+        "name": "video_platforms_result",
+        "title": "video_platforms_result"
+      },
+      "metadata": {
+        "position": {
+          "x": 4800,
+          "y": 600
+        }
+      }
+    },
+    {
+      "id": "c5997717-888d-4756-842e-a2dc818dcc3d",
+      "block_id": "363ae599-353e-4804-937e-b2ee3cef3da4",
+      "input_default": {
+        "name": "error",
+        "title": "Error"
+      },
+      "metadata": {
+        "position": {
+          "x": 4800,
+          "y": 1300
+        }
+      }
+    }
+  ],
+  "links": [
+    {
+      "id": "aa19666c-b573-4468-8491-26559ad4c2ca",
+      "source_id": "2557b119-9901-4afa-9134-1afe343fba76",
+      "sink_id": "ce0eb8cc-74b0-4c0f-9015-9523e75d7af2",
+      "source_name": "result",
+      "sink_name": "values_#_k",
+      "is_static": true
+    },
+    {
+      "id": "ff05e6a1-2caf-4481-9815-e374c88b6701",
+      "source_id": "3bdc0842-939e-4ae3-be75-4f52ac4178c5",
+      "sink_id": "6c3f239b-d8ae-459a-a60f-3ad0f1785278",
+      "source_name": "result",
+      "sink_name": "client",
+      "is_static": true
+    },
+    {
+      "id": "6166fcc8-24be-406b-947a-4efe57f9375a",
+      "source_id": "f8783d9c-a54b-4727-94e1-e0e11873f7ea",
+      "sink_id": "6c3f239b-d8ae-459a-a60f-3ad0f1785278",
+      "source_name": "result",
+      "sink_name": "brief",
+      "is_static": true
+    },
+    {
+      "id": "18601291-2a4e-43ef-bf29-a7bf915c2bc5",
+      "source_id": "d4103b41-26c8-40a7-b7e4-a02af61ad471",
+      "sink_id": "6c3f239b-d8ae-459a-a60f-3ad0f1785278",
+      "source_name": "result",
+      "sink_name": "lang",
+      "is_static": true
+    },
+    {
+      "id": "2d59358e-1545-407c-a011-bd4ae78cbc33",
+      "source_id": "ce0eb8cc-74b0-4c0f-9015-9523e75d7af2",
+      "sink_id": "f1af9e9b-e6b0-447f-8b6f-8d2c84064507",
+      "source_name": "output",
+      "sink_name": "key",
+      "is_static": false
+    },
+    {
+      "id": "377a02c4-aaca-4f00-b4e6-26d8e0e79538",
+      "source_id": "f1af9e9b-e6b0-447f-8b6f-8d2c84064507",
+      "sink_id": "9bde2116-9f36-4915-9f79-c1640b59c3c6",
+      "source_name": "value",
+      "sink_name": "value1",
+      "is_static": true
+    },
+    {
+      "id": "caeb3628-6209-417f-910e-b4e3770b3bf8",
+      "source_id": "9bde2116-9f36-4915-9f79-c1640b59c3c6",
+      "sink_id": "c5997717-888d-4756-842e-a2dc818dcc3d",
+      "source_name": "no_output",
+      "sink_name": "value",
+      "is_static": false
+    },
+    {
+      "id": "22c73d83-a592-4bc1-a8d4-1efa53aeae11",
+      "source_id": "23d95760-1c1b-4dc0-9a6a-a4acee001824",
+      "sink_id": "6c3f239b-d8ae-459a-a60f-3ad0f1785278",
+      "source_name": "yes_output",
+      "sink_name": "pkey",
+      "is_static": false
+    },
+    {
+      "id": "64072764-1af8-4f8a-b36c-07974c378880",
+      "source_id": "23d95760-1c1b-4dc0-9a6a-a4acee001824",
+      "sink_id": "c5997717-888d-4756-842e-a2dc818dcc3d",
+      "source_name": "no_output",
+      "sink_name": "value",
+      "is_static": false
+    },
+    {
+      "id": "a2f38054-3d36-478b-9ac5-aab7e6c6b692",
+      "source_id": "6c3f239b-d8ae-459a-a60f-3ad0f1785278",
+      "sink_id": "d7ffc472-7ea0-440b-b760-6baa897dc0dd",
+      "source_name": "x_result",
+      "sink_name": "value",
+      "is_static": false
+    },
+    {
+      "id": "8c053d7f-a1a4-4144-b4dc-7fccc45f7183",
+      "source_id": "6c3f239b-d8ae-459a-a60f-3ad0f1785278",
+      "sink_id": "686e1c17-bfe7-492e-a949-5200dbcecc36",
+      "source_name": "instagram_facebook_result",
+      "sink_name": "value",
+      "is_static": false
+    },
+    {
+      "id": "8fe372eb-336b-451b-8105-3b72a9407abb",
+      "source_id": "6c3f239b-d8ae-459a-a60f-3ad0f1785278",
+      "sink_id": "1869c685-1ec0-401d-b747-5d16014032d3",
+      "source_name": "video_platforms_result",
+      "sink_name": "value",
+      "is_static": false
+    },
+    {
+      "id": "dedf5acb-7cdc-4bed-a25c-e7fe58550ed4",
+      "source_id": "2b9bed00-bd75-45bb-abed-47a31ced252f",
+      "source_name": "result",
+      "sink_id": "9bde2116-9f36-4915-9f79-c1640b59c3c6",
+      "sink_name": "yes_value",
+      "is_static": true
+    },
+    {
+      "id": "20bd1d62-091d-42ab-b569-6b115bfd0f9e",
+      "source_id": "9bde2116-9f36-4915-9f79-c1640b59c3c6",
+      "source_name": "yes_output",
+      "sink_id": "23d95760-1c1b-4dc0-9a6a-a4acee001824",
+      "sink_name": "value1",
+      "is_static": false
+    },
+    {
+      "id": "887e4cf0-599c-4776-a9b1-5be546f12cf2",
+      "source_id": "f1af9e9b-e6b0-447f-8b6f-8d2c84064507",
+      "source_name": "value",
+      "sink_id": "23d95760-1c1b-4dc0-9a6a-a4acee001824",
+      "sink_name": "yes_value",
+      "is_static": false
+    }
+  ]
+}
