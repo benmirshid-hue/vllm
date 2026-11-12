@@ -4,12 +4,15 @@
 
 import io
 import json
+import os
 import socket
 import stat
 import sys
 import tempfile
+import threading
 import unittest
 from contextlib import redirect_stdout
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from unittest.mock import patch
 
@@ -17,6 +20,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 import catalog  # noqa: E402
+import oss  # noqa: E402
 import studio  # noqa: E402
 
 
@@ -86,6 +90,8 @@ class RunTests(unittest.TestCase):
         self.assertEqual(video["output"]["total_seconds"], 180)
         self.assertEqual(len(video["output"]["scenes"]), 6)
         self.assertIsNone(video["output"]["video"])
+        self.assertIn("HyperFrames", video["output"]["note"])
+        self.assertNotIn("api.heygen.com", video["output"]["note"])
         short = studio.execute("site-to-video", {"scene_seconds": 1})
         self.assertEqual(short["output"]["total_seconds"], 30)
         external = studio.execute(
@@ -204,6 +210,72 @@ class RunTests(unittest.TestCase):
                         {"ready", "external", "empty", "error"},
                     )
                     self.assertNotIn("SECRET-PKEY", json.dumps(result))
+
+
+class OpenSourceTests(unittest.TestCase):
+    def test_inventory_keeps_heygen_api_closed(self) -> None:
+        data = oss.inventory()
+        opened = {item["name"]: item for item in data["heygen_open"]}
+        self.assertEqual(opened["HyperFrames"]["license"], "Apache-2.0")
+        self.assertFalse(opened["HyperFrames"]["called"])
+        closed = {item["name"] for item in data["heygen_closed"]}
+        self.assertEqual(
+            closed,
+            {"MCP", "API", "Video Agent", "Avatar V", "Voice"},
+        )
+        self.assertTrue(all(item["called"] is False for item in data["heygen_closed"]))
+        modes = {row["modality"]: row["status"] for row in data["mozilla"]}
+        self.assertEqual(modes["text"], "local")
+        self.assertEqual(modes["image-generation"], "unavailable")
+        self.assertEqual(modes["video-generation"], "unavailable")
+        self.assertEqual(oss.loopback_host(), "127.0.0.1")
+        self.assertIn("--server --port 8080", oss.WINDOWS_SERVE)
+        self.assertIn("llamafile.exe", oss.WINDOWS_SERVE)
+
+    def test_serve_argv_matches_the_bat_shape(self) -> None:
+        with patch.dict(os.environ, {"LLAMAFILE_PORT": "8080"}, clear=False):
+            os.environ.pop("LLAMAFILE_BIN", None)
+            os.environ.pop("LLAMAFILE_MODEL", None)
+            argv = oss.serve_argv()
+        self.assertEqual(argv[1], "-m")
+        self.assertTrue(argv[2].endswith("model.gguf"))
+        self.assertEqual(argv[3:], ["--server", "--port", "8080"])
+        self.assertNotIn("http", " ".join(argv))
+
+    def test_ask_stays_on_loopback(self) -> None:
+        class Handler(BaseHTTPRequestHandler):
+            def do_POST(self) -> None:
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                body = json.dumps(
+                    {"choices": [{"message": {"content": "مرحبا"}}]}
+                ).encode()
+                self.wfile.write(body)
+
+            def log_message(self, _format: str, *_args) -> None:
+                return
+
+        server = HTTPServer((oss.loopback_host(), 0), Handler)
+        port = server.server_address[1]
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            with patch.dict(os.environ, {"LLAMAFILE_HOST": "https://example.com"}):
+                result = oss.complete("اختبار", port)
+            self.assertEqual(result["text"], "مرحبا")
+            self.assertEqual(result["host"], "127.0.0.1")
+        finally:
+            server.shutdown()
+            server.server_close()
+
+    def test_ask_reports_a_stopped_server(self) -> None:
+        probe = socket.socket()
+        probe.bind(("127.0.0.1", 0))
+        port = probe.getsockname()[1]
+        probe.close()
+        with self.assertRaises(oss.StudioError):
+            oss.complete("مرحبا", port)
 
 
 def _sample(agent: dict) -> dict:
