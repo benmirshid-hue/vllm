@@ -682,4 +682,215 @@ mkdir %USERPROFILE%\ai-workspace && cd /d %USERPROFILE%\ai-workspace
 
 ---
 
-آخر تحديث: 2026-11-12 (توقيت Asia/Riyadh)
+## 8) Mozilla الكامل — متصفح، مطوّر، مصدر، بناء، AI، بحث
+
+قسم واحد متماسك لمشاريع Mozilla على Windows فقط. لا تشغّل الأوامر هنا في السحابة؛ انسخها إلى CMD عندك.
+
+### 8.1 تنزيل Firefox الكامل (المتصفح العادي)
+
+```bat
+:: تثبيت صامت عبر winget
+winget install --id Mozilla.Firefox -e --silent --accept-package-agreements --accept-source-agreements
+
+:: تثبيت صامت عبر Chocolatey (CMD كمسؤول؛ يحتاج choco مسبقاً)
+choco install firefox -y
+
+:: تنزيل المثبت ثم تثبيت صامت يدوياً (Win64)
+curl -L -o "%TEMP%\FirefoxSetup.exe" "https://download.mozilla.org/?product=firefox-latest&os=win64&lang=en-US"
+"%TEMP%\FirefoxSetup.exe" /S
+```
+
+### 8.2 Firefox Developer Edition
+
+```bat
+:: winget — Developer Edition
+winget install --id Mozilla.Firefox.DeveloperEdition -e --silent --accept-package-agreements --accept-source-agreements
+
+:: Chocolatey
+choco install firefox-dev -y
+
+:: مثبت رسمي ثم صامت
+curl -L -o "%TEMP%\FirefoxSetupDev.exe" "https://download.mozilla.org/?product=firefox-devedition-latest&os=win64&lang=en-US"
+"%TEMP%\FirefoxSetupDev.exe" /S
+```
+
+### 8.3 شجرة المصدر الكاملة (mozilla-central + comm-central عبر Mercurial)
+
+```bat
+:: مجلد العمل
+mkdir %USERPROFILE%\mozilla && cd /d %USERPROFILE%\mozilla
+
+:: mozilla-central (يُشار إليه غالباً m-c) — شجرة Firefox/Gecko
+hg clone https://hg.mozilla.org/mozilla-central mozilla-central
+cd /d %USERPROFILE%\mozilla\mozilla-central
+
+:: comm-central — Thunderbird / التطبيقات فوق mozilla-central
+cd /d %USERPROFILE%\mozilla
+hg clone https://hg.mozilla.org/comm-central comm-central
+
+:: تحديث لاحق
+cd /d %USERPROFILE%\mozilla\mozilla-central && hg pull -u
+cd /d %USERPROFILE%\mozilla\comm-central && hg pull -u
+```
+
+```bat
+:: بديل Git mirror إن تعذّر Mercurial (اختياري، ليس بديل hg.mozilla.org الرسمي)
+git clone https://github.com/mozilla-firefox/firefox.git %USERPROFILE%\mozilla\firefox-git
+```
+
+### 8.4 كل اعتماديات البناء على Windows
+
+```bat
+:: Rust عبر rustup
+winget install -e --id Rustlang.Rustup --silent --accept-package-agreements --accept-source-agreements
+rustup default stable
+
+:: Mercurial
+winget install -e --id Mercurial.Mercurial --silent --accept-package-agreements --accept-source-agreements
+
+:: Python
+winget install -e --id Python.Python.3.12 --silent --accept-package-agreements --accept-source-agreements
+
+:: Node.js
+winget install -e --id OpenJS.NodeJS.LTS --silent --accept-package-agreements --accept-source-agreements
+
+:: Git (مفيد للأدوات المساعدة)
+winget install -e --id Git.Git --silent --accept-package-agreements --accept-source-agreements
+
+:: Visual Studio 2022 Build Tools + C++ workload + Windows SDK
+winget install -e --id Microsoft.VisualStudio.2022.BuildTools --silent --accept-package-agreements --accept-source-agreements --override "--wait --passive --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
+
+:: تحقق سريع
+rustc --version
+hg --version
+python --version
+node --version
+```
+
+### 8.5 أوامر mach: bootstrap / build / test / try
+
+```bat
+cd /d %USERPROFILE%\mozilla\mozilla-central
+
+:: تثبيت بقية الاعتماديات حسب المنصة (اختر Firefox for Desktop)
+.\mach bootstrap
+
+:: بناء
+.\mach build
+
+:: تشغيل البناء المحلي
+.\mach run
+
+:: اختبارات
+.\mach test
+.\mach mochitest
+.\mach xpcshell-test
+
+:: إرسال تجربة إلى Mozilla CI (يحتاج صلاحيات/حساب)
+.\mach try auto
+.\mach try fuzzy
+
+:: تنظيف بناء سابق
+.\mach clobber
+```
+
+### 8.6 إعداد المصحّح (rr / gdb)
+
+```bat
+:: rr: غير مدعوم على Windows الأصلي — استخدم WSL2/Linux فقط
+wsl --install
+wsl
+```
+
+```bash
+# داخل WSL/Linux فقط
+sudo apt update
+sudo apt install -y gdb
+# rr (Linux): https://github.com/rr-debugger/rr — اتبع تعليمات البناء/التثبيت للمنصة
+```
+
+```bat
+:: على Windows الأصلي مع بناء Firefox المحلي: Visual Studio Debugger أو WinDbg
+:: اختصار أدوات المطوّر داخل Developer Edition: Ctrl+Shift+I
+```
+
+### 8.7 أدوات AI و ML من Mozilla (نماذج محلية، صوت، صوتية)
+
+```bat
+mkdir %USERPROFILE%\mozilla\ai && cd /d %USERPROFILE%\mozilla\ai
+
+:: llamafile — تشغيل LLM محلي بملف واحد (Mozilla.ai)
+git clone https://github.com/mozilla-ai/llamafile.git
+
+:: أطر مساعدة من mozilla-ai
+git clone https://github.com/mozilla-ai/any-llm.git
+git clone https://github.com/mozilla-ai/any-agent.git
+
+:: مكتبات صوت Mozilla
+git clone https://github.com/mozilla/cubeb.git
+git clone https://github.com/mozilla/cubeb-rs.git
+git clone https://github.com/mozilla/audio_thread_priority.git
+git clone https://github.com/mozilla/audioipc.git
+
+:: DeepSpeech (مرجع تاريخي؛ التطوير النشط متوقف)
+git clone https://github.com/mozilla/deepspeech.git
+```
+
+```bat
+:: ملاحظة عن STT/VAD:
+:: لا يوجد مستودع رسمي باسم RealtimeSTT تحت github.com/mozilla
+:: التعرف على الكلام المحلي داخل Firefox يعتمد على مكوّنات داخل mozilla-central
+:: (SpeechRecognition + نماذج عبر Model Hub) — راجع بعد الاستنساخ:
+cd /d %USERPROFILE%\mozilla\mozilla-central
+dir /s /b *SpeechRecognition*
+
+:: whisper.cpp ليس مشروع Mozilla؛ llamafile يوفّر whisperfile كتغليف مرتبط
+:: وثائق استدلال ML داخل Firefox:
+start https://firefox-source-docs.mozilla.org/toolkit/components/ml/architecture.html
+```
+
+### 8.8 البحث في الشفرة — Searchfox
+
+```bat
+:: واجهة Searchfox العامة
+start https://searchfox.org/mozilla-central/source/
+
+:: بنية Searchfox التحتية
+cd /d %USERPROFILE%\mozilla\ai
+git clone https://github.com/mozsearch/mozsearch.git
+git clone https://github.com/mozsearch/mozsearch-mozilla.git
+```
+
+### 8.9 حزم اللغات والإضافات
+
+```bat
+:: مجلد لحزم اللغات (XPI)
+mkdir %USERPROFILE%\mozilla\langpacks
+cd /d %USERPROFILE%\mozilla\langpacks
+
+:: مثال: حزمة عربية (حدّث رقم الإصدار من ftp.mozilla.org حسب نسختك)
+curl -L -o ar.xpi "https://ftp.mozilla.org/pub/firefox/releases/latest/win64/xpi/ar.xpi"
+
+:: تثبيت الـ XPI يدوياً من Firefox: about:addons → الترس → Install Add-on From File…
+:: أو اسحب ملف .xpi إلى نافذة Firefox
+```
+
+```bat
+:: مجلد إضافات للتطوير
+mkdir %USERPROFILE%\mozilla\extensions
+cd /d %USERPROFILE%\mozilla\extensions
+
+:: أمثلة إضافات/أدوات مرتبطة بمنظومة الويب لدى Mozilla (MDN tooling اختياري)
+git clone https://github.com/mdn/browser-compat-data.git
+git clone https://github.com/mozilla/web-ext.git
+
+:: بناء/تشغيل إضافة عبر web-ext بعد npm install داخل مجلد الإضافة
+npm install -g web-ext
+:: web-ext run   ← من مجلد إضافة تحتوي manifest.json
+```
+
+> تحذير: بناء mozilla-central كامل يحتاج عشرات الجيجابايت ووقتاً طويلاً. للتجربة السريعة: ثبّت Developer Edition + استنسخ llamafile دون `mach build`.
+
+---
+
+آخر تحديث: 2026-11-12 (توقيت Asia/Riyadh) — إعادة كتابة القسم 8 من الصفر
