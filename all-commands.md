@@ -750,17 +750,40 @@ wsl -e bash -lc "sudo apt update && sudo apt install -y gdb"
 ```
 
 ```bat
-REM === 8.7 أدوات Mozilla AI و الصوت ===
-mkdir %USERPROFILE%\mozilla\ai
+REM === 8.7 استخدام Mozilla AI والصوت (بعد التثبيت) ===
+mkdir %USERPROFILE%\mozilla\ai\bin %USERPROFILE%\mozilla\ai\models %USERPROFILE%\mozilla\ai\audio
 cd /d %USERPROFILE%\mozilla\ai
-git clone https://github.com/mozilla-ai/llamafile.git
-git clone https://github.com/mozilla-ai/any-llm.git
-git clone https://github.com/mozilla-ai/any-agent.git
-git clone https://github.com/mozilla/cubeb.git
-git clone https://github.com/mozilla/cubeb-rs.git
-git clone https://github.com/mozilla/audio_thread_priority.git
-git clone https://github.com/mozilla/audioipc.git
-git clone https://github.com/mozilla/deepspeech.git
+
+REM استنساخ المستودعات إن لم تكن موجودة
+IF NOT EXIST llamafile git clone https://github.com/mozilla-ai/llamafile.git
+IF NOT EXIST any-llm git clone https://github.com/mozilla-ai/any-llm.git
+IF NOT EXIST any-agent git clone https://github.com/mozilla-ai/any-agent.git
+IF NOT EXIST cubeb git clone https://github.com/mozilla/cubeb.git
+
+REM تنزيل نموذج llamafile صغير جاهز للتشغيل على Windows (أقل من 4GB)
+curl -L -o "%USERPROFILE%\mozilla\ai\bin\Qwen3.5-0.8B-Q8_0.llamafile.exe" "https://huggingface.co/mozilla-ai/llamafile_0.10/resolve/main/Qwen3.5-0.8B-Q8_0.llamafile"
+
+REM تشغيل الدردشة المحلية (واجهة ويب/طرفية حسب الإصدار)
+"%USERPROFILE%\mozilla\ai\bin\Qwen3.5-0.8B-Q8_0.llamafile.exe"
+
+REM بديل: ثنائي llamafile + أوزان GGUF منفصلة (للنماذج الأكبر)
+curl -L -o "%USERPROFILE%\mozilla\ai\bin\llamafile.exe" "https://github.com/mozilla-ai/llamafile/releases/latest/download/llamafile.exe"
+curl -L -o "%USERPROFILE%\mozilla\ai\models\model.gguf" "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q5_k_m.gguf"
+"%USERPROFILE%\mozilla\ai\bin\llamafile.exe" -m "%USERPROFILE%\mozilla\ai\models\model.gguf" --server --port 8080
+start http://127.0.0.1:8080/
+
+REM whisperfile — تحويل كلام إلى نص
+curl -L -o "%USERPROFILE%\mozilla\ai\bin\whisperfile.exe" "https://github.com/mozilla-ai/llamafile/releases/latest/download/whisperfile.exe"
+curl -L -o "%USERPROFILE%\mozilla\ai\models\whisper-tiny.en-q5_1.bin" "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en-q5_1.bin"
+"%USERPROFILE%\mozilla\ai\bin\whisperfile.exe" -m "%USERPROFILE%\mozilla\ai\models\whisper-tiny.en-q5_1.bin" -f "%USERPROFILE%\mozilla\ai\audio\input.wav" --no-prints
+
+REM أي-LLM / أي-Agent (يتطلب Python داخل المجلد)
+cd /d %USERPROFILE%\mozilla\ai\any-llm
+python -m pip install -e .
+cd /d %USERPROFILE%\mozilla\ai\any-agent
+python -m pip install -e .
+
+REM مكوّنات التعرف على الكلام داخل شجرة Firefox + وثائق ML
 cd /d %USERPROFILE%\mozilla\mozilla-central
 dir /s /b *SpeechRecognition*
 start https://firefox-source-docs.mozilla.org/toolkit/components/ml/architecture.html
