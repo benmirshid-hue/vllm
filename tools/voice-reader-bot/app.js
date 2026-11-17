@@ -40,16 +40,16 @@
 
   const DEFAULT_VOICE = "Zariyah";
   const API_BASE = "";
-  const HISTORY_KEY = "voice-bot-history-v14";
-  const MEMORY_KEY = "voice-bot-memory-v14";
-  const VOICE_KEY = "voice-bot-voice-v14";
-  const DELIVERY_KEY = "voice-bot-delivery-v14";
+  const HISTORY_KEY = "voice-bot-history-v15";
+  const MEMORY_KEY = "voice-bot-memory-v15";
+  const VOICE_KEY = "voice-bot-voice-v15";
+  const DELIVERY_KEY = "voice-bot-delivery-v15";
   const CALL_OPENER = "هلا، تكلّمي.";
 
   // Sensitive VAD — catch whispers; do not require clear words.
   const WHISPER_RMS = 0.0012;
   const SILENCE_MS = 700;
-  const MIN_SPEECH_MS = 120;
+  const MIN_SPEECH_MS = 350;
   const MAX_UTTERANCE_MS = 20000;
 
   let catalog = FALLBACK_VOICES.slice();
@@ -377,11 +377,23 @@
     return Math.sqrt(sum / data.length);
   }
 
+  function historyPayload() {
+    return JSON.stringify(
+      history.slice(-8).map((item) => ({
+        role: item.role === "bot" ? "assistant" : item.role,
+        content: String(item.content || "").slice(0, 500),
+      }))
+    );
+  }
+
   async function sendVoiceTurn(blob) {
     const form = new FormData();
-    form.append("audio", blob, "utterance.webm");
+    const mime = blob.type || "audio/webm";
+    const ext = mime.includes("mp4") ? "mp4" : mime.includes("ogg") ? "ogg" : "webm";
+    form.append("audio", blob, `utterance.${ext}`);
     form.append("voice", activeVoiceName);
     form.append("delivery", selectedDelivery());
+    form.append("history", historyPayload());
     const res = await fetch(`${API_BASE}/api/voice-turn`, { method: "POST", body: form });
     if (!res.ok) throw new Error((await res.text()) || `voice-turn HTTP ${res.status}`);
     const heard = decodeURIComponent(res.headers.get("X-Heard") || "");
@@ -392,6 +404,23 @@
       blob: new Blob([buf], { type: "audio/mpeg" }),
       heard,
       reply,
+    };
+  }
+
+  async function sendTextTurn(userText) {
+    const form = new FormData();
+    form.append("text", userText);
+    form.append("voice", activeVoiceName);
+    form.append("delivery", selectedDelivery());
+    form.append("history", historyPayload());
+    const res = await fetch(`${API_BASE}/api/text-turn`, { method: "POST", body: form });
+    if (!res.ok) throw new Error((await res.text()) || `text-turn HTTP ${res.status}`);
+    const reply = decodeURIComponent(res.headers.get("X-Reply") || "");
+    const buf = await res.arrayBuffer();
+    if (!buf.byteLength) throw new Error("empty spoken reply");
+    return {
+      blob: new Blob([buf], { type: "audio/mpeg" }),
+      reply: reply || "تم.",
     };
   }
 
@@ -552,7 +581,7 @@
   }
 
   async function handleTextFallback(text) {
-    // Text box remains as accessibility fallback only; still uses voice-out.
+    // Accessibility only when mic fails — still a real model reply, never an echo.
     const userText = String(text || "").trim();
     if (!userText || busy || isSpeaking) return;
     busy = true;
@@ -562,24 +591,18 @@
     history.push({ role: "user", content: userText });
     addBubble("user", userText);
     saveHistory();
-    setStatus("أرد بالصوت…");
+    setStatus("أفهم وأرد بصوت…");
     try {
-      // Synthesize a short spoken reply via TTS path (no content gate).
-      const blob = await fetchFemaleTtsBlob(
-        `تمام، سمعتك: ${userText.slice(0, 120)}.`,
-        activeVoiceName,
-        selectedDelivery()
-      );
-      const reply = `تمام، سمعتك: ${userText.slice(0, 120)}.`;
-      lastBotText = reply;
-      history.push({ role: "assistant", content: reply });
-      addBubble("bot", reply);
+      const turn = await sendTextTurn(userText);
+      lastBotText = turn.reply;
+      history.push({ role: "assistant", content: turn.reply });
+      addBubble("bot", turn.reply);
       saveHistory();
       isSpeaking = true;
-      await playBlob(blob);
-      setStatus(inCall ? "جاهزة." : "انتهى.");
+      await playBlob(turn.blob);
+      setStatus(inCall ? "جاهزة. تكلّمي." : "انتهى.");
     } catch (err) {
-      setStatus(`فشل الصوت: ${err.message}`);
+      setStatus(`فشل الرد: ${err.message}`);
     } finally {
       isSpeaking = false;
       busy = false;
