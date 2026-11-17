@@ -17,31 +17,45 @@ from fastapi.responses import FileResponse, Response
 ROOT = Path(__file__).resolve().parent
 DEFAULT_VOICE = "Zariyah"
 
-# Natural Cursor voice-call register for client prompts (not a caricature).
+# Natural Cursor voice-call register — copy the live call speech style.
 VOICE_PERSONA = {
     "id": "cursor-call-saudi",
     "default_voice": DEFAULT_VOICE,
     "dialect": "saudi_gulf_white",
     "register": (
-        "Match Cursor's real live voice-call Arabic: natural Saudi/Gulf white "
-        "dialect, short practical sentences, careful listening, ordinary word "
-        "choice. Warm but not theatrical. Never Modern Standard Arabic skits "
-        "or canned romantic lines."
+        "Speak exactly like the Cursor agent on this live Arabic voice call: "
+        "direct, short, Saudi white dialect, progress-first, no MSA skits, "
+        "no formal السلام عليكم openers, no canned romance."
     ),
+    # Samples taken from the live Cursor call replies in this session.
+    "samples": [
+        "بشيك السيرفر، غالبًا فحص الصوت هو اللي يوقف التشغيل.",
+        "أصلح كل شيء دفعة واحدة وأرجع لك هل يرد الحين.",
+        "انصلح. السبب كان إحماء الصوت بنقطة؛ الحين يشتغل.",
+        "بشيك الكود واللي يوصل من الرابط؛ غالبًا نسخة قديمة أو كاش.",
+        "أحط ترحيب سعودي قصير وأكسر الكاش.",
+        "تمام، فهمت عليك. خلّيني أتأكد وأرد.",
+    ],
     "do": [
-        "بشوف",
+        "بشيك",
+        "الحين",
         "تمام",
         "فهمت عليك",
-        "خلّيني أتأكد",
-        "لحظة",
+        "خلّيني",
+        "غالبًا",
+        "انصلح",
     ],
     "dont": [
+        "السلام عليكم",
+        "وعليكم السلام ورحمة الله",
+        "السلامة عليكم ورحمتك",
         "هيا بنا نذهب بعيدًا",
         "يا ثقل صدرك يا روحي",
         "أود أن أتحدث معك الآن",
         "تكلمي يا قلبي وش تبي",
         "اليومِي",
     ],
+    "opener": "هلا، تكلّمي.",
     "spelling": {
         "اليومي": "بدون كسرة زائدة على الياء",
     },
@@ -298,29 +312,35 @@ async def reload_voices() -> dict:
     }
 
 
+def _no_store_file(path: Path, media_type: str) -> Response:
+    return Response(
+        content=path.read_bytes(),
+        media_type=media_type,
+        headers={
+            "Cache-Control": "no-store, no-cache, max-age=0, must-revalidate",
+            "Pragma": "no-cache",
+        },
+    )
+
+
 @app.get("/")
-async def index() -> FileResponse:
-    return FileResponse(ROOT / "index.html")
+async def index() -> Response:
+    return _no_store_file(ROOT / "index.html", "text/html; charset=utf-8")
 
 
 @app.get("/app.js")
 async def app_js() -> Response:
-    body = (ROOT / "app.js").read_bytes()
-    return Response(
-        content=body,
-        media_type="application/javascript",
-        headers={"Cache-Control": "no-store, max-age=0"},
-    )
+    return _no_store_file(ROOT / "app.js", "application/javascript; charset=utf-8")
 
 
 @app.get("/styles.css")
-async def styles_css() -> FileResponse:
-    return FileResponse(ROOT / "styles.css", media_type="text/css")
+async def styles_css() -> Response:
+    return _no_store_file(ROOT / "styles.css", "text/css; charset=utf-8")
 
 
 @app.get("/public.html")
-async def public_html() -> FileResponse:
-    return FileResponse(ROOT / "public.html")
+async def public_html() -> Response:
+    return _no_store_file(ROOT / "public.html", "text/html; charset=utf-8")
 
 
 if __name__ == "__main__":

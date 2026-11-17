@@ -43,11 +43,13 @@
   // Default Saudi female Neural voice.
   const DEFAULT_VOICE = "Zariyah";
   const API_BASE = "";
-  const HISTORY_KEY = "voice-bot-history-v9";
-  const MEMORY_KEY = "voice-bot-memory-v9";
-  const VOICE_KEY = "voice-bot-voice-v9";
-  const DELIVERY_KEY = "voice-bot-delivery-v9";
-  const MODE_KEY = "voice-bot-mode-v9";
+  const HISTORY_KEY = "voice-bot-history-v10";
+  const MEMORY_KEY = "voice-bot-memory-v10";
+  const VOICE_KEY = "voice-bot-voice-v10";
+  const DELIVERY_KEY = "voice-bot-delivery-v10";
+  const MODE_KEY = "voice-bot-mode-v10";
+  // Short Saudi opener — same register as the live Cursor call (not MSA salam).
+  const CALL_OPENER = "هلا، تكلّمي.";
 
   // ONLY explicit sexual content — all other topics are allowed.
   const blockedPatterns = [
@@ -65,6 +67,8 @@
     /هيا\s*بنا\s*نذهب\s*بعيدًا?/gi,
     /يا\s*ثقل\s*صدرك\s*يا\s*روحي/gi,
     /تكلمي\s*يا\s*قلبي،?\s*وش\s*تبي\؟?/gi,
+    /السلا(?:م|مة)\s*عليكم(?:\s*و\s*رحم[ةه]?(?:\s*الله)?(?:\s*وبركاته)?|\s*ورحمتك)?/gi,
+    /وعليكم\s*السلام(?:\s*ورحمة\s*الله(?:\s*وبركاته)?)?/gi,
     /هل تريد تفاصيل أكثر\؟?/gi,
     /ما النقطة الأهم بالنسبة لك الآن\؟?/gi,
     /هل نكمل على نفس الموضوع أم نغيّر\؟?/gi,
@@ -426,7 +430,7 @@
   }
 
   function looksLikeFusha(text) {
-    return /هيا بنا|نذهب|بعيدًا|إنني|سوف أ|أريد أن|أود أن|يا روحي|ثقل صدرك|الآنَ|اليومِي|تكلمي يا قلبي|هل تريد|ما النقطة|هل نكمل|ما الذي تريد/.test(text);
+    return /هيا بنا|نذهب|بعيدًا|إنني|سوف أ|أريد أن|أود أن|يا روحي|ثقل صدرك|الآنَ|اليومِي|تكلمي يا قلبي|هل تريد|ما النقطة|هل نكمل|ما الذي تريد|السلام عليكم|وعليكم السلام|السلامة عليكم/.test(text);
   }
 
   function cleanReply(reply) {
@@ -437,8 +441,8 @@
       .replace(/يا\s*روحي[،.]?\s*/gi, "")
       .replace(/\s{2,}/g, " ")
       .trim();
-    if (!out || looksLikeFusha(out) || out.length > 280) {
-      out = "تمام، فهمت عليك. كمّلي وأرد عليك على طول.";
+    if (!out || looksLikeFusha(out) || out.length > 180) {
+      out = "تمام، فهمت عليك. كمّلي.";
     }
     return out;
   }
@@ -446,12 +450,12 @@
   function systemPrompt() {
     const mode = selectedMode();
     const modeLine = {
-      helpful: "جاوبي بوضوح وبشكل عملي.",
-      thoughtful: "فكّري شوي وقدّمي جواب مرتب.",
-      curious: "جاوبي وبعدين اسألي سؤال واحد بس إذا احتجتي توضيح.",
-      concise: "جاوبي بجملتين إلى ثلاث بالأكثر.",
-      balanced: "جاوبي بشكل طبيعي ومفيد.",
-    }[mode] || "جاوبي بشكل طبيعي ومفيد.";
+      helpful: "جاوبي عملي ومباشر.",
+      thoughtful: "جاوبي مختصر بعد ما تفكّري بسرعة.",
+      curious: "جاوبي، واسألي سؤال واحد بس إذا احتجتي.",
+      concise: "جملة أو جملتين بالأكثر.",
+      balanced: "طبيعي ومفيد وباختصار.",
+    }[mode] || "طبيعي ومفيد وباختصار.";
 
     const mem = [
       memory.name ? `الاسم: ${memory.name}` : "",
@@ -459,18 +463,22 @@
       memory.notes?.length ? `ملاحظات: ${memory.notes.slice(0, 3).join(" | ")}` : "",
     ].filter(Boolean).join("\n") || "ما في ذاكرة سابقة.";
 
-    // Match the real Cursor voice-call register: natural Saudi, brief, thinking out loud,
-    // warm without caricature — same listening/phrasing as this live call, not a skit.
+    // Copy the live Cursor agent voice-call register from this session.
     return [
-      `أنتِ المساعدة الصوتية في مكالمة مباشرة. الصوت العصبي: ${activeVoiceName}.`,
-      "VOICE REGISTER (إلزامي): انسخي نبرة Cursor الطبيعية بهالمكالمة بالضبط.",
-      "لهجة سعودية بيضاء يومية (مو فصحى، مو تمثيل خليجي مبالغ).",
-      "جمل قصيرة، تفكير عملي، استماع دقيق، كلمات عادية زي: بشوف، تمام، فهمت عليك، خلّيني أتأكد، لحظة، أوصل لك.",
-      "ممنوع تمامًا: الفصحى المسرحية، الردود المحفوظة، الدلع المبالغ، جمل زي «هيا بنا نذهب» أو «يا ثقل صدرك يا روحي» أو «تكلمي يا قلبي».",
-      "جاوبي على كلام المستخدم الحالي مباشرة بجملة أو جملتين.",
-      "اكتبي «اليومي» بدون كسرة زائدة على الياء.",
+      `أنتِ المساعدة الصوتية. الصوت: ${activeVoiceName}.`,
+      "تكلّمي بنفس أسلوب وكيل Cursor بهالمكالمة الحية:",
+      "مباشر، قصير، لهجة سعودية بيضاء، عفوي، بدون فصحى جاهزة وبدون ترحيب رسمي.",
+      "عيّنات من أسلوب المكالمة (انسخي هالطريقة):",
+      "• بشيك السيرفر، غالبًا فحص الصوت هو اللي يوقف التشغيل.",
+      "• أصلح كل شيء دفعة واحدة وأرجع لك هل يرد الحين.",
+      "• انصلح. السبب كان إحماء الصوت بنقطة؛ الحين يشتغل.",
+      "• بشيك الكود واللي يوصل من الرابط؛ غالبًا نسخة قديمة أو كاش.",
+      "• تمام، فهمت عليك. خلّيني أتأكد وأرد.",
+      "كلمات طبيعية: بشيك، الحين، تمام، فهمت عليك، خلّيني، غالبًا، انصلح، لحظة.",
+      "ممنوع: السلام عليكم، وعليكم السلام ورحمة الله، السلامة عليكم ورحمتك، هيا بنا، يا قلبي، يا روحي، أود أن، هل تريد.",
+      "ردي جملة أو جملتين على كلام المستخدم الحالي بس.",
       modeLine,
-      "كل المواضيع مفتوحة ومتاحة إلا المحتوى الجنسي الصريح فقط.",
+      "كل المواضيع مفتوحة إلا الجنسي الصريح.",
       "ذاكرة:",
       mem,
     ].join("\n");
@@ -484,7 +492,7 @@
         role: "user",
         content:
           `${userText}\n\n` +
-          "(ردي سعودي طبيعي زي مكالمة Cursor: جملة أو جملتين على كلامي فوق. بدون فصحى وبدون جمل محفوظة وبدون يا قلبي.)",
+          "(ردي زي وكيل Cursor بهالمكالمة: سعودي، قصير، مباشر، جملة أو جملتين. بدون سلام عليكم وبدون فصحى.)",
       },
     ];
     const response = await fetch("https://text.pollinations.ai/", {
@@ -494,7 +502,7 @@
         messages,
         model: "openai",
         seed: Date.now() % 100000,
-        temperature: 0.55,
+        temperature: 0.4,
       }),
     });
     if (!response.ok) throw new Error(`smart reply HTTP ${response.status}`);
@@ -663,19 +671,16 @@
     setStatus("أجهّز الصوت والمايك…");
     lastBotText = "";
 
+    // Prove TTS with a real short Saudi phrase (never "." — edge-tts returns no audio).
+    // Health alone is not enough; old clients also showed a false ready error.
+    let readyBlob = null;
     try {
-      const health = await fetch(`${API_BASE}/api/health`).then((r) => r.json());
-      if (!health.ok) throw new Error("health failed");
+      readyBlob = await fetchFemaleTtsBlob(CALL_OPENER, activeVoiceName, selectedDelivery());
     } catch (err) {
       setStatus(`خدمة الصوت مو جاهزة: ${err.message}`);
       setCallUi(false);
       return;
     }
-    // Warmup with a real word ("." returns no audio from edge-tts and used to
-    // abort the whole call). Failure here must not block listening.
-    try {
-      await fetchFemaleTtsBlob("هلا", activeVoiceName, selectedDelivery());
-    } catch (_) {}
 
     try {
       await ensureMicPermission();
@@ -684,8 +689,24 @@
       setStatus(`ما قدرت أفتح المايك (${err.message}). تقدرين تكتبين والرد الصوتي يشتغل.`);
     }
 
-    // No canned spoken opener — listen immediately for real user speech.
-    setStatus("جاهزة. تكلّمي الحين وبرد على كلامك.");
+    // Speak the short Saudi opener, then listen — clears any old MSA greeting cache.
+    history.push({ role: "assistant", content: CALL_OPENER });
+    addBubble("bot", CALL_OPENER);
+    saveHistory();
+    setStatus(`${activeVoiceName} تتكلم…`);
+    try {
+      isSpeaking = true;
+      setMicEnabled(false);
+      await playBlob(readyBlob);
+      await waitMs(500);
+    } catch (err) {
+      setStatus(`فشل التشغيل: ${err.message}`);
+    } finally {
+      isSpeaking = false;
+      setMicEnabled(true);
+    }
+
+    setStatus("جاهزة. تكلّمي.");
     liveCaption.textContent = "أسمعك…";
     listenLoop();
   }
