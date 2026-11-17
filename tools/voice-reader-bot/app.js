@@ -43,11 +43,11 @@
   // Default Saudi female Neural voice.
   const DEFAULT_VOICE = "Zariyah";
   const API_BASE = "";
-  const HISTORY_KEY = "voice-bot-history-v7";
-  const MEMORY_KEY = "voice-bot-memory-v7";
-  const VOICE_KEY = "voice-bot-voice-v7";
-  const DELIVERY_KEY = "voice-bot-delivery-v7";
-  const MODE_KEY = "voice-bot-mode-v7";
+  const HISTORY_KEY = "voice-bot-history-v9";
+  const MEMORY_KEY = "voice-bot-memory-v9";
+  const VOICE_KEY = "voice-bot-voice-v9";
+  const DELIVERY_KEY = "voice-bot-delivery-v9";
+  const MODE_KEY = "voice-bot-mode-v9";
 
   // ONLY explicit sexual content — all other topics are allowed.
   const blockedPatterns = [
@@ -426,12 +426,18 @@
   }
 
   function looksLikeFusha(text) {
-    return /هيا بنا|نذهب|بعيدًا|إنني|سوف|أريد أن|أود أن|يا روحي|ثقل صدرك|الآنَ|اليومِي/.test(text);
+    return /هيا بنا|نذهب|بعيدًا|إنني|سوف أ|أريد أن|أود أن|يا روحي|ثقل صدرك|الآنَ|اليومِي|تكلمي يا قلبي|هل تريد|ما النقطة|هل نكمل|ما الذي تريد/.test(text);
   }
 
   function cleanReply(reply) {
     let out = stripFiller(reply.replace(/\s+/g, " "));
-    if (!out || looksLikeFusha(out)) {
+    // Drop theatrical romance / MSA leftovers the model sometimes stitches in.
+    out = out
+      .replace(/يا\s*قلبي[،.]?\s*/gi, "")
+      .replace(/يا\s*روحي[،.]?\s*/gi, "")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+    if (!out || looksLikeFusha(out) || out.length > 280) {
       out = "تمام، فهمت عليك. كمّلي وأرد عليك على طول.";
     }
     return out;
@@ -458,15 +464,13 @@
     return [
       `أنتِ المساعدة الصوتية في مكالمة مباشرة. الصوت العصبي: ${activeVoiceName}.`,
       "VOICE REGISTER (إلزامي): انسخي نبرة Cursor الطبيعية بهالمكالمة بالضبط.",
-      "يعني: لهجة سعودية/خليجية بيضاء يومية، جمل قصيرة، تفكير عملي، استماع دقيق، اختيار كلمات طبيعي.",
-      "مو تمثيل، مو مبالغة، مو مسرحية، مو فصحى، مو ردود محفوظة.",
-      "أمثلة نبرة صحيحة: بشوف، تمام، خلّيني أتأكد، أوصل لك الرابط، فهمت عليك، لحظة.",
-      "أمثلة نبرة ممنوعة: هيا بنا نذهب بعيدًا، يا ثقل صدرك يا روحي، أود أن أتحدث معك الآن، تكلمي يا قلبي وش تبي.",
-      "الحنية موجودة بهدوء (دفء بسيط)، بدون حشو عاطفي مبالغ.",
-      "جاوبي على كلام المستخدم الحالي مباشرة؛ لا تتجاهلينه ولا تلفّين حوله.",
+      "لهجة سعودية بيضاء يومية (مو فصحى، مو تمثيل خليجي مبالغ).",
+      "جمل قصيرة، تفكير عملي، استماع دقيق، كلمات عادية زي: بشوف، تمام، فهمت عليك، خلّيني أتأكد، لحظة، أوصل لك.",
+      "ممنوع تمامًا: الفصحى المسرحية، الردود المحفوظة، الدلع المبالغ، جمل زي «هيا بنا نذهب» أو «يا ثقل صدرك يا روحي» أو «تكلمي يا قلبي».",
+      "جاوبي على كلام المستخدم الحالي مباشرة بجملة أو جملتين.",
       "اكتبي «اليومي» بدون كسرة زائدة على الياء.",
       modeLine,
-      "كل المواضيع مسموحة إلا المحتوى الجنسي الصريح فقط.",
+      "كل المواضيع مفتوحة ومتاحة إلا المحتوى الجنسي الصريح فقط.",
       "ذاكرة:",
       mem,
     ].join("\n");
@@ -480,13 +484,18 @@
         role: "user",
         content:
           `${userText}\n\n` +
-          "(جاوبي باللهجة السعودية الطبيعية زي مكالمة Cursor، جملة أو جملتين، على كلامي أنا فوق، بدون فصحى وبدون جمل محفوظة.)",
+          "(ردي سعودي طبيعي زي مكالمة Cursor: جملة أو جملتين على كلامي فوق. بدون فصحى وبدون جمل محفوظة وبدون يا قلبي.)",
       },
     ];
     const response = await fetch("https://text.pollinations.ai/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages, model: "openai", seed: Date.now() % 100000 }),
+      body: JSON.stringify({
+        messages,
+        model: "openai",
+        seed: Date.now() % 100000,
+        temperature: 0.55,
+      }),
     });
     if (!response.ok) throw new Error(`smart reply HTTP ${response.status}`);
     const reply = (await response.text()).trim();
@@ -621,7 +630,7 @@
       setStatus("الرد السحابي تعثر؛ استخدمت رد محلي على كلامك.");
     }
     if (isBlocked(reply)) {
-      reply = cleanReply("يا قلبي خلّنا نكمّل بدون كلام جنسي صريح. وش تبي نتكلم عنه؟");
+      reply = cleanReply("خلّنا نكمّل بدون كلام جنسي صريح. وش تبي نتكلم عنه؟");
     }
     // Never speak the user's insult/words back as if they were the bot line.
     if (normalizeArabic(reply) === normalizeArabic(userText)) {
