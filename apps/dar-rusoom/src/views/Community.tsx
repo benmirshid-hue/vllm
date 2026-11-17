@@ -5,7 +5,7 @@ import { useStore } from "../store.tsx";
 export function Community() {
   const { state, dispatch } = useStore();
   const profile = profileById(state.profileId);
-  const allowed = new Set(visibleTitles(profile).map((title) => title.id));
+  const allowed = new Set(visibleTitles(profile, state.catalog).map((title) => title.id));
   const people = profiles.filter((person) => person.id !== profile.id && person.role !== "child");
   const comments = state.comments.filter((comment) => allowed.has(comment.titleId));
 
@@ -26,7 +26,9 @@ export function Community() {
                 <b>{person.name}</b>
                 <p>
                   {person.ageYears} سنة
-                  {shared.length > 0 ? ` · مشترك معك في ${shared.map((id) => titleById(id).name).join("، ")}` : ""}
+                  {shared.length > 0
+                    ? ` · مشترك معك في ${shared.map((id) => titleById(id, state.catalog).name).join("، ")}`
+                    : ""}
                 </p>
               </div>
               {allowedFollow ? (
@@ -46,7 +48,7 @@ export function Community() {
           <li key={comment.id}>
             <b>{profileById(comment.profileId).name}</b>
             <p>
-              على {titleById(comment.titleId).name}: {comment.text}
+              على {titleById(comment.titleId, state.catalog).name}: {comment.text}
             </p>
           </li>
         ))}

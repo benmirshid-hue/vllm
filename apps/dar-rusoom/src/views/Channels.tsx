@@ -41,7 +41,7 @@ export function Channels() {
 function ChannelDetail({ id }: { id: string }) {
   const { state, dispatch } = useStore();
   const creator = creatorById(id);
-  const ownTitles = titles.filter((title) => title.creatorId === creator.id);
+  const ownTitles = [...titles, ...state.catalog].filter((title) => title.creatorId === creator.id);
   const adsEarned = creatorAdEarnings(state.adEvents, creator.id, creator.adShare);
   const shop = creator.merchantId ? merchantEarnings(state.orders, creator.merchantId) : null;
   const following = (state.followsCreators[state.profileId] ?? []).includes(creator.id);

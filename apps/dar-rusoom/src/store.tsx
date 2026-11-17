@@ -16,7 +16,14 @@ function load(): State {
     if (parsed.version !== 1 || !parsed.layers) {
       return initialState();
     }
-    return parsed;
+    const base = initialState();
+    return {
+      ...base,
+      ...parsed,
+      series: Array.isArray(parsed.series) && parsed.series.length > 0 ? parsed.series : base.series,
+      catalog: Array.isArray(parsed.catalog) ? parsed.catalog : [],
+      layers: parsed.layers,
+    };
   } catch {
     return initialState();
   }

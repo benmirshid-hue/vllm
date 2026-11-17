@@ -34,7 +34,7 @@ export function Voice() {
     if (!clean) {
       return;
     }
-    const result = assist(profile, clean, offers.current);
+    const result = assist(profile, clean, offers.current, state.catalog);
     offers.current = result.offerIds;
     setLines((current) => [
       ...current,
@@ -109,8 +109,8 @@ export function Voice() {
       {offers.current.length > 0 ? (
         <div className="actions">
           {offers.current.map((id) => (
-            <button key={id} type="button" onClick={() => reply(`شغّل ${titleById(id).name}`)}>
-              {titleById(id).name}
+            <button key={id} type="button" onClick={() => reply(`شغّل ${titleById(id, state.catalog).name}`)}>
+              {titleById(id, state.catalog).name}
             </button>
           ))}
         </div>

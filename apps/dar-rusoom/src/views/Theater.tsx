@@ -1,21 +1,24 @@
 import { useEffect, useRef, useState } from "react";
+import type { Title } from "../data.ts";
 import {
   canComment,
   canFollow,
   clock,
   creatorById,
+  mouthCues,
   playCount,
   prerollFor,
   profileById,
   sharedWatchers,
   titleById,
 } from "../domain.ts";
+import { speakArabic } from "../speech.ts";
 import { useStore } from "../store.tsx";
 
 export function Theater() {
   const { state, dispatch } = useStore();
   const profile = profileById(state.profileId);
-  const title = titleById(state.titleId);
+  const title = titleById(state.titleId, state.catalog);
   const creator = creatorById(title.creatorId);
   const videoRef = useRef<HTMLVideoElement>(null);
   const stageRef = useRef<HTMLElement>(null);
@@ -27,6 +30,8 @@ export function Theater() {
   const [draft, setDraft] = useState("");
   const [note, setNote] = useState("");
   const savedMark = useRef(-1);
+  const positions = useRef(state.positions);
+  positions.current = state.positions;
   const ad = prerollFor(profile);
   const showAd = Boolean(ad) && !state.prerollSeen.includes(title.id);
   const liked = (state.likes[title.id] ?? []).includes(profile.id);
@@ -34,19 +39,71 @@ export function Theater() {
   const watchers = sharedWatchers(title.id, state.likes, profile.id);
   const comments = state.comments.filter((comment) => comment.titleId === title.id);
   const gate = canComment(profile, draft);
-  const streamLabel =
-    state.layers.video === "enterprise" ? "Cloudflare Stream · بث متكيف" : "أساس مفتوح · MP4 1080p";
+  const board = title.playback === "board";
+  const runtime = title.runtimeSec ?? 0;
+  const streamLabel = board
+    ? "حلقة مجمّعة · وجوه مقفلة"
+    : state.layers.video === "enterprise"
+      ? "Cloudflare Stream · بث متكيف"
+      : "أساس مفتوح · MP4 1080p";
 
   useEffect(() => {
     setPlaying(false);
-    setTime(0);
     setError("");
     savedMark.current = -1;
-  }, [title.id]);
+    if (title.playback === "board") {
+      const length = title.runtimeSec ?? 0;
+      setDuration(length);
+      const resume = positions.current[title.id] ?? 0;
+      setTime(resume > 1 && resume < length - 2 ? resume : 0);
+      return;
+    }
+    setTime(0);
+  }, [title.id, title.playback, title.runtimeSec]);
+
+  useEffect(() => {
+    if (!board || !playing || showAd) {
+      return;
+    }
+    const timer = window.setInterval(() => {
+      setTime((current) => Math.min(runtime, Math.round((current + 0.25) * 100) / 100));
+    }, 250);
+    return () => window.clearInterval(timer);
+  }, [board, playing, showAd, runtime]);
+
+  useEffect(() => {
+    if (!board || time < runtime || runtime === 0) {
+      return;
+    }
+    setPlaying(false);
+  }, [board, time, runtime]);
+
+  useEffect(() => {
+    if (!board) {
+      return;
+    }
+    const mark = Math.floor(time);
+    if (mark % 2 === 0 && mark !== savedMark.current) {
+      savedMark.current = mark;
+      dispatch({ type: "position", titleId: title.id, seconds: time });
+    }
+  }, [board, time, title.id, dispatch]);
 
   function togglePlay() {
+    if (showAd) {
+      return;
+    }
+    if (board) {
+      setPlaying((value) => {
+        if (!value) {
+          dispatch({ type: "play" });
+        }
+        return !value;
+      });
+      return;
+    }
     const video = videoRef.current;
-    if (!video || showAd) {
+    if (!video) {
       return;
     }
     if (video.paused) {
@@ -61,13 +118,16 @@ export function Theater() {
   }
 
   function seek(next: number) {
-    const video = videoRef.current;
-    if (!video) {
-      return;
+    const capped = board ? Math.min(Math.max(0, next), runtime) : next;
+    if (!board) {
+      const video = videoRef.current;
+      if (!video) {
+        return;
+      }
+      video.currentTime = capped;
     }
-    video.currentTime = next;
-    setTime(next);
-    dispatch({ type: "position", titleId: title.id, seconds: next });
+    setTime(capped);
+    dispatch({ type: "position", titleId: title.id, seconds: capped });
   }
 
   return (
@@ -77,6 +137,9 @@ export function Theater() {
         <p>{streamLabel}. استئناف من آخر ثانية على هذا الجهاز.</p>
       </header>
       <figure className="matte" ref={stageRef}>
+        {board ? (
+          <BoardFrame title={title} time={time} playing={playing && !showAd} />
+        ) : (
         <video
           ref={videoRef}
           key={title.id}
@@ -105,6 +168,7 @@ export function Theater() {
           onEnded={() => setPlaying(false)}
           onError={() => setError("تعذر فتح الملف. تحقق من الشبكة ثم أعد المحاولة.")}
         />
+        )}
         {showAd && ad ? (
           <Preroll
             brand={ad.brand}
@@ -252,6 +316,34 @@ export function Theater() {
         </div>
       </div>
     </section>
+  );
+}
+
+function BoardFrame({ title, time, playing }: { title: Title; time: number; playing: boolean }) {
+  const chapter = [...title.chapters].reverse().find((item) => item.t <= time) ?? title.chapters[0];
+  const line = chapter?.line ?? title.logline;
+  const cues = mouthCues(line);
+  const shape = playing ? (cues[Math.floor(time * 5) % cues.length] ?? "closed") : "closed";
+  const spoken = useRef("");
+
+  useEffect(() => {
+    if (!playing || !chapter?.line) {
+      return;
+    }
+    const mark = `${chapter.t}:${chapter.line}`;
+    if (spoken.current === mark) {
+      return;
+    }
+    spoken.current = mark;
+    speakArabic(chapter.line, chapter.pitch ?? 1, chapter.rate ?? 1);
+  }, [playing, chapter]);
+
+  return (
+    <div className="board" style={{ background: title.hue }}>
+      <strong>{chapter?.label}</strong>
+      <p>{line}</p>
+      <span className={`mouth ${shape}`} aria-label="فم" />
+    </div>
   );
 }
 
