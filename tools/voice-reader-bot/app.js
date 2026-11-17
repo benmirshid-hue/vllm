@@ -71,6 +71,8 @@
   let queueTimer = null;
   let shouldListenAgain = false;
   let currentAudio = null;
+  let sharedAudio = null;
+  let audioUnlocked = false;
   let audioCtx = null;
   let activeVoiceName = DEFAULT_VOICE;
 
@@ -171,13 +173,49 @@
     return audioCtx;
   }
 
+  function getSharedAudio() {
+    if (!sharedAudio) {
+      sharedAudio = new Audio();
+      sharedAudio.preload = "auto";
+      sharedAudio.setAttribute("playsinline", "true");
+      sharedAudio.setAttribute("webkit-playsinline", "true");
+      sharedAudio.playsInline = true;
+      sharedAudio.muted = false;
+      sharedAudio.volume = 1;
+    }
+    return sharedAudio;
+  }
+
+  /** Must run inside a user gesture before any await, or mobile browsers block sound. */
+  async function unlockAudioPlayback() {
+    try {
+      ensureAudio();
+      const audio = getSharedAudio();
+      // Tiny silent wav — unlocks HTMLAudioElement for later blob playback.
+      audio.src =
+        "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
+      audio.muted = true;
+      await audio.play().catch(() => {});
+      audio.pause();
+      audio.muted = false;
+      audio.currentTime = 0;
+      audioUnlocked = true;
+    } catch (_) {
+      audioUnlocked = false;
+    }
+  }
+
   function stopSpeech() {
     if (queueTimer) {
       clearTimeout(queueTimer);
       queueTimer = null;
     }
     if (currentAudio) {
-      try { currentAudio.pause(); currentAudio.src = ""; } catch (_) {}
+      try {
+        currentAudio.onended = null;
+        currentAudio.onerror = null;
+        currentAudio.pause();
+      } catch (_) {}
       currentAudio = null;
     }
   }
@@ -284,28 +322,43 @@
     if (gender && gender.toLowerCase() !== "female") {
       throw new Error("Rejected non-female voice response");
     }
-    return res.blob();
+    const buf = await res.arrayBuffer();
+    if (!buf.byteLength) throw new Error("TTS empty audio");
+    // Force mpeg type — some browsers refuse blob playback without it.
+    return new Blob([buf], { type: "audio/mpeg" });
   }
 
-  function playBlob(blob) {
-    return new Promise((resolve, reject) => {
-      const audio = new Audio(URL.createObjectURL(blob));
-      currentAudio = audio;
-      audio.onended = () => {
-        URL.revokeObjectURL(audio.src);
-        if (currentAudio === audio) currentAudio = null;
-        resolve();
-      };
-      audio.onerror = () => {
-        if (currentAudio === audio) currentAudio = null;
-        reject(new Error("audio playback failed"));
-      };
-      audio.play().catch(reject);
+  async function playBlob(blob) {
+    const audio = getSharedAudio();
+    const objectUrl = URL.createObjectURL(blob);
+    stopSpeech();
+    currentAudio = audio;
+    audio.src = objectUrl;
+    audio.muted = false;
+    audio.volume = 1;
+    const finished = new Promise((resolve, reject) => {
+      audio.onended = () => resolve();
+      audio.onerror = () => reject(new Error("audio playback failed"));
     });
+    try {
+      await audio.play();
+    } catch (_) {
+      await unlockAudioPlayback();
+      audio.muted = false;
+      await audio.play();
+    }
+    try {
+      await finished;
+    } finally {
+      try { URL.revokeObjectURL(objectUrl); } catch (_) {}
+      audio.onended = null;
+      audio.onerror = null;
+      if (currentAudio === audio) currentAudio = null;
+    }
   }
 
   async function speakText(text) {
-    stopSpeech();
+    if (!audioUnlocked) await unlockAudioPlayback();
     ensureAudio();
     activeVoiceName = selectedVoiceName();
     const delivery = selectedDelivery();
@@ -322,7 +375,7 @@
       const blob = await fetchFemaleTtsBlob(step.text, activeVoiceName, delivery);
       await playBlob(blob);
       if (i < plan.length - 1 && step.pauseAfterMs) {
-        await waitMs(step.pauseAfterMs);
+        await waitMs(Math.min(step.pauseAfterMs, 500));
       }
     }
   }
@@ -510,27 +563,33 @@
   }
 
   async function startCall() {
+    // Unlock speakers inside the click gesture BEFORE any network await.
+    await unlockAudioPlayback();
     activeVoiceName = selectedVoiceName();
     localStorage.setItem(VOICE_KEY, activeVoiceName);
     localStorage.setItem(DELIVERY_KEY, selectedDelivery());
     localStorage.setItem(MODE_KEY, selectedMode());
     setCallUi(true);
+    setStatus("جاري تجهيز الصوت…");
     try {
       const health = await fetch(`${API_BASE}/api/health`).then((r) => r.json());
       if (!health.ok) throw new Error("health failed");
-      await fetchFemaleTtsBlob("مرحبا", activeVoiceName, selectedDelivery());
     } catch (err) {
       setStatus(`الخدمة الصوتية غير جاهزة: ${err.message}`);
       setCallUi(false);
       return;
     }
-    const open = stylizeReply(
-      `مرحباً. أنا ${activeVoiceName}. المكالمة جاهزة والرد الذكي مفعّل.`
-    );
+    const open = `مرحباً. أنا ${activeVoiceName}. المكالمة جاهزة.`;
     history.push({ role: "assistant", content: open });
     addBubble("bot", open);
     saveHistory();
-    await speakText(open);
+    try {
+      setStatus(`${activeVoiceName} تتكلم…`);
+      await speakText(open);
+      setStatus("حاضرة. تكلّمي أو اكتبي.");
+    } catch (err) {
+      setStatus(`فشل تشغيل الصوت: ${err.message}. ارفعي صوت الجهاز واضغطي بدء مرة أخرى.`);
+    }
     listenLoop();
   }
 
@@ -559,14 +618,21 @@
   replyModeEl.addEventListener("change", () => {
     localStorage.setItem(MODE_KEY, selectedMode());
   });
-  startCallBtn.addEventListener("click", startCall);
+  startCallBtn.addEventListener("click", () => { startCall(); });
   endCallBtn.addEventListener("click", endCall);
-  sendBtn.addEventListener("click", () => {
+  sendBtn.addEventListener("click", async () => {
+    await unlockAudioPlayback();
     const t = textEl.value.trim();
     textEl.value = "";
     if (!inCall) setCallUi(true);
     handleUtterance(t);
   });
+  // Extra unlock on first tap anywhere in the call card (mobile browsers).
+  document.querySelector(".call-card")?.addEventListener(
+    "pointerdown",
+    () => { unlockAudioPlayback(); },
+    { once: true }
+  );
 
   populateVoices(FALLBACK_VOICES);
   const savedDelivery = localStorage.getItem(DELIVERY_KEY);

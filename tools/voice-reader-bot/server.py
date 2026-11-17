@@ -198,6 +198,10 @@ async def tts(
             "X-Voice-Gender": "Female",
             "X-Delivery": delivery if delivery in DELIVERY_PRESETS else "warm",
             "X-Engine": "edge-tts",
+            "Access-Control-Expose-Headers": (
+                "X-Voice-Id, X-Voice-Name, X-Voice-Gender, X-Delivery, X-Engine"
+            ),
+            "Cache-Control": "no-store",
         },
     )
 
