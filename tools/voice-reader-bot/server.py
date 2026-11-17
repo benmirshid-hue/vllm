@@ -8,12 +8,15 @@ import io
 import json
 import subprocess
 import tempfile
+import wave
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import Any
+
+import numpy as np
 
 import edge_tts
 import speech_recognition as sr
@@ -30,10 +33,10 @@ VOICE_PERSONA = {
     "default_voice": DEFAULT_VOICE,
     "dialect": "saudi_gulf_white",
     "register": (
-        "You are a real conversation partner on a live Saudi voice call. "
-        "Answer the user's request with understanding. Natural white Saudi "
-        "dialect, continuous spoken sentences, not chopped fragments. "
-        "Never echo the user word-for-word. Never open with formal salam."
+        "You are on a live Saudi voice call like Cursor/Grok voice mode: "
+        "listen, understand, answer helpfully in natural white Saudi dialect. "
+        "Speak in continuous sentences meant for TTS. No chopped fragments, "
+        "no bullet lists, no markdown. Never echo the user. Be warm and direct."
     ),
     "samples": [
         "فهمت عليك. خلّيني أصلّح مسار الصوت وأرجّع لك يشتغل.",
@@ -41,7 +44,7 @@ VOICE_PERSONA = {
         "أبغى نكمل مكالمة صوتية طبيعية، مو تكرار نص.",
         "تمام، هذا طلبك واضح وبشتغل عليه دحين.",
     ],
-    "opener": "هلا، تكلّمي.",
+    "opener": "هلا، معك على المكالمة. تكلّمي.",
 }
 
 # Every skill enabled at once on the voice↔voice path.
@@ -107,6 +110,9 @@ FALLBACK_VOICES = [
 _voice_cache: dict[str, Any] = {"ts": 0.0, "voices": list(FALLBACK_VOICES)}
 _voice_lock = asyncio.Lock()
 _started_at = time.time()
+
+_whisper_model = None
+_whisper_lock = asyncio.Lock()
 
 app = FastAPI(title="Arabic Female Voice Call Bot")
 app.add_middleware(
@@ -235,7 +241,7 @@ async def synthesize_mp3(text: str, voice_name: str, delivery: str) -> tuple[byt
 
 
 def _audio_bytes_to_wav(data: bytes, suffix: str) -> Path:
-    """Decode browser MediaRecorder blobs robustly (webm/ogg/mp4/wav)."""
+    """Decode browser audio (prefer WAV PCM from client) to 16 kHz mono."""
     suf = (suffix or ".webm").lower()
     if suf not in {".webm", ".ogg", ".opus", ".mp4", ".m4a", ".wav", ".mpeg", ".mp3"}:
         suf = ".webm"
@@ -243,26 +249,26 @@ def _audio_bytes_to_wav(data: bytes, suffix: str) -> Path:
         src.write(data)
         src_path = Path(src.name)
     dst = Path(tempfile.mkstemp(suffix=".wav")[1])
+    af = "loudnorm=I=-16:TP=-1.5:LRA=11"
     attempts = [
         [
             "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
             "-fflags", "+discardcorrupt+genpts",
             "-err_detect", "ignore_err",
             "-i", str(src_path),
-            "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1",
-            str(dst),
-        ],
-        [
-            "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
-            "-f", "webm",
-            "-i", str(src_path),
-            "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1",
+            "-vn", "-af", af, "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1",
             str(dst),
         ],
         [
             "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
             "-i", str(src_path),
-            "-ar", "16000", "-ac", "1",
+            "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1",
+            str(dst),
+        ],
+        [
+            "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+            "-f", "webm", "-i", str(src_path),
+            "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1",
             str(dst),
         ],
     ]
@@ -284,32 +290,77 @@ def _audio_bytes_to_wav(data: bytes, suffix: str) -> Path:
             pass
 
 
+def _load_whisper():
+    global _whisper_model
+    if _whisper_model is not None:
+        return _whisper_model
+    try:
+        from faster_whisper import WhisperModel
+
+        _whisper_model = WhisperModel("tiny", device="cpu", compute_type="int8")
+    except Exception:
+        _whisper_model = False
+    return _whisper_model
+
+
+def _transcribe_whisper(wav_path: Path) -> tuple[str, float | None]:
+    model = _load_whisper()
+    if not model:
+        return "", None
+    try:
+        with wave.open(str(wav_path), "rb") as wf:
+            if wf.getnchannels() != 1 or wf.getsampwidth() != 2:
+                return "", None
+            audio = (
+                np.frombuffer(wf.readframes(wf.getnframes()), dtype=np.int16).astype(
+                    np.float32
+                )
+                / 32768.0
+            )
+        segments, _info = model.transcribe(
+            audio,
+            language="ar",
+            beam_size=1,
+            vad_filter=False,
+            without_timestamps=True,
+        )
+        text = " ".join(seg.text.strip() for seg in segments).strip()
+        return text, None
+    except Exception:
+        return "", None
+
+
 def transcribe_audio_keep_soft(wav_path: Path) -> tuple[str, float | None]:
-    """Transcribe without dropping quiet/unclear audio (no confidence gate)."""
+    """Arabic ASR: Google first, Whisper tiny fallback. Never drop on low confidence."""
     recognizer = sr.Recognizer()
     recognizer.energy_threshold = 15
     recognizer.dynamic_energy_threshold = False
-    with sr.AudioFile(str(wav_path)) as source:
-        audio = recognizer.record(source)
+    text = ""
+    conf_f = None
     try:
+        with sr.AudioFile(str(wav_path)) as source:
+            audio = recognizer.record(source)
         result = recognizer.recognize_google(audio, language="ar-SA", show_all=True)
+        if isinstance(result, str):
+            text = result.strip()
+        elif result:
+            alts = result.get("alternative") or []
+            if alts:
+                top = alts[0]
+                text = str(top.get("transcript") or "").strip()
+                try:
+                    conf_f = float(top["confidence"]) if top.get("confidence") is not None else None
+                except Exception:
+                    conf_f = None
     except Exception:
-        return "", None
-    if not result:
-        return "", None
-    if isinstance(result, str):
-        return result.strip(), None
-    alts = result.get("alternative") or []
-    if not alts:
-        return "", None
-    # Keep the top alternative even with missing/low confidence — never drop.
-    top = alts[0]
-    text = str(top.get("transcript") or "").strip()
-    conf = top.get("confidence")
-    try:
-        conf_f = float(conf) if conf is not None else None
-    except Exception:
-        conf_f = None
+        text = ""
+
+    if len(text) >= 2:
+        return text, conf_f
+
+    wh_text, wh_conf = _transcribe_whisper(wav_path)
+    if wh_text:
+        return wh_text, wh_conf
     return text, conf_f
 
 
@@ -364,6 +415,7 @@ def ask_reply_model(user_text: str, history_json: str = "") -> str:
 @app.on_event("startup")
 async def warmup_voices() -> None:
     await load_arabic_female_voices(force=True)
+    await asyncio.to_thread(_load_whisper)
 
 
 @app.get("/api/health")
@@ -383,6 +435,8 @@ async def health() -> dict:
         "skills_count": len(ALL_SKILLS),
         "content_filters": False,
         "content_restrictions": False,
+        "asr": ["google-ar-SA", "whisper-tiny"],
+        "call_mode": "voice-to-voice",
     }
 
 

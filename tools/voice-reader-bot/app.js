@@ -40,17 +40,17 @@
 
   const DEFAULT_VOICE = "Zariyah";
   const API_BASE = "";
-  const HISTORY_KEY = "voice-bot-history-v15";
-  const MEMORY_KEY = "voice-bot-memory-v15";
-  const VOICE_KEY = "voice-bot-voice-v15";
-  const DELIVERY_KEY = "voice-bot-delivery-v15";
-  const CALL_OPENER = "هلا، تكلّمي.";
+  const HISTORY_KEY = "voice-bot-history-v16";
+  const MEMORY_KEY = "voice-bot-memory-v16";
+  const VOICE_KEY = "voice-bot-voice-v16";
+  const DELIVERY_KEY = "voice-bot-delivery-v16";
+  const CALL_OPENER = "هلا، معك على المكالمة. تكلّمي.";
 
   // Sensitive VAD — catch whispers; do not require clear words.
-  const WHISPER_RMS = 0.0012;
-  const SILENCE_MS = 700;
-  const MIN_SPEECH_MS = 350;
-  const MAX_UTTERANCE_MS = 20000;
+  const WHISPER_RMS = 0.0035;
+  const SILENCE_MS = 900;
+  const MIN_SPEECH_MS = 280;
+  const MAX_UTTERANCE_MS = 25000;
 
   let catalog = FALLBACK_VOICES.slice();
   let history = loadJson(HISTORY_KEY, []);
@@ -67,13 +67,13 @@
   let micStream = null;
   let lastBotText = "";
   let listenGeneration = 0;
-  let mediaRecorder = null;
   let vadAnalyser = null;
   let vadSource = null;
+  let vadProcessor = null;
   let vadRaf = 0;
-  let captureChunks = [];
   let capturing = false;
-  let vadCloneTracks = [];
+  let pcmChunks = [];
+  let pcmSampleRate = 48000;
 
   function loadJson(key, fallback) {
     try {
@@ -243,21 +243,54 @@
       cancelAnimationFrame(vadRaf);
       vadRaf = 0;
     }
-    if (mediaRecorder && mediaRecorder.state !== "inactive") {
-      try { mediaRecorder.stop(); } catch (_) {}
-    }
-    mediaRecorder = null;
     capturing = false;
-    captureChunks = [];
+    pcmChunks = [];
+    if (vadProcessor) {
+      try { vadProcessor.disconnect(); } catch (_) {}
+      vadProcessor.onaudioprocess = null;
+      vadProcessor = null;
+    }
     if (vadSource) {
       try { vadSource.disconnect(); } catch (_) {}
       vadSource = null;
     }
     vadAnalyser = null;
-    vadCloneTracks.forEach((t) => {
-      try { t.stop(); } catch (_) {}
-    });
-    vadCloneTracks = [];
+  }
+
+  function encodeWavBlob(floatChunks, sampleRate) {
+    let length = 0;
+    for (const c of floatChunks) length += c.length;
+    const samples = new Float32Array(length);
+    let off = 0;
+    for (const c of floatChunks) {
+      samples.set(c, off);
+      off += c.length;
+    }
+    const buffer = new ArrayBuffer(44 + samples.length * 2);
+    const view = new DataView(buffer);
+    const writeStr = (o, s) => {
+      for (let i = 0; i < s.length; i += 1) view.setUint8(o + i, s.charCodeAt(i));
+    };
+    writeStr(0, "RIFF");
+    view.setUint32(4, 36 + samples.length * 2, true);
+    writeStr(8, "WAVE");
+    writeStr(12, "fmt ");
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeStr(36, "data");
+    view.setUint32(40, samples.length * 2, true);
+    let idx = 44;
+    for (let i = 0; i < samples.length; i += 1) {
+      const s = Math.max(-1, Math.min(1, samples[i]));
+      view.setInt16(idx, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+      idx += 2;
+    }
+    return new Blob([buffer], { type: "audio/wav" });
   }
 
   async function fetchFemaleTtsBlob(text, voiceName, delivery) {
@@ -388,8 +421,8 @@
 
   async function sendVoiceTurn(blob) {
     const form = new FormData();
-    const mime = blob.type || "audio/webm";
-    const ext = mime.includes("mp4") ? "mp4" : mime.includes("ogg") ? "ogg" : "webm";
+    const mime = blob.type || "audio/wav";
+    const ext = mime.includes("wav") ? "wav" : mime.includes("mp4") ? "mp4" : mime.includes("ogg") ? "ogg" : "webm";
     form.append("audio", blob, `utterance.${ext}`);
     form.append("voice", activeVoiceName);
     form.append("delivery", selectedDelivery());
@@ -433,7 +466,7 @@
     setMicEnabled(false);
     activeVoiceName = selectedVoiceName();
     setStatus("أسمع وأرد بالصوت…");
-    liveCaption.textContent = "مسار صوت↔صوت — بدون بوابة نص.";
+    liveCaption.textContent = "أفهمك وأرد بالصوت…";
 
     try {
       const turn = await sendVoiceTurn(blob);
@@ -474,79 +507,74 @@
     }
     const gen = ++listenGeneration;
     setMicEnabled(true);
-    setStatus("أسمعك… بما فيه الهمس");
-    liveCaption.textContent = "التقاط مباشر — الهمس والكلام غير الواضح ما ينحذف.";
+    setStatus("أسمعك… زي مكالمة حية");
+    liveCaption.textContent = "مكالمة صوت↔صوت — تكلمين وأرد عليك.";
 
     const ctx = ensureAudio();
     try {
       if (ctx.state === "suspended") await ctx.resume();
     } catch (_) {}
+    pcmSampleRate = ctx.sampleRate || 48000;
 
-    // Clone mic track for VAD so MediaRecorder keeps a clean original stream.
-    vadCloneTracks.forEach((t) => {
-      try { t.stop(); } catch (_) {}
-    });
-    vadCloneTracks = [];
+    if (vadProcessor) {
+      try { vadProcessor.disconnect(); } catch (_) {}
+      vadProcessor.onaudioprocess = null;
+      vadProcessor = null;
+    }
     if (vadSource) {
       try { vadSource.disconnect(); } catch (_) {}
       vadSource = null;
     }
-    let vadStream = micStream;
-    try {
-      const clones = micStream.getAudioTracks().map((t) => t.clone());
-      vadCloneTracks = clones;
-      vadStream = new MediaStream(clones);
-    } catch (_) {
-      vadStream = micStream;
-    }
-    vadSource = ctx.createMediaStreamSource(vadStream);
+
+    vadSource = ctx.createMediaStreamSource(micStream);
     vadAnalyser = ctx.createAnalyser();
     vadAnalyser.fftSize = 2048;
-    vadSource.connect(vadAnalyser);
-
-    const mime = pickRecorderMime();
-    captureChunks = [];
+    // ScriptProcessor keeps raw PCM for a reliable WAV upload (no broken webm).
+    const frame = 4096;
+    vadProcessor = ctx.createScriptProcessor(frame, 1, 1);
+    pcmChunks = [];
     capturing = false;
     let speechStartedAt = 0;
     let lastLoudAt = 0;
     let utteranceStartedAt = 0;
-    const armedAt = performance.now();
+    let finishing = false;
 
-    try {
-      mediaRecorder = mime
-        ? new MediaRecorder(micStream, { mimeType: mime })
-        : new MediaRecorder(micStream);
-    } catch (err) {
-      setStatus(`MediaRecorder غير متاح: ${err.message}`);
-      return;
-    }
+    vadSource.connect(vadAnalyser);
+    vadSource.connect(vadProcessor);
+    // Keep processor alive without audible monitor feedback.
+    const mute = ctx.createGain();
+    mute.gain.value = 0;
+    vadProcessor.connect(mute);
+    mute.connect(ctx.destination);
 
-    mediaRecorder.ondataavailable = (ev) => {
-      if (ev.data && ev.data.size) captureChunks.push(ev.data);
-    };
-    mediaRecorder.onstop = async () => {
-      if (gen !== listenGeneration) return;
-      const blob = new Blob(captureChunks, { type: (mediaRecorder && mediaRecorder.mimeType) || "audio/webm" });
-      captureChunks = [];
+    const finishUtterance = async () => {
+      if (finishing || gen !== listenGeneration) return;
+      finishing = true;
+      const chunks = pcmChunks;
+      pcmChunks = [];
       capturing = false;
-      if (!blob.size) {
-        if (inCall && !busy && !isSpeaking) queueTimer = setTimeout(() => { listenLoop(); }, 250);
+      if (!chunks.length) {
+        finishing = false;
+        if (inCall && !busy && !isSpeaking) queueTimer = setTimeout(() => { listenLoop(); }, 200);
         return;
       }
-      await handleVoiceBlob(blob);
+      const blob = encodeWavBlob(chunks, pcmSampleRate);
+      // Disconnect outside the audio callback to avoid glitches.
+      setTimeout(async () => {
+        stopCapturePipeline();
+        await handleVoiceBlob(blob);
+      }, 0);
     };
 
-    const tick = () => {
-      if (gen !== listenGeneration || !inCall || busy || isSpeaking) return;
-      if (ctx.state === "suspended") {
-        ctx.resume().catch(() => {});
-      }
-      const rms = rmsFromAnalyser(vadAnalyser);
+    vadProcessor.onaudioprocess = (ev) => {
+      if (gen !== listenGeneration || !inCall || busy || isSpeaking || finishing) return;
+      const input = ev.inputBuffer.getChannelData(0);
+      // RMS on this frame
+      let sum = 0;
+      for (let i = 0; i < input.length; i += 1) sum += input[i] * input[i];
+      const rms = Math.sqrt(sum / input.length);
       const now = performance.now();
       const loud = rms >= WHISPER_RMS;
-      if ((now - armedAt) > 400 && (now - armedAt) < 520) {
-        liveCaption.textContent = `أسمعك — مستوى ${rms.toFixed(4)}`;
-      }
 
       if (loud) {
         lastLoudAt = now;
@@ -554,27 +582,30 @@
           capturing = true;
           speechStartedAt = now;
           utteranceStartedAt = now;
-          captureChunks = [];
-          try {
-            mediaRecorder.start(100);
-            liveCaption.textContent = `يلتقط… (rms ${rms.toFixed(3)})`;
-            setStatus("ألتقط صوتك…");
-          } catch (_) {
-            capturing = false;
-          }
+          pcmChunks = [];
+          liveCaption.textContent = `ألتقط… (${rms.toFixed(3)})`;
+          setStatus("ألتقط صوتك…");
         }
       }
 
       if (capturing) {
+        pcmChunks.push(new Float32Array(input));
         const spokenFor = now - speechStartedAt;
         const silentFor = now - lastLoudAt;
         const tooLong = now - utteranceStartedAt > MAX_UTTERANCE_MS;
         if ((spokenFor >= MIN_SPEECH_MS && silentFor >= SILENCE_MS) || tooLong) {
-          try { mediaRecorder.stop(); } catch (_) {}
-          return;
+          finishUtterance();
         }
       }
+    };
 
+    // Safety tick for AudioContext resume + UI heartbeat
+    const tick = () => {
+      if (gen !== listenGeneration || !inCall) return;
+      if (ctx.state === "suspended") ctx.resume().catch(() => {});
+      if (!busy && !isSpeaking && !capturing) {
+        liveCaption.textContent = "أسمعك — جاهزة";
+      }
       vadRaf = requestAnimationFrame(tick);
     };
     vadRaf = requestAnimationFrame(tick);
@@ -687,6 +718,17 @@
     replyModeEl.disabled = true;
     replyModeEl.title = "كل المهارات مفعّلة معًا";
   }
+  callPulse?.addEventListener("click", () => {
+    if (!inCall) return;
+    if (isSpeaking || busy) {
+      stopSpeech();
+      isSpeaking = false;
+      busy = false;
+      setMicEnabled(true);
+      setStatus("قاطعتِ — تكلّمي.");
+      listenLoop();
+    }
+  });
   startCallBtn.addEventListener("click", () => { startCall(); });
   endCallBtn.addEventListener("click", endCall);
   sendBtn.addEventListener("click", async () => {
