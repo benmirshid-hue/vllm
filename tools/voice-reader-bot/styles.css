@@ -211,35 +211,3 @@ button.danger {
   color: var(--muted);
 }
 
-.admin-card {
-  margin-bottom: 0.9rem;
-  padding: 0.9rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: #17121c;
-}
-
-.admin-card h2 {
-  margin: 0 0 0.35rem;
-  font-size: 1rem;
-}
-
-.admin-note {
-  margin: 0 0 0.7rem;
-  color: var(--muted);
-  font-size: 0.85rem;
-  line-height: 1.55;
-}
-
-.svc-log {
-  margin: 0.4rem 0 0;
-  padding: 0.7rem 0.8rem;
-  border-radius: 10px;
-  background: #120e16;
-  border: 1px solid var(--border);
-  color: var(--muted);
-  white-space: pre-wrap;
-  font-size: 0.8rem;
-  line-height: 1.55;
-  overflow-x: auto;
-}

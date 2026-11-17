@@ -12,8 +12,8 @@
       <p class="eyebrow">edge-tts · صوت ↔ صوت · رد ذكي</p>
       <h1>بوت المكالمة الصوتية</h1>
       <p class="subtitle">
-        16 صوت عربي أنثوي عبر edge-tts بدون أصوات نظام الجهاز.
-        رد ذكي سياقي. بدون دلع أو إغراء. المحتوى الجنسي محظور.
+        16 صوت عربي أنثوي عبر edge-tts. اختر الصوت، ابدأ المكالمة، والرد الذكي يفهم السياق.
+        بدون محتوى جنسي أو دلع.
       </p>
     </header>
 
@@ -28,17 +28,17 @@
       </div>
 
       <label class="control">
-        <span>الصوت العربي الأنثوي</span>
+        <span>الصوت العربي الأنثوي (16)</span>
         <select id="voice"></select>
       </label>
       <label class="control">
         <span>أسلوب الإلقاء</span>
         <select id="delivery">
-          <option value="warm">واضح دافئ</option>
+          <option value="warm">واضح</option>
           <option value="soft">ناعم</option>
           <option value="calm">هادئ</option>
-          <option value="lively">سريع قليلاً</option>
-          <option value="close">بطيء واضح</option>
+          <option value="lively">أسرع قليلاً</option>
+          <option value="close">أبطأ أوضح</option>
         </select>
       </label>
       <label class="control">
@@ -51,17 +51,7 @@
           <option value="balanced">متوازن</option>
         </select>
       </label>
-      <p id="voiceHint" class="hint">جارٍ الربط…</p>
-    </section>
-
-    <section class="admin-card" id="adminPanel">
-      <h2>إدارة الخدمات</h2>
-      <p class="admin-note">يتحكم فقط بخدمات هذا البوت داخل المجلد. لا يلمس برامجك الشخصية.</p>
-      <div class="call-actions">
-        <button id="svcStatus" type="button" class="secondary">حالة الخدمات</button>
-        <button id="svcRestartTts" type="button" class="secondary">إعادة تحميل الأصوات</button>
-      </div>
-      <pre id="svcLog" class="svc-log" aria-live="polite">—</pre>
+      <p id="voiceHint" class="hint">جارٍ تحميل الأصوات…</p>
     </section>
 
     <section id="chat" class="chat" aria-live="polite"></section>
