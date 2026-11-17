@@ -3,19 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>بوتك الشخصي</title>
+  <title>مكالمة صوتية أنثوية</title>
   <style>
 :root {
-  --panel: #1e1f24;
-  --text: #f4f4f5;
-  --muted: #a1a1aa;
-  --accent: #7c9cff;
-  --accent-strong: #a8bfff;
-  --voice: #e8a0bf;
-  --voice-strong: #f0bfd4;
-  --border: #2f333c;
-  --user: #2a3348;
-  --bot: #25262c;
+  --bg: #140f16;
+  --panel: #221925;
+  --text: #f7eef5;
+  --muted: #cbb8c7;
+  --accent: #e8a0bf;
+  --accent-strong: #f3c0d6;
+  --border: #3a2d3d;
+  --danger: #ff7b8a;
 }
 
 * { box-sizing: border-box; }
@@ -25,168 +23,180 @@ body {
   min-height: 100vh;
   font-family: "Segoe UI", "Tahoma", "Arial", sans-serif;
   color: var(--text);
-  background: linear-gradient(165deg, #14151a, #0f1014 70%);
-}
-
-body.voice-mode {
   background:
-    radial-gradient(ellipse at top, #3a2438 0%, transparent 50%),
-    linear-gradient(165deg, #1a1520, #120e18 70%);
+    radial-gradient(ellipse at top, #3a2438 0%, transparent 52%),
+    linear-gradient(165deg, #140f16, #0d0a10 75%);
 }
 
 .app {
-  width: min(760px, 94vw);
-  margin: 1.5rem auto;
-  padding: 1.25rem;
-  background: var(--panel);
+  width: min(680px, 94vw);
+  margin: 1.4rem auto;
+  padding: 1.2rem;
+  background: color-mix(in srgb, var(--panel) 94%, black);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 18px;
 }
 
-body.voice-mode .app {
-  background: color-mix(in srgb, #261f2e 92%, black);
-  border-color: #3b3044;
+.eyebrow {
+  margin: 0 0 0.25rem;
+  color: var(--accent-strong);
+  font-size: 0.85rem;
 }
 
 .header h1 {
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.4rem;
   font-weight: 650;
 }
 
 .subtitle {
-  margin: 0 0 0.9rem;
+  margin: 0 0 1rem;
   color: var(--muted);
   line-height: 1.7;
   font-size: 0.92rem;
 }
 
-.mode-switch {
-  display: flex;
-  gap: 0.45rem;
-  margin-bottom: 1rem;
-}
-
-.mode {
+.call-card {
+  position: relative;
+  padding: 1.1rem;
+  border-radius: 16px;
   border: 1px solid var(--border);
-  background: transparent;
+  background: #1a1320;
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.pulse {
+  width: 72px;
+  height: 72px;
+  margin: 0.2rem auto 0.8rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, #f0bfd4 0%, #e8a0bf 45%, transparent 70%);
+  opacity: 0.55;
+}
+
+.pulse.live {
+  animation: pulse 1.6s ease-in-out infinite;
+  opacity: 0.9;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(0.92); filter: brightness(0.95); }
+  50% { transform: scale(1.08); filter: brightness(1.12); }
+}
+
+.call-state {
+  margin: 0;
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 650;
+}
+
+.caption {
+  margin: 0.35rem 0 1rem;
+  text-align: center;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.call-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+}
+
+.control span {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: var(--accent-strong);
+  font-size: 0.88rem;
+}
+
+select, textarea {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #140f18;
   color: var(--text);
-  border-radius: 999px;
-  padding: 0.45rem 0.95rem;
-  cursor: pointer;
-  font-weight: 600;
+  padding: 0.7rem 0.85rem;
 }
 
-.mode.active {
-  background: var(--accent);
-  color: #0f1220;
-  border-color: transparent;
-}
-
-body.voice-mode .mode.active {
-  background: var(--voice);
-  color: #2a1520;
+.hint {
+  margin: 0.4rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
 }
 
 .chat {
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
-  min-height: 42vh;
-  max-height: 54vh;
+  gap: 0.55rem;
+  max-height: 34vh;
   overflow-y: auto;
-  padding: 0.85rem;
-  margin-bottom: 1rem;
+  padding: 0.7rem;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: #15161a;
+  background: #151018;
+  margin-bottom: 0.8rem;
 }
 
 .bubble {
   max-width: 90%;
-  padding: 0.75rem 0.9rem;
+  padding: 0.65rem 0.8rem;
   border-radius: 12px;
-  line-height: 1.75;
+  line-height: 1.7;
   white-space: pre-wrap;
 }
 
-.bubble.user { align-self: flex-start; background: var(--user); }
-.bubble.bot { align-self: flex-end; background: var(--bot); border: 1px solid var(--border); }
-
+.bubble.user { align-self: flex-start; background: #2a2233; }
+.bubble.bot { align-self: flex-end; background: #312433; border: 1px solid var(--border); }
 .bubble .who {
   display: block;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.2rem;
   color: var(--accent-strong);
-  font-size: 0.78rem;
-}
-
-body.voice-mode .bubble .who { color: var(--voice-strong); }
-
-.field-label,
-.control span {
-  display: block;
-  margin-bottom: 0.35rem;
-  color: var(--accent-strong);
-  font-size: 0.9rem;
-}
-
-body.voice-mode .field-label,
-body.voice-mode .control span { color: var(--voice-strong); }
-
-textarea,
-select,
-input[type="range"] { width: 100%; }
-
-textarea {
-  resize: vertical;
-  padding: 0.9rem 1rem;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: #15161a;
-  color: var(--text);
-  line-height: 1.8;
-  font-size: 1rem;
-}
-
-.controls {
-  display: grid;
-  gap: 0.85rem;
-  margin: 0.9rem 0 0.2rem;
-}
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  margin-top: 0.85rem;
+  font-size: 0.75rem;
 }
 
 button {
   border: 0;
-  border-radius: 10px;
-  padding: 0.7rem 1.15rem;
+  border-radius: 999px;
+  padding: 0.75rem 1.2rem;
   background: var(--accent);
-  color: #0f1220;
-  font-weight: 650;
+  color: #2a1520;
+  font-weight: 700;
   cursor: pointer;
 }
 
-body.voice-mode #send,
-body.voice-mode #mic { background: var(--voice); color: #2a1520; }
-
-button.secondary {
+button.secondary, .fallback summary {
   background: transparent;
   color: var(--text);
   border: 1px solid var(--border);
 }
 
-button.listening {
-  box-shadow: 0 0 0 3px rgba(232, 160, 191, 0.28);
+button.danger {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid color-mix(in srgb, var(--danger) 55%, transparent);
 }
 
-button:disabled { opacity: 0.55; cursor: wait; }
+.fallback {
+  margin-top: 0.5rem;
+  color: var(--muted);
+}
+
+.fallback summary {
+  display: inline-block;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  cursor: pointer;
+  margin-bottom: 0.55rem;
+}
+
+.fallback textarea { margin-bottom: 0.5rem; }
 
 .policy {
-  margin: 0.6rem 0 0;
+  margin: 0.7rem 0 0;
   padding: 0.7rem 0.9rem;
   border-radius: 10px;
   background: #3a2230;
@@ -195,246 +205,126 @@ button:disabled { opacity: 0.55; cursor: wait; }
 }
 
 .status {
-  min-height: 1.35rem;
-  margin-top: 0.9rem;
+  min-height: 1.3rem;
+  margin-top: 0.8rem;
   color: var(--muted);
 }
 
 </style>
 </head>
-<body>
+<body class="call-mode">
   <main class="app">
     <header class="header">
-      <h1>بوتك الشخصي</h1>
+      <p class="eyebrow">مكالمة صوت ↔ صوت</p>
+      <h1>رفيقتك الصوتية</h1>
       <p class="subtitle">
-        محادثة خاصة بك على هذا الجهاز: نصية مثل Cursor، أو صوتية أنثوية دافئة.
-        ليست للمحتوى الجنسي أو الصريح.
+        محادثة مباشرة بالصوت، بصوت أنثوي عربي هادئ.
+        بدون أصوات رجال أو أصوات صينية. ليست لقراءة نص ملصوق، وليست للمحتوى الجنسي الصريح.
       </p>
-      <div class="mode-switch" role="tablist" aria-label="وضع المحادثة">
-        <button id="modeText" type="button" class="mode active" role="tab" aria-selected="true">نصي</button>
-        <button id="modeVoice" type="button" class="mode" role="tab" aria-selected="false">صوتي أنثوي</button>
-      </div>
     </header>
+
+    <section class="call-card">
+      <div id="callPulse" class="pulse" aria-hidden="true"></div>
+      <p id="callState" class="call-state">جاهزة للمكالمة</p>
+      <p id="liveCaption" class="caption">اضغطي «ابدئي المكالمة» وتكلّمي بالعربي.</p>
+
+      <div class="call-actions">
+        <button id="startCall" type="button">ابدئي المكالمة</button>
+        <button id="endCall" type="button" class="danger" hidden>إنهاء</button>
+      </div>
+
+      <label class="control">
+        <span>الصوت الأنثوي العربي فقط</span>
+        <select id="voice"></select>
+      </label>
+      <p id="voiceHint" class="hint"></p>
+    </section>
 
     <section id="chat" class="chat" aria-live="polite"></section>
 
-    <label class="field-label" for="text">رسالتك</label>
-    <textarea
-      id="text"
-      rows="4"
-      placeholder="اكتبي هنا مثل Cursor…"
-    ></textarea>
-
-    <section id="voiceControls" class="controls voice-only" hidden>
-      <label class="control">
-        <span>الصوت الأنثوي</span>
-        <select id="voice"></select>
-      </label>
-      <label class="control">
-        <span>وضوح الأنوثة</span>
-        <input id="pitch" type="range" min="1.25" max="1.75" step="0.05" value="1.58" />
-      </label>
-      <label class="control">
-        <span>نعومة الإيقاع</span>
-        <input id="rate" type="range" min="0.72" max="0.98" step="0.02" value="0.82" />
-      </label>
-    </section>
+    <details class="fallback">
+      <summary>إذا المايك ما اشتغل، اكتبي هنا</summary>
+      <textarea id="text" rows="3" placeholder="اكتبي رسالة قصيرة…"></textarea>
+      <button id="send" type="button" class="secondary">أرسل نصاً</button>
+    </details>
 
     <p id="policyNote" class="policy" hidden></p>
-
-    <div class="actions">
-      <button id="send" type="button">أرسل</button>
-      <button id="mic" type="button" class="voice-only" hidden>تكلّمي</button>
-      <button id="stopVoice" type="button" class="secondary voice-only" hidden>إيقاف الصوت</button>
-      <button id="clear" type="button" class="secondary">مسح المحادثة</button>
-    </div>
-
     <p id="status" class="status" aria-live="polite"></p>
   </main>
   <script>
 (() => {
+  const startCallBtn = document.getElementById("startCall");
+  const endCallBtn = document.getElementById("endCall");
+  const sendBtn = document.getElementById("send");
   const textEl = document.getElementById("text");
+  const voiceEl = document.getElementById("voice");
+  const voiceHint = document.getElementById("voiceHint");
+  const callState = document.getElementById("callState");
+  const liveCaption = document.getElementById("liveCaption");
+  const callPulse = document.getElementById("callPulse");
+  const chatEl = document.getElementById("chat");
   const statusEl = document.getElementById("status");
   const policyNote = document.getElementById("policyNote");
-  const chatEl = document.getElementById("chat");
-  const sendBtn = document.getElementById("send");
-  const clearBtn = document.getElementById("clear");
-  const micBtn = document.getElementById("mic");
-  const stopVoiceBtn = document.getElementById("stopVoice");
-  const modeTextBtn = document.getElementById("modeText");
-  const modeVoiceBtn = document.getElementById("modeVoice");
-  const voiceControls = document.getElementById("voiceControls");
-  const voiceEl = document.getElementById("voice");
-  const pitchEl = document.getElementById("pitch");
-  const rateEl = document.getElementById("rate");
-  const voiceOnlyEls = document.querySelectorAll(".voice-only");
 
-  const TEXT_KEY = "personal-arabic-chat-v1";
-  const VOICE_KEY = "personal-arabic-voice-chat-v1";
-  const MEMORY_KEY = "personal-arabic-companion-memory-v1";
+  const HISTORY_KEY = "personal-call-history-v1";
+  const MEMORY_KEY = "personal-call-memory-v1";
 
+  // Keep soft safety: no explicit sexual content.
   const blockedPatterns = [
     /نيك/i, /أنیک/i, /انيك/i, /طيز/i, /زب\b/i, /كس\b/i, /قحب/i, /ممحون/i, /منيوك/i,
     /\bsex\b/i, /\bporn\b/i, /\bfuck\b/i, /\bcock\b/i, /\bpussy\b/i, /\banal\b/i,
   ];
 
-  const softOpeners = [
-    "همم… خليني أكون معك بهدوء.",
-    "طيب… أنا هنا، وودي أسمعك للنهاية.",
-    "لحظة لطيفة… خليني أرتب الكلام لك بدفء.",
-  ];
+  const softSighs = ["مم…", "آه…", "همم…", "أوه…", "مم مم…"];
 
-  let mode = "text";
-  let history = [];
-  let memory = loadMemory();
+  let history = loadJson(HISTORY_KEY, []);
+  let memory = loadJson(MEMORY_KEY, { name: "", mood: "", notes: [] });
+  let inCall = false;
   let busy = false;
-  let queueTimer = null;
-  let audioCtx = null;
   let recognition = null;
-  let listening = false;
+  let audioCtx = null;
+  let queueTimer = null;
+  let shouldListenAgain = false;
 
-  function storageKey() {
-    return mode === "voice" ? VOICE_KEY : TEXT_KEY;
-  }
-
-  function setStatus(message) {
-    statusEl.textContent = message;
-  }
-
-  function isBlocked(text) {
-    return blockedPatterns.some((pattern) => pattern.test(text));
-  }
-
-  function showPolicy(message) {
-    policyNote.hidden = false;
-    policyNote.textContent = message;
-  }
-
-  function hidePolicy() {
-    policyNote.hidden = true;
-  }
-
-  function defaultMemory() {
-    return {
-      name: "",
-      mood: "",
-      likes: [],
-      worries: [],
-      goals: [],
-      lastCheckInAt: 0,
-      notes: [],
-    };
-  }
-
-  function loadMemory() {
+  function loadJson(key, fallback) {
     try {
-      const raw = localStorage.getItem(MEMORY_KEY);
-      if (!raw) return defaultMemory();
-      return { ...defaultMemory(), ...JSON.parse(raw) };
+      const raw = localStorage.getItem(key);
+      if (!raw) return fallback;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(fallback)) return Array.isArray(parsed) ? parsed : fallback;
+      return { ...fallback, ...parsed };
     } catch (_) {
-      return defaultMemory();
+      return fallback;
     }
+  }
+
+  function saveHistory() {
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(-40))); } catch (_) {}
   }
 
   function saveMemory() {
-    try {
-      localStorage.setItem(MEMORY_KEY, JSON.stringify(memory));
-    } catch (_) {}
+    try { localStorage.setItem(MEMORY_KEY, JSON.stringify(memory)); } catch (_) {}
   }
 
-  function pushUnique(list, value, max = 8) {
-    const clean = value.trim();
-    if (!clean) return;
-    const without = list.filter((item) => item !== clean);
-    without.unshift(clean);
-    return without.slice(0, max);
+  function setStatus(msg) { statusEl.textContent = msg; }
+
+  function isBlocked(text) {
+    return blockedPatterns.some((p) => p.test(text));
   }
 
-  function updateMemoryFromUser(text) {
-    const nameMatch = text.match(/(?:اسمي|ناديني|قلّ?ي لي)\s+([^\s،.!?؟]{2,20})/i);
-    if (nameMatch) memory.name = nameMatch[1];
-
-    if (/تعبان|حزين|ضايق|متوتر|خايف|زهقان|منهار/i.test(text)) {
-      memory.mood = "يحتاج احتواء";
-      memory.worries = pushUnique(memory.worries, text.slice(0, 80));
-    } else if (/فرحان|مرتاح|متحمس|تمام|بخير|سعيد/i.test(text)) {
-      memory.mood = "إيجابي";
-    } else if (/عادي|ماشي الحال/i.test(text)) {
-      memory.mood = "هادئ";
-    }
-
-    const likeMatch = text.match(/(?:أحب|يعجبني|ودي ب|أسوي)\s+(.{3,60})/i);
-    if (likeMatch) memory.likes = pushUnique(memory.likes, likeMatch[1]);
-
-    const goalMatch = text.match(/(?:أبي|أبغى|ودي|هدفي|أحاول)\s+(.{3,60})/i);
-    if (goalMatch) memory.goals = pushUnique(memory.goals, goalMatch[1]);
-
-    if (text.length > 12) {
-      memory.notes = pushUnique(memory.notes, text.slice(0, 100), 10);
-    }
-    memory.lastCheckInAt = Date.now();
-    saveMemory();
+  function showPolicy(msg) {
+    policyNote.hidden = false;
+    policyNote.textContent = msg;
   }
 
-  function memoryContext() {
-    const parts = [];
-    if (memory.name) parts.push(`اسم المستخدم المفضّل: ${memory.name}`);
-    if (memory.mood) parts.push(`آخر مزاج ملاحظ: ${memory.mood}`);
-    if (memory.likes.length) parts.push(`يحب/تهتم بـ: ${memory.likes.slice(0, 3).join("؛ ")}`);
-    if (memory.worries.length) parts.push(`أمور تحتاج متابعة لطيفة: ${memory.worries.slice(0, 3).join("؛ ")}`);
-    if (memory.goals.length) parts.push(`أهداف مذكورة: ${memory.goals.slice(0, 3).join("؛ ")}`);
-    if (memory.notes.length) parts.push(`ملاحظات شخصية سابقة: ${memory.notes.slice(0, 4).join(" | ")}`);
-    return parts.length ? parts.join("\n") : "لا توجد ذكريات كثيرة بعد؛ ابدئي بتعرف لطيف وسؤال عن يومه.";
-  }
-
-  function textSystem() {
-    return [
-      "أنتِ مساعدة محادثة نصية شخصية بالعربية، بأسلوب قريب من مساعد Cursor:",
-      "مفيدة، مباشرة، واضحة، ومتعاونة، ومهتمة بالمستخدم بدون تطفل.",
-      "ممنوع تماماً أي محتوى جنسي أو صريح أو إباحي.",
-      "ذاكرة خاصة بالمستخدم:",
-      memoryContext(),
-    ].join("\n");
-  }
-
-  function voiceSystem() {
-    return [
-      "أنتِ رفيقة صوتية أنثوية دافئة وهادئة وطبيعية بالعربية.",
-      "لستِ قارئ نصوص؛ أنتِ شخص يحاور باهتمام واستباقية لطيفة.",
-      "كوني مبادرة ومهتمة: اسألي عن يومه، تفقدّي شعوره، ذكّريه بلطف بأمور ذكرها سابقاً إن وُجدت.",
-      "قدّمي راحة وتشجيعاً عملياً قصيراً، بدون وعظ ثقيل وبدون أحكام.",
-      "اجعلي الردود أطول قليلاً: 3 إلى 5 جمل قصيرة واضحة تصلح للكلام الصوتي.",
-      "نوّعي التعبير: همم، طيب، أنا معك، خليني أفكر معك، فخور/فخورة فيك على محاولتك.",
-      "اسألي سؤال متابعة واحد دافئ في النهاية غالباً.",
-      "ممنوع تماماً أي محتوى جنسي أو صريح أو إباحي.",
-      "ذاكرة خاصة بالمستخدم (استخدمِها بلطف، لا تسرديها كقائمة):",
-      memoryContext(),
-    ].join("\n");
-  }
-
-  function save() {
-    try {
-      localStorage.setItem(storageKey(), JSON.stringify(history));
-    } catch (_) {}
-  }
-
-  function load() {
-    try {
-      const raw = localStorage.getItem(storageKey());
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (_) {
-      return [];
-    }
-  }
+  function hidePolicy() { policyNote.hidden = true; }
 
   function addBubble(role, text) {
     const bubble = document.createElement("div");
     bubble.className = `bubble ${role}`;
     const who = document.createElement("span");
     who.className = "who";
-    who.textContent = role === "user" ? "أنت" : mode === "voice" ? "رفيقتك" : "بوتك";
+    who.textContent = role === "user" ? "أنت" : "رفيقتك";
     const body = document.createElement("div");
     body.textContent = text;
     bubble.appendChild(who);
@@ -443,70 +333,66 @@ button:disabled { opacity: 0.55; cursor: wait; }
     chatEl.scrollTop = chatEl.scrollHeight;
   }
 
-  function proactiveGreeting() {
-    const name = memory.name ? ` ${memory.name}` : "";
-    if (mode === "voice") {
-      if (memory.mood === "يحتاج احتواء") {
-        return `أهلاً${name}… فكرت فيك. كيف أنت اليوم؟ إذا لسه في شيء يضغط عليك، أنا هنا أسمعك بهدوء وأكون معك.`;
-      }
-      if (memory.goals.length) {
-        return `أهلاً${name}… وحشتني درشتنا. كيف يومك؟ وإلى أي حد مشيت اليوم في موضوع «${memory.goals[0]}»؟ أنا معك بتشجيع هادئ.`;
-      }
-      return `أهلاً${name}… أنا هنا معك. كيف كان يومك إلى الآن؟ تكلّمي أو اكتبي، وأرد عليك بصوت دافئ مع توقفات لطيفة.`;
-    }
-    return `مرحباً${name}. أنا بوتك الشخصي. كيف يومك؟ اكتب لي مثل Cursor، وأرد عليك بالعربية مع متابعة لطيفة لما يهمك.`;
-  }
-
-  function renderAll() {
+  function renderHistory() {
     chatEl.innerHTML = "";
-    if (!history.length) {
-      addBubble("bot", proactiveGreeting());
-      return;
-    }
     history.forEach((item) => {
       if (item.role === "user") addBubble("user", item.content);
       if (item.role === "assistant") addBubble("bot", item.content);
     });
   }
 
-  function scoreFeminineVoice(voice) {
-    const name = `${voice.name} ${voice.lang}`.toLowerCase();
+  function isChineseVoice(voice) {
+    const s = `${voice.name} ${voice.lang}`.toLowerCase();
+    return /zh|cmn|chinese|china|cantonese|mandarin|taiwan|hong kong|yue/.test(s);
+  }
+
+  function isMaleVoice(voice) {
+    const s = `${voice.name} ${voice.lang}`.toLowerCase();
+    if (/female|woman|girl|feminine|samantha|victoria|karen|moira|zira|susan|linda|sara|nora|salma|laila|hoda|aria|jenny|mia|sonia|natasha/.test(s)) {
+      return false;
+    }
+    return /male|man\b|david|mark|george|guy|ryan|andrew|thomas|richard|daniel|james|brian|eric|guy/.test(s);
+  }
+
+  function femininityScore(voice) {
+    const s = `${voice.name} ${voice.lang}`.toLowerCase();
     let score = 0;
-    if (/female|woman|girl|feminine|samantha|victoria|karen|moira|zira|susan|linda|sara|nora|salma|laila|hoda|aria|jenny|neural|natural/.test(name)) score += 6;
-    if (/premium|enhanced|quality|google|microsoft/.test(name)) score += 2;
-    if (/male|man|david|mark|george|guy|ryan|andrew/.test(name)) score -= 6;
-    if (/ar|arab/.test(name)) score += 3;
+    if (isChineseVoice(voice) || isMaleVoice(voice)) return -100;
+    if (/female|woman|girl|feminine/.test(s)) score += 8;
+    if (/samantha|victoria|karen|moira|zira|susan|linda|sara|nora|salma|laila|hoda|aria|jenny|mia|sonia|natasha|neural/.test(s)) score += 6;
+    if (/ar|arab|saudi|egypt|gulf|levant/.test(s)) score += 7;
+    if (/en|us|gb|uk/.test(s)) score += 1;
+    if (/premium|enhanced|natural|quality/.test(s)) score += 2;
     return score;
   }
 
   function populateVoices() {
-    const voices = speechSynthesis.getVoices();
-    const ranked = [...voices].sort((a, b) => scoreFeminineVoice(b) - scoreFeminineVoice(a));
+    const all = speechSynthesis.getVoices();
+    const ranked = all
+      .filter((v) => femininityScore(v) > 0)
+      .sort((a, b) => femininityScore(b) - femininityScore(a));
+
     voiceEl.innerHTML = "";
+    if (!ranked.length) {
+      voiceHint.textContent = "ما لقيت صوت أنثوي مناسب على الجهاز. جرّبي كروم/سفاري وحدّثي أصوات النظام العربية الأنثوية.";
+      return;
+    }
     ranked.forEach((voice, index) => {
-      const option = document.createElement("option");
-      option.value = String(index);
-      option.textContent = `${voice.name} (${voice.lang})`;
-      voiceEl.appendChild(option);
+      const opt = document.createElement("option");
+      opt.value = String(index);
+      opt.textContent = `${voice.name} (${voice.lang})`;
+      voiceEl.appendChild(opt);
     });
-    voiceEl.dataset.ranked = JSON.stringify(
-      ranked.map((voice) => ({ name: voice.name, lang: voice.lang }))
-    );
-    if (ranked.length) voiceEl.selectedIndex = 0;
+    voiceEl.dataset.ranked = JSON.stringify(ranked.map((v) => ({ name: v.name, lang: v.lang })));
+    voiceEl.selectedIndex = 0;
+    voiceHint.textContent = `تم فلترة الأصوات: أنثوي فقط، بدون رجال وبدون صيني. المختار: ${ranked[0].name}`;
   }
 
   function selectedVoice() {
-    const rankedMeta = JSON.parse(voiceEl.dataset.ranked || "[]");
-    const meta = rankedMeta[Number(voiceEl.value)];
+    const ranked = JSON.parse(voiceEl.dataset.ranked || "[]");
+    const meta = ranked[Number(voiceEl.value)];
     if (!meta) return null;
     return speechSynthesis.getVoices().find((v) => v.name === meta.name && v.lang === meta.lang) || null;
-  }
-
-  function splitSentences(text) {
-    return text
-      .split(/(?<=[.!?…。؟！،,;؛])\s+|\n+/)
-      .map((part) => part.trim())
-      .filter(Boolean);
   }
 
   function ensureAudio() {
@@ -518,24 +404,23 @@ button:disabled { opacity: 0.55; cursor: wait; }
   function playBreath(kind = "soft") {
     try {
       const ctx = ensureAudio();
-      const duration = kind === "deep" ? 0.7 : 0.42;
-      const sampleRate = ctx.sampleRate;
-      const frameCount = Math.floor(sampleRate * duration);
-      const buffer = ctx.createBuffer(1, frameCount, sampleRate);
+      const duration = kind === "deep" ? 0.85 : kind === "sigh" ? 0.55 : 0.4;
+      const frameCount = Math.floor(ctx.sampleRate * duration);
+      const buffer = ctx.createBuffer(1, frameCount, ctx.sampleRate);
       const data = buffer.getChannelData(0);
       for (let i = 0; i < frameCount; i += 1) {
         const t = i / frameCount;
-        const envelope = Math.sin(Math.PI * t) * (1 - t * 0.85) * (kind === "deep" ? 0.055 : 0.04);
-        data[i] = (Math.random() * 2 - 1) * envelope;
+        const env = Math.sin(Math.PI * t) * (1 - t * 0.8) * (kind === "deep" ? 0.07 : 0.045);
+        data[i] = (Math.random() * 2 - 1) * env;
       }
-      const source = ctx.createBufferSource();
+      const src = ctx.createBufferSource();
       const filter = ctx.createBiquadFilter();
       filter.type = "lowpass";
-      filter.frequency.value = kind === "deep" ? 700 : 980;
-      source.buffer = buffer;
-      source.connect(filter);
+      filter.frequency.value = kind === "deep" ? 650 : 900;
+      src.buffer = buffer;
+      src.connect(filter);
       filter.connect(ctx.destination);
-      source.start();
+      src.start();
     } catch (_) {}
   }
 
@@ -547,272 +432,257 @@ button:disabled { opacity: 0.55; cursor: wait; }
     speechSynthesis.cancel();
   }
 
-  function speakSentence(sentence, expressiveness, onDone) {
-    const utterance = new SpeechSynthesisUtterance(sentence);
-    const voice = selectedVoice();
-    if (voice) utterance.voice = voice;
-    utterance.lang = (voice && voice.lang) || "ar-SA";
-    const basePitch = Number(pitchEl.value);
-    const baseRate = Number(rateEl.value);
-    utterance.pitch = Math.min(1.8, Math.max(1.2, basePitch + expressiveness.pitchDelta));
-    utterance.rate = Math.min(1.0, Math.max(0.7, baseRate + expressiveness.rateDelta));
-    utterance.volume = expressiveness.volume;
-    utterance.onend = () => onDone();
-    utterance.onerror = () => onDone();
-    speechSynthesis.speak(utterance);
+  function splitParts(text) {
+    return text
+      .split(/(?<=[.!?…。؟！،,;؛])\s+|\n+/)
+      .map((p) => p.trim())
+      .filter(Boolean);
   }
 
-  function expressionFor(sentence, index, total) {
-    const soft = /همم|طيب|خليني|بهـ?دوء|أنا معك|فخور/i.test(sentence);
-    const question = /[؟?]\s*$/.test(sentence);
-    if (index === 0) return { pitchDelta: 0.04, rateDelta: -0.02, volume: 0.95, pause: 780, breath: "soft" };
-    if (question) return { pitchDelta: 0.08, rateDelta: -0.01, volume: 0.92, pause: 940, breath: "soft" };
-    if (soft) return { pitchDelta: 0.02, rateDelta: -0.04, volume: 0.88, pause: 1040, breath: "deep" };
-    if (index === total - 1) return { pitchDelta: 0.03, rateDelta: -0.03, volume: 0.9, pause: 720, breath: "soft" };
-    return { pitchDelta: index % 2 === 0 ? 0.03 : -0.01, rateDelta: -0.015, volume: 0.93, pause: 840, breath: "soft" };
+  function expressionFor(part, index, total) {
+    const soft = /مم|آه|همم|أوه|قربي|دلع|بهـ?دوء|أحس|يا قلبي/i.test(part);
+    const question = /[؟?]\s*$/.test(part);
+    if (index === 0) return { pitch: 1.62, rate: 0.78, vol: 0.95, pause: 900, breath: "soft" };
+    if (soft) return { pitch: 1.68, rate: 0.74, vol: 0.88, pause: 1150, breath: "deep" };
+    if (question) return { pitch: 1.7, rate: 0.8, vol: 0.92, pause: 1000, breath: "sigh" };
+    if (index === total - 1) return { pitch: 1.64, rate: 0.76, vol: 0.9, pause: 800, breath: "soft" };
+    return { pitch: 1.6 + (index % 2) * 0.05, rate: 0.77, vol: 0.93, pause: 950, breath: "soft" };
   }
 
   function speakText(text) {
     return new Promise((resolve) => {
       stopSpeech();
-      const sentences = splitSentences(text);
-      if (!sentences.length) {
+      const parts = splitParts(text);
+      if (!parts.length) {
         resolve();
         return;
       }
-      let index = 0;
+      let i = 0;
       const next = () => {
-        if (index >= sentences.length) {
+        if (i >= parts.length) {
           resolve();
           return;
         }
-        const sentence = sentences[index];
-        const expressiveness = expressionFor(sentence, index, sentences.length);
-        index += 1;
-        speakSentence(sentence, expressiveness, () => {
-          if (index < sentences.length) {
-            playBreath(expressiveness.breath);
-            queueTimer = setTimeout(next, expressiveness.pause);
+        const part = parts[i];
+        const expr = expressionFor(part, i, parts.length);
+        i += 1;
+        const u = new SpeechSynthesisUtterance(part);
+        const voice = selectedVoice();
+        if (voice) u.voice = voice;
+        u.lang = (voice && voice.lang) || "ar-SA";
+        u.pitch = expr.pitch;
+        u.rate = expr.rate;
+        u.volume = expr.vol;
+        u.onend = () => {
+          if (i < parts.length) {
+            playBreath(expr.breath);
+            queueTimer = setTimeout(next, expr.pause);
           } else resolve();
-        });
+        };
+        u.onerror = () => resolve();
+        speechSynthesis.speak(u);
       };
       playBreath("soft");
-      queueTimer = setTimeout(next, 280);
+      queueTimer = setTimeout(next, 320);
     });
   }
 
-  function localFallback(userText) {
-    const name = memory.name ? ` ${memory.name}` : "";
-    if (mode === "voice") {
-      return [
-        softOpeners[Math.floor(Math.random() * softOpeners.length)],
-        `أنا معك${name}، وودي أطمّن عليك بهدوء.`,
-        "يومك مهم عندي، حتى لو كان يوم عادي أو ثقيل.",
-        memory.goals[0]
-          ? ` وإذا تبين، نرجع لخطوة بسيطة من موضوع «${memory.goals[0]}».`
-          : " قولي لي كيف تحس الحين، وأشجعك بجملة عملية لطيفة.",
-        "كيف أقدر أكون مفيدة لك في هاللحظة؟",
-      ].join(" ");
+  function updateMemory(text) {
+    const nameMatch = text.match(/(?:اسمي|ناديني)\s+([^\s،.!?؟]{2,20})/i);
+    if (nameMatch) memory.name = nameMatch[1];
+    if (/تعبان|حزين|ضايق|متوتر/i.test(text)) memory.mood = "يحتاج احتواء";
+    if (/فرحان|تمام|بخير|سعيد/i.test(text)) memory.mood = "إيجابي";
+    if (text.length > 10) {
+      memory.notes = [text.slice(0, 90), ...(memory.notes || [])].slice(0, 8);
     }
-    if (/^(مرحبا|السلام|هلا|أهلا|اهلا)/i.test(userText)) {
-      return `أهلاً${name}. كيف يومك؟ وكيف أقدر أساعدك الآن؟`;
-    }
-    return `فهمت${name}. أعطني تفاصيل أوضح، وأرد عليك مباشرة مع متابعة لما يهمك.`;
+    saveMemory();
   }
 
-  function enrichUserPrompt(userText) {
-    if (mode !== "voice") {
-      return `${userText}\n\nإن ناسب، اسألي بلطف عن يومه أو شعوره مرة واحدة فقط.`;
-    }
+  function systemPrompt() {
+    const mem = [
+      memory.name ? `الاسم: ${memory.name}` : "",
+      memory.mood ? `المزاج: ${memory.mood}` : "",
+      memory.notes?.length ? `ملاحظات: ${memory.notes.slice(0, 3).join(" | ")}` : "",
+    ].filter(Boolean).join("\n") || "لا ذكريات كثيرة بعد.";
+
     return [
-      userText,
-      "",
-      "تذكير للأسلوب: رفيقة مبادرة ومهتمة، راحة + تشجيع، جمل أطول قليلاً، سؤال متابعة دافئ، واستخدمي الذاكرة بلطف إن وُجدت.",
+      "أنتِ رفيقة مكالمة صوتية أنثوية جداً، دلعة، قريبة، دافئة، بهمس ناعم.",
+      "المكالمة صوت إلى صوت: تكلمين كأنكِ على الهاتف، مو قارئ نصوص.",
+      "أعلى درجات القرب والدلع المسموحة عاطفياً: همس، تنفس، آه/مم خفيفة غير جنسية، تشجيع، احتواء.",
+      "اجعلي الرد 3 إلى 5 جمل قصيرة صوتية، مع تنهدات خفيفة مثل: مم… آه… همم…",
+      "كوني مبادرة: اسألي عن يومه، اطمئني عليه، ذكّريه بلطف بما قاله.",
+      "ممنوع تماماً أي محتوى جنسي أو صريح أو إباحي أو أوصاف جسدية جنسية.",
+      "إذا طُلب محتوى جنسي، ارفضي بلطف وارجعي لدلع عاطفي مسموح فقط.",
+      "ذاكرة خاصة:",
+      mem,
     ].join("\n");
+  }
+
+  function localFallback() {
+    const name = memory.name ? ` ${memory.name}` : "";
+    const sigh = softSighs[Math.floor(Math.random() * softSighs.length)];
+    return `${sigh} أنا قريبة منك${name}. مم… يومك عندي مهم. آه… قولي لي كيف تحسين الحين، وأنا أرد عليك بدلع هادئ وقرب أكثر.`;
   }
 
   async function askModel(userText) {
     const messages = [
-      { role: "system", content: mode === "voice" ? voiceSystem() : textSystem() },
-      ...history.slice(-12),
-      { role: "user", content: enrichUserPrompt(userText) },
+      { role: "system", content: systemPrompt() },
+      ...history.slice(-10),
+      {
+        role: "user",
+        content: `${userText}\n\nتذكير: ردي كمكالمة هاتفية أنثوية دلعة جداً مع مم/آه خفيفة غير جنسية، وقرب عالي، وسؤال متابعة دافئ.`,
+      },
     ];
     const response = await fetch("https://text.pollinations.ai/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        messages,
-        model: "openai",
-        seed: Date.now() % 100000,
-      }),
+      body: JSON.stringify({ messages, model: "openai", seed: Date.now() % 100000 }),
     });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    if (!response.ok) throw new Error("bad status");
     const reply = (await response.text()).trim();
     if (!reply) throw new Error("empty");
     return reply;
   }
 
-  async function handleUserMessage(raw, { spoken = false } = {}) {
-    const text = raw.trim();
+  function setCallUi(active) {
+    inCall = active;
+    startCallBtn.hidden = active;
+    endCallBtn.hidden = !active;
+    callPulse.classList.toggle("live", active);
+    callState.textContent = active ? "المكالمة شغّالة" : "جاهزة للمكالمة";
+    liveCaption.textContent = active
+      ? "تكلّمي… أسمعك وأرد عليك بصوت أنثوي دلوع."
+      : "اضغطي «ابدئي المكالمة» وتكلّمي بالعربي.";
+  }
+
+  function getRecognition() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return null;
+    if (recognition) return recognition;
+    recognition = new SR();
+    recognition.lang = "ar-SA";
+    recognition.interimResults = false;
+    recognition.continuous = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      setStatus("أسمعلك الحين…");
+      liveCaption.textContent = "سمعتك جاية… كمّلي بهدوء.";
+    };
+    recognition.onerror = (e) => {
+      setStatus(`مشكلة بالمايك: ${e.error}`);
+      if (inCall && !busy) queueTimer = setTimeout(listenLoop, 700);
+    };
+    recognition.onend = () => {
+      if (shouldListenAgain && inCall && !busy) {
+        queueTimer = setTimeout(listenLoop, 450);
+      }
+    };
+    recognition.onresult = async (event) => {
+      const transcript = Array.from(event.results).map((r) => r[0].transcript).join(" ").trim();
+      if (transcript) await handleUtterance(transcript, true);
+      else if (inCall) queueTimer = setTimeout(listenLoop, 500);
+    };
+    return recognition;
+  }
+
+  function listenLoop() {
+    if (!inCall || busy) return;
+    const rec = getRecognition();
+    if (!rec) {
+      setStatus("المتصفح ما يدعم المايك. استخدمي خانة النص.");
+      return;
+    }
+    shouldListenAgain = true;
+    stopSpeech();
+    try {
+      rec.start();
+    } catch (_) {
+      queueTimer = setTimeout(listenLoop, 800);
+    }
+  }
+
+  async function handleUtterance(text, fromVoice) {
     if (!text || busy) return;
     if (isBlocked(text)) {
-      showPolicy("هذا البوت الشخصي لا يكمل المحتوى الجنسي أو الصريح.");
-      setStatus("تم رفض الرسالة.");
+      showPolicy("ما أكمّل محتوى جنسي صريح. أقدر أكون قريبة ودلعة عاطفياً فقط.");
+      setStatus("تم رفض المحتوى الصريح.");
+      if (inCall) queueTimer = setTimeout(listenLoop, 600);
       return;
     }
 
     busy = true;
-    sendBtn.disabled = true;
-    if (micBtn) micBtn.disabled = true;
+    shouldListenAgain = false;
     hidePolicy();
-    updateMemoryFromUser(text);
+    updateMemory(text);
     history.push({ role: "user", content: text });
     addBubble("user", text);
-    textEl.value = "";
-    save();
-    setStatus(spoken ? "سمعتك… أفكر معك باهتمام…" : "يفكر في الرد…");
+    saveHistory();
+    setStatus(fromVoice ? "مم… خليني أرد عليك…" : "أجهز رد المكالمة…");
+    liveCaption.textContent = "أرد عليك بدلع وقرب…";
 
     let reply;
     try {
       reply = await askModel(text);
     } catch (_) {
-      reply = localFallback(text);
-      setStatus("الخدمة الذكية غير متاحة مؤقتاً؛ استخدمت رداً محلياً دافئاً.");
+      reply = localFallback();
     }
-
     if (isBlocked(reply)) {
-      reply = "أفضل نبتعد عن هذا الموضوع. خلينا نرجع لحديث هادئ ومطمّن. كيف يومك الآن؟";
+      reply = "مم… خلينا نبقى على قرب دافئ مسموح فقط. آه… قولي لي عن يومك، وأنا أقرب لك بالكلام بهدوء.";
     }
-
-    if (mode === "voice" && splitSentences(reply).length < 3) {
-      reply = `${softOpeners[0]} ${reply} وأنا هنا أتابع معك بهدوء: كيف تحس الحين؟`;
+    if (splitParts(reply).length < 3) {
+      reply = `مم… ${reply} آه… وأنا لسه معك، قريبة. كيف تحسين الحين؟`;
     }
 
     history.push({ role: "assistant", content: reply });
     addBubble("bot", reply);
-    save();
-
-    if (mode === "voice") {
-      setStatus("أرد عليك بصوت أنثوي ناعم…");
-      await speakText(reply);
-      setStatus("جاهزة. تكلّمي أو اكتبي.");
-    } else {
-      setStatus("جاهز. اكتب رسالتك التالية.");
-    }
-
+    saveHistory();
+    setStatus("أتكلم معك…");
+    await speakText(reply);
     busy = false;
-    sendBtn.disabled = false;
-    if (micBtn) micBtn.disabled = false;
-    textEl.focus();
+    setStatus(inCall ? "حاضرين… تكلّمي." : "انتهى الرد.");
+    liveCaption.textContent = inCall ? "دورك… تكلّمي." : "اضغطي ابدئي المكالمة.";
+    if (inCall) listenLoop();
   }
 
-  function getRecognition() {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) return null;
-    if (recognition) return recognition;
-    recognition = new SpeechRecognition();
-    recognition.lang = "ar-SA";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    recognition.continuous = false;
-    recognition.onstart = () => {
-      listening = true;
-      micBtn.classList.add("listening");
-      setStatus("أسمعك… تكلّمي بهدوء.");
-    };
-    recognition.onend = () => {
-      listening = false;
-      micBtn.classList.remove("listening");
-      if (!busy) setStatus("انتهى الاستماع.");
-    };
-    recognition.onerror = (event) => {
-      listening = false;
-      micBtn.classList.remove("listening");
-      setStatus(`ما قدرت أسمع بوضوح (${event.error}). اكتبي إن أحببت.`);
-    };
-    recognition.onresult = (event) => {
-      const transcript = Array.from(event.results)
-        .map((result) => result[0].transcript)
-        .join(" ")
-        .trim();
-      if (transcript) handleUserMessage(transcript, { spoken: true });
-      else setStatus("ما التقطت كلاماً واضحاً.");
-    };
-    return recognition;
+  async function startCall() {
+    populateVoices();
+    ensureAudio();
+    setCallUi(true);
+    const open = memory.name
+      ? `مم… أهلاً ${memory.name}. آه… وحشتني صوتك. قولي لي كيف يومك، وأنا قريبة منك بدلع.`
+      : "مم… أهلاً. آه… أنا هنا معك بالمكالمة. قولي لي كيف يومك، وأنا أرد عليك بدلع وقرب عالي.";
+    history.push({ role: "assistant", content: open });
+    addBubble("bot", open);
+    saveHistory();
+    await speakText(open);
+    listenLoop();
   }
 
-  function toggleMic() {
-    const rec = getRecognition();
-    if (!rec) {
-      setStatus("المتصفح ما يدعم المايك. اكتبي الرسالة.");
-      return;
-    }
-    if (listening) {
-      rec.stop();
-      return;
-    }
+  function endCall() {
+    shouldListenAgain = false;
+    busy = false;
     stopSpeech();
-    try {
-      rec.start();
-    } catch (_) {
-      setStatus("اسمحي بصلاحية المايك ثم أعيدي المحاولة.");
+    if (recognition) {
+      try { recognition.stop(); } catch (_) {}
     }
+    setCallUi(false);
+    setStatus("انتهت المكالمة.");
   }
 
-  function setMode(next) {
-    if (busy) return;
-    stopSpeech();
-    if (listening && recognition) recognition.stop();
-    mode = next;
-    const voiceMode = mode === "voice";
-    document.body.classList.toggle("voice-mode", voiceMode);
-    modeTextBtn.classList.toggle("active", !voiceMode);
-    modeVoiceBtn.classList.toggle("active", voiceMode);
-    modeTextBtn.setAttribute("aria-selected", String(!voiceMode));
-    modeVoiceBtn.setAttribute("aria-selected", String(voiceMode));
-    voiceControls.hidden = !voiceMode;
-    voiceOnlyEls.forEach((el) => {
-      el.hidden = !voiceMode;
-    });
-    textEl.placeholder = voiceMode
-      ? "تكلّمي أو اكتبي… أتابع يومك وأرد بصوت دافئ"
-      : "اكتبي هنا مثل Cursor…";
-    history = load();
-    renderAll();
-    setStatus(voiceMode ? "الرفيقة الصوتية جاهزة لتطمّن عليك." : "البوت النصي الشخصي جاهز.");
-    if (voiceMode) populateVoices();
-  }
-
-  function clearChat() {
-    stopSpeech();
-    history = [];
-    save();
-    renderAll();
-    hidePolicy();
-    setStatus("تم مسح محادثة هذا الوضع. الذاكرة الشخصية ما زالت محفوظة محلياً.");
-  }
-
-  sendBtn.addEventListener("click", () => handleUserMessage(textEl.value));
-  clearBtn.addEventListener("click", clearChat);
-  micBtn.addEventListener("click", toggleMic);
-  stopVoiceBtn.addEventListener("click", () => {
-    stopSpeech();
-    if (listening && recognition) recognition.stop();
-    setStatus("توقّف الصوت.");
-  });
-  modeTextBtn.addEventListener("click", () => setMode("text"));
-  modeVoiceBtn.addEventListener("click", () => setMode("voice"));
-  textEl.addEventListener("keydown", (event) => {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-      handleUserMessage(textEl.value);
-    }
+  startCallBtn.addEventListener("click", startCall);
+  endCallBtn.addEventListener("click", endCall);
+  sendBtn.addEventListener("click", () => {
+    const t = textEl.value.trim();
+    textEl.value = "";
+    if (!inCall) setCallUi(true);
+    handleUtterance(t, false);
   });
 
   populateVoices();
   speechSynthesis.onvoiceschanged = populateVoices;
-  setMode("text");
-  textEl.focus();
+  renderHistory();
+  setStatus("جاهزة لمكالمة صوت ↔ صوت أنثوية.");
 })();
 
 </script>
