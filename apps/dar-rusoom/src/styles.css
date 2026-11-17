@@ -1,0 +1,256 @@
+:root {
+  color: #241910;
+  background: #efe4d2;
+  font-family: "IBM Plex Sans Arabic", "Noto Naskh Arabic", Tahoma, sans-serif;
+  line-height: 1.55;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 100% 0, #f7e7c4 0 18rem, transparent 19rem),
+    #efe4d2;
+}
+
+button, input, select, textarea { font: inherit; color: inherit; }
+
+button {
+  background: #241910;
+  color: #f8f1e4;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+}
+
+button.on, .filters button.on, .nav-btn.on {
+  background: #c4522a;
+}
+
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.shell {
+  display: grid;
+  grid-template-columns: 13rem 1fr;
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+}
+
+.top {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #ddcfb8;
+}
+
+.mark { margin: 0; font-size: 1.45rem; font-weight: 700; }
+.mark-sub { margin: 0; color: #6d5c4b; }
+
+.who { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; }
+.who select, .mod-form input, .mod-form select, .mod-form textarea, .filters select, textarea {
+  background: #fffaf2;
+  border: 1px solid #d9cbb6;
+  border-radius: 0.7rem;
+  padding: 0.45rem 0.6rem;
+}
+
+.nav {
+  padding: 1rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  border-inline-end: 1px solid #ddcfb8;
+}
+
+.nav-btn { text-align: start; border-radius: 0.8rem; background: transparent; color: #241910; }
+.nav-btn.on { background: #241910; color: #f8f1e4; }
+
+.stage { padding: 1.25rem; min-width: 0; }
+
+.page-head h1 { margin: 0 0 0.25rem; font-size: 1.8rem; }
+.page-head p, .credit, .note { color: #6d5c4b; }
+
+.poster-grid, .product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 0.9rem;
+}
+
+.poster-card, .channel-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  border-radius: 1rem;
+}
+
+.poster {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 15rem;
+  padding: 0.9rem;
+  border-radius: 1rem;
+  color: #241910;
+  border: 1px solid #24191022;
+}
+
+.poster small, .poster em { font-style: normal; }
+.poster strong { font-size: 1.5rem; }
+.poster-meta, .channel-card span { color: #6d5c4b; font-size: 0.92rem; }
+.poster-meta b, .channel-card b { color: #241910; display: block; }
+
+.channel-card, .product, .cart, .mod-form, .queue li, .stack-list li, .people.cards li {
+  background: #fffaf2;
+  border: 1px solid #e4d5bf;
+  border-radius: 1rem;
+  padding: 0.9rem;
+}
+
+.matte {
+  position: relative;
+  background: #1b140f;
+  border-radius: 1.2rem;
+  overflow: hidden;
+}
+
+.matte video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #1b140f; }
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  padding: 0.7rem;
+  color: #f8f1e4;
+}
+
+.controls input[type="range"] { flex: 1; min-width: 8rem; }
+
+.cinema .matte { max-width: none; }
+
+.preroll, .ad-reel {
+  background: #f3d27a;
+  color: #241910;
+}
+
+.preroll {
+  position: absolute;
+  inset: 0 0 3.4rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  padding: 1.2rem;
+}
+
+.ad-flag {
+  display: inline-block;
+  margin: 0;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  width: fit-content;
+  font-size: 0.8rem;
+}
+
+.chapters, .actions, .filters { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; }
+
+.title-row, .split, .market-layout {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.6rem;
+  margin: 1rem 0;
+}
+
+.stats article {
+  background: #fffaf2;
+  border: 1px solid #e4d5bf;
+  border-radius: 1rem;
+  padding: 0.8rem;
+}
+
+.stats span { display: block; color: #6d5c4b; }
+.stats strong { font-size: 1.3rem; }
+
+.people, .comments, .queue, .stack-list { list-style: none; padding: 0; margin: 0; }
+.people li, .comments li, .queue li, .stack-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid #eadfcd;
+}
+
+.feed {
+  height: calc(100vh - 11rem);
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  border-radius: 1.2rem;
+}
+
+.reel {
+  min-height: 100%;
+  scroll-snap-align: start;
+  position: relative;
+  background: #1b140f;
+  color: #f8f1e4;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 1rem;
+}
+
+.reel video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.reel-copy, .ad-reel .actions, .ad-reel p, .ad-reel strong { position: relative; }
+
+.product-grid { align-content: start; }
+.product h2 { margin: 0.2rem 0; font-size: 1.15rem; }
+.cart { position: sticky; top: 0.5rem; height: fit-content; }
+.cart ul { list-style: none; padding: 0; }
+
+.mod-form, .stack-list { display: grid; gap: 0.7rem; }
+.mod-form { margin-bottom: 1rem; }
+.check { display: flex; gap: 0.4rem; align-items: center; }
+.warn { color: #9d2c22; }
+textarea { min-height: 5rem; width: 100%; }
+
+.stack-list li { align-items: center; }
+.stack-side { display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-start; min-width: 11rem; }
+
+.chat { display: flex; flex-direction: column; gap: 0.55rem; max-width: 42rem; }
+.bubble { margin: 0; background: #fffaf2; border: 1px solid #e4d5bf; border-radius: 1rem; padding: 0.75rem 0.9rem; }
+.bubble.viewer { background: #241910; color: #f8f1e4; }
+.voice-form { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.8rem; }
+.voice-form input { flex: 1; min-width: 12rem; background: #fffaf2; border: 1px solid #d9cbb6; border-radius: 0.7rem; padding: 0.45rem 0.6rem; }
+.stages { display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0; margin: 0 0 1rem; list-style: none; }
+.stages li { background: #fffaf2; border: 1px solid #e4d5bf; border-radius: 999px; padding: 0.3rem 0.7rem; }
+
+@media (max-width: 860px) {
+  .shell { grid-template-columns: 1fr; }
+  .nav { flex-direction: row; overflow-x: auto; border-inline-end: 0; border-bottom: 1px solid #ddcfb8; }
+  .title-row, .split, .market-layout, .stats { grid-template-columns: 1fr; }
+  .feed { height: 70vh; }
+}

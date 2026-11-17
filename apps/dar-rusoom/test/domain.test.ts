@@ -1,0 +1,142 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import {
+  assist,
+  prerollFor,
+  assessSubmission,
+  canCheckout,
+  canComment,
+  canFollow,
+  creatorAdEarnings,
+  initialState,
+  merchantEarnings,
+  profileById,
+  reduce,
+  splitSale,
+  visibleTitles,
+} from "../src/domain.ts";
+
+function adEarningsCheck(): number {
+  return creatorAdEarnings(
+    [
+      {
+        id: "1",
+        adId: "bag",
+        creatorId: "noor-studio",
+        profileId: "layan",
+        at: 1,
+        skipped: false,
+      },
+      {
+        id: "2",
+        adId: "bag",
+        creatorId: "noor-studio",
+        profileId: "layan",
+        at: 2,
+        skipped: true,
+      },
+    ],
+    "noor-studio",
+    0.55,
+  );
+}
+
+test("the assistant offers a fit and opens it only after the viewer accepts", () => {
+  const layan = profileById("layan");
+  const first = assist(layan, "شيء مضحك", []);
+  assert.equal(first.openId, null);
+  assert.deepEqual(first.offerIds, ["bunny"]);
+  assert.equal(first.say.includes("مرحبا"), false);
+  const second = assist(layan, "شغّله", first.offerIds);
+  assert.equal(second.openId, "bunny");
+  const child = assist(profileById("mishaal"), "سينتل", []);
+  assert.equal(child.openId, null);
+  assert.equal(child.say.includes("فوق عمر"), true);
+});
+
+test("guardians still see kids ads they can buy", () => {
+  assert.equal(prerollFor(profileById("layan"))?.id, "bag");
+  assert.equal(prerollFor(profileById("mishaal"))?.id, "bag");
+});
+
+test("child library stays inside the age rating", () => {
+  const titles = visibleTitles(profileById("mishaal")).map((title) => title.id);
+  assert.deepEqual(titles, ["bunny"]);
+});
+
+test("live action is rejected and cannot be approved later", () => {
+  const result = assessSubmission({
+    title: "مباراة",
+    medium: "live-action",
+    rights: true,
+    rating: 7,
+    notes: "",
+  });
+  assert.equal(result.decision, "reject");
+  let state = initialState();
+  state = reduce(state, {
+    type: "submit",
+    submission: { title: "مباراة", medium: "live-action", rights: true, rating: 7, notes: "" },
+  });
+  const id = state.queue[0]?.id;
+  assert.ok(id);
+  state = reduce(state, { type: "resolve", id, decision: "approve" });
+  assert.equal(state.queue[0]?.decision, "reject");
+});
+
+test("animation with rights is approved and a hybrid waits", () => {
+  assert.equal(
+    assessSubmission({ title: "غيمة", medium: "animation", rights: true, rating: 3, notes: "" })
+      .decision,
+    "approve",
+  );
+  assert.equal(
+    assessSubmission({ title: "خلف", medium: "hybrid", rights: true, rating: 7, notes: "" })
+      .decision,
+    "review",
+  );
+  assert.equal(
+    assessSubmission({ title: "بلا حقوق", medium: "anime", rights: false, rating: 7, notes: "" })
+      .decision,
+    "reject",
+  );
+});
+
+test("money split and ad share ignore skipped ads", () => {
+  assert.deepEqual(splitSale(120, 2, 0.12), { gross: 240, platform: 28.8, merchant: 211.2 });
+  assert.equal(adEarningsCheck(), 0.01);
+});
+
+test("child comments and follows stay inside the family gate", () => {
+  const child = profileById("mishaal");
+  assert.equal(canComment(child, "حلو").ok, false);
+  assert.equal(canFollow(child, profileById("layan")), true);
+  assert.equal(canFollow(child, profileById("fahad")), false);
+  assert.equal(canFollow(profileById("fahad"), child), false);
+  assert.equal(canCheckout(child), false);
+  assert.equal(canCheckout(profileById("layan")), true);
+});
+
+test("guardian checkout pays the merchant net and clears the cart", () => {
+  let state = initialState();
+  state = reduce(state, { type: "addCart", productId: "backpack" });
+  state = reduce(state, { type: "checkout" });
+  assert.deepEqual(state.cart, {});
+  assert.equal(state.orders.length, 1);
+  assert.equal(state.orders[0]?.provider, "ledger");
+  const earned = merchantEarnings(state.orders, "noor");
+  assert.equal(earned.gross, 189);
+  assert.equal(earned.platform, 22.68);
+  assert.equal(earned.merchant, 166.32);
+});
+
+test("enterprise payments label the order as Moyasar without charging a card", () => {
+  let state = reduce(initialState(), { type: "layer", key: "payments", mode: "enterprise" });
+  state = reduce(state, { type: "profile", id: "mishaal" });
+  state = reduce(state, { type: "addCart", productId: "pencils" });
+  state = reduce(state, { type: "checkout" });
+  assert.equal(state.orders.length, 0);
+  state = reduce(state, { type: "profile", id: "layan" });
+  state = reduce(state, { type: "checkout" });
+  assert.equal(state.orders[0]?.provider, "moyasar");
+});
