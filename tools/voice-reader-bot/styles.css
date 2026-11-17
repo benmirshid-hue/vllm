@@ -98,6 +98,11 @@ body {
   margin-bottom: 0.9rem;
 }
 
+.control {
+  display: block;
+  margin-top: 0.65rem;
+}
+
 .control span {
   display: block;
   margin-bottom: 0.3rem;
@@ -105,8 +110,11 @@ body {
   font-size: 0.88rem;
 }
 
-select, textarea {
+select, textarea, input[type="range"] {
   width: 100%;
+}
+
+select, textarea {
   border-radius: 12px;
   border: 1px solid var(--border);
   background: #140f18;
