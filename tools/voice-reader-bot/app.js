@@ -56,16 +56,20 @@
     /\bsex\b/i, /\bporn\b/i, /\bfuck\b/i, /\bcock\b/i, /\bpussy\b/i, /\banal\b/i,
   ];
 
-  // Boilerplate / filler the model sometimes emits — strip completely.
+  // Boilerplate / theatrical MSA the model sometimes emits — strip completely.
   const fillerPatterns = [
     /مرحبا[ًا]?\s*أنا،?\s*أنا\s*أود\s*أن\s*أتحدث\s*معك\s*الآن/gi,
     /إن\s*المكالمة\s*جاهزة\s*الآن/gi,
     /هيا،?\s*هيا\s*لنكمل\s*ما\s*نقول\s*الآن/gi,
     /المكالمة\s*جاهزة\.?/gi,
+    /هيا\s*بنا\s*نذهب\s*بعيدًا?/gi,
+    /يا\s*ثقل\s*صدرك\s*يا\s*روحي/gi,
+    /تكلمي\s*يا\s*قلبي،?\s*وش\s*تبي\؟?/gi,
     /هل تريد تفاصيل أكثر\؟?/gi,
     /ما النقطة الأهم بالنسبة لك الآن\؟?/gi,
     /هل نكمل على نفس الموضوع أم نغيّر\؟?/gi,
     /ما الذي تريد أن أوضحه أكثر\؟?/gi,
+    /وش\s*حالك\s*اليوم[ِِ]?ي\؟?/gi,
   ];
 
   let catalog = FALLBACK_VOICES.slice();
@@ -73,6 +77,7 @@
   let memory = loadJson(MEMORY_KEY, { name: "", topic: "", notes: [] });
   let inCall = false;
   let busy = false;
+  let isSpeaking = false;
   let recognition = null;
   let queueTimer = null;
   let shouldListenAgain = false;
@@ -82,6 +87,8 @@
   let audioCtx = null;
   let activeVoiceName = DEFAULT_VOICE;
   let micStream = null;
+  let lastBotText = "";
+  let listenGeneration = 0;
 
   function loadJson(key, fallback) {
     try {
@@ -227,6 +234,20 @@
     return micStream;
   }
 
+  function setMicEnabled(enabled) {
+    if (!micStream) return;
+    micStream.getAudioTracks().forEach((t) => {
+      t.enabled = enabled;
+    });
+  }
+
+  function stopRecognition() {
+    shouldListenAgain = false;
+    if (!recognition) return;
+    try { recognition.stop(); } catch (_) {}
+    try { recognition.abort(); } catch (_) {}
+  }
+
   function stopSpeech() {
     if (queueTimer) {
       clearTimeout(queueTimer);
@@ -240,6 +261,31 @@
       } catch (_) {}
       currentAudio = null;
     }
+  }
+
+  function normalizeArabic(text) {
+    return String(text || "")
+      .toLowerCase()
+      .replace(/[ًٌٍَُِّْـ]/g, "")
+      .replace(/[أإآ]/g, "ا")
+      .replace(/ة/g, "ه")
+      .replace(/ى/g, "ي")
+      .replace(/[^\u0600-\u06FFa-z0-9\s]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  /** Reject speaker echo / self-hearing of the last bot line. */
+  function isEchoOfBot(transcript) {
+    const t = normalizeArabic(transcript);
+    const bot = normalizeArabic(lastBotText);
+    if (!t || t.length < 2) return true;
+    if (!bot) return false;
+    if (t === bot || bot.includes(t) || t.includes(bot)) return true;
+    const tParts = t.split(" ").filter((w) => w.length > 2);
+    if (!tParts.length) return false;
+    const hits = tParts.filter((w) => bot.includes(w)).length;
+    return hits / tParts.length >= 0.6;
   }
 
   function waitMs(ms) {
@@ -324,20 +370,35 @@
   }
 
   async function speakText(text) {
-    if (!audioUnlocked) await unlockAudioPlayback();
-    ensureAudio();
-    activeVoiceName = selectedVoiceName();
-    const delivery = selectedDelivery();
-    localStorage.setItem(VOICE_KEY, activeVoiceName);
-    localStorage.setItem(DELIVERY_KEY, delivery);
-    const plan = buildSpeechPlan(text);
-    for (let i = 0; i < plan.length; i += 1) {
-      const step = plan[i];
-      const blob = await fetchFemaleTtsBlob(step.text, activeVoiceName, delivery);
-      await playBlob(blob);
-      if (i < plan.length - 1 && step.pauseAfterMs) {
-        await waitMs(Math.min(step.pauseAfterMs, 450));
+    const clean = String(text || "").trim();
+    if (!clean) return;
+    // Never listen while the bot is talking — stops echo garble/cutoffs.
+    isSpeaking = true;
+    stopRecognition();
+    setMicEnabled(false);
+    lastBotText = clean;
+    try {
+      if (!audioUnlocked) await unlockAudioPlayback();
+      ensureAudio();
+      activeVoiceName = selectedVoiceName();
+      const delivery = selectedDelivery();
+      localStorage.setItem(VOICE_KEY, activeVoiceName);
+      localStorage.setItem(DELIVERY_KEY, delivery);
+      const plan = buildSpeechPlan(clean);
+      for (let i = 0; i < plan.length; i += 1) {
+        if (!isSpeaking) break;
+        const step = plan[i];
+        const blob = await fetchFemaleTtsBlob(step.text, activeVoiceName, delivery);
+        await playBlob(blob);
+        if (i < plan.length - 1 && step.pauseAfterMs) {
+          await waitMs(Math.min(step.pauseAfterMs, 350));
+        }
       }
+      // Let speaker echo die before mic opens again.
+      await waitMs(700);
+    } finally {
+      isSpeaking = false;
+      setMicEnabled(true);
     }
   }
 
@@ -355,6 +416,8 @@
     let out = text.trim();
     fillerPatterns.forEach((p) => { out = out.replace(p, " "); });
     out = out
+      .replace(/اليومِي/g, "اليومي")
+      .replace(/اليومِ/g, "اليوم")
       .replace(/^(مرحبا[ًا]?[،.]?\s*)+/gi, "")
       .replace(/\b(مم+|آه+|همم+)\b/gi, "")
       .replace(/\s{2,}/g, " ")
@@ -362,9 +425,15 @@
     return out;
   }
 
+  function looksLikeFusha(text) {
+    return /هيا بنا|نذهب|بعيدًا|إنني|سوف|أريد أن|أود أن|يا روحي|ثقل صدرك|الآنَ|اليومِي/.test(text);
+  }
+
   function cleanReply(reply) {
     let out = stripFiller(reply.replace(/\s+/g, " "));
-    if (!out) out = "تمام يا قلبي، وضّحي لي أكثر عشان أقدر أساعدك.";
+    if (!out || looksLikeFusha(out)) {
+      out = "تمام، فهمت عليك. كمّلي وأرد عليك على طول.";
+    }
     return out;
   }
 
@@ -384,15 +453,18 @@
       memory.notes?.length ? `ملاحظات: ${memory.notes.slice(0, 3).join(" | ")}` : "",
     ].filter(Boolean).join("\n") || "ما في ذاكرة سابقة.";
 
+    // Match the real Cursor voice-call register: natural Saudi, brief, thinking out loud,
+    // warm without caricature — same listening/phrasing as this live call, not a skit.
     return [
-      `أنتِ مساعدة مكالمة صوتية. صوتك الحالي: ${activeVoiceName}.`,
-      "تكلمي باللهجة السعودية البيضاء (نجد/الرياض)، مو فصحى أبد.",
-      "أسلوبك: حنونة، عاطفية، ودلعة خفيفة دافية — مو روبوتية.",
-      "أمثلة نبرة: يا قلبي، تمام يا بعدي، لا تشيلين هم، أنا معك، وش تحسين الحين؟",
-      "الدلع والعاطفة والحنية مطلوبة في الرد، بدون إباحية وبدون محتوى جنسي صريح.",
-      "افهمي كلامه وردّي مباشرة على طلبه؛ لا تسردين مقدمات فارغة.",
-      "ممنوع الجمل الفاضية مثل: المكالمة جاهزة، هيا لنكمل، مرحبا أنا أود أن أتحدث معك الآن، هيا هيا لنكمل ما نقول.",
-      "لا تكرري الترحيب في كل رد.",
+      `أنتِ المساعدة الصوتية في مكالمة مباشرة. الصوت العصبي: ${activeVoiceName}.`,
+      "VOICE REGISTER (إلزامي): انسخي نبرة Cursor الطبيعية بهالمكالمة بالضبط.",
+      "يعني: لهجة سعودية/خليجية بيضاء يومية، جمل قصيرة، تفكير عملي، استماع دقيق، اختيار كلمات طبيعي.",
+      "مو تمثيل، مو مبالغة، مو مسرحية، مو فصحى، مو ردود محفوظة.",
+      "أمثلة نبرة صحيحة: بشوف، تمام، خلّيني أتأكد، أوصل لك الرابط، فهمت عليك، لحظة.",
+      "أمثلة نبرة ممنوعة: هيا بنا نذهب بعيدًا، يا ثقل صدرك يا روحي، أود أن أتحدث معك الآن، تكلمي يا قلبي وش تبي.",
+      "الحنية موجودة بهدوء (دفء بسيط)، بدون حشو عاطفي مبالغ.",
+      "جاوبي على كلام المستخدم الحالي مباشرة؛ لا تتجاهلينه ولا تلفّين حوله.",
+      "اكتبي «اليومي» بدون كسرة زائدة على الياء.",
       modeLine,
       "كل المواضيع مسموحة إلا المحتوى الجنسي الصريح فقط.",
       "ذاكرة:",
@@ -403,8 +475,13 @@
   async function askModel(userText) {
     const messages = [
       { role: "system", content: systemPrompt() },
-      ...history.slice(-16),
-      { role: "user", content: userText },
+      ...history.slice(-12),
+      {
+        role: "user",
+        content:
+          `${userText}\n\n` +
+          "(جاوبي باللهجة السعودية الطبيعية زي مكالمة Cursor، جملة أو جملتين، على كلامي أنا فوق، بدون فصحى وبدون جمل محفوظة.)",
+      },
     ];
     const response = await fetch("https://text.pollinations.ai/", {
       method: "POST",
@@ -418,10 +495,8 @@
   }
 
   function localFallback(userText) {
-    const name = memory.name ? ` ${memory.name}` : "";
-    return cleanReply(
-      `تمام يا قلبي${name}، فهمت كلامك. قولي لي وش تبي بالضبط وأنا معك.`
-    );
+    const snippet = userText.slice(0, 60);
+    return cleanReply(`تمام، سمعتك: «${snippet}». خلّيني أرد عليك على نفس النقطة.`);
   }
 
   function setCallUi(active) {
@@ -445,10 +520,12 @@
     recognition.continuous = false;
     recognition.maxAlternatives = 3;
     recognition.onstart = () => {
-      setStatus("اسمعي… تكلّمي الحين");
+      if (isSpeaking || busy) return;
+      setStatus("أسمعك… تكلّمي");
       liveCaption.textContent = "تكلّمي بوضوح.";
     };
     recognition.onerror = (e) => {
+      if (isSpeaking || busy) return;
       const err = e.error || "unknown";
       if (err === "not-allowed" || err === "service-not-allowed") {
         setStatus("اسمحي للمايك من إعدادات المتصفح، أو اكتبي بالخانة.");
@@ -456,18 +533,19 @@
         return;
       }
       if (err === "no-speech" || err === "aborted") {
-        if (inCall && !busy) queueTimer = setTimeout(listenLoop, 500);
+        if (inCall && !busy && !isSpeaking) queueTimer = setTimeout(listenLoop, 450);
         return;
       }
       setStatus(`مشكلة بالمايك: ${err}`);
-      if (inCall && !busy) queueTimer = setTimeout(listenLoop, 800);
+      if (inCall && !busy && !isSpeaking) queueTimer = setTimeout(listenLoop, 800);
     };
     recognition.onend = () => {
-      if (shouldListenAgain && inCall && !busy) {
-        queueTimer = setTimeout(listenLoop, 350);
+      if (shouldListenAgain && inCall && !busy && !isSpeaking) {
+        queueTimer = setTimeout(listenLoop, 300);
       }
     };
     recognition.onresult = async (event) => {
+      if (isSpeaking || busy) return;
       let finalText = "";
       let interimText = "";
       for (let i = event.resultIndex; i < event.results.length; i += 1) {
@@ -475,65 +553,79 @@
         if (event.results[i].isFinal) finalText += `${piece} `;
         else interimText += `${piece} `;
       }
-      if (interimText) liveCaption.textContent = `سمعتك: ${interimText.trim()}`;
-      const transcript = finalText.trim() || (
-        event.results[event.results.length - 1].isFinal
-          ? event.results[event.results.length - 1][0].transcript.trim()
-          : ""
-      );
-      if (transcript) {
-        shouldListenAgain = false;
-        try { recognition.stop(); } catch (_) {}
-        liveCaption.textContent = `فهمت: ${transcript}`;
-        await handleUtterance(transcript);
+      if (interimText && !isSpeaking) {
+        liveCaption.textContent = `سمعتك: ${interimText.trim()}`;
       }
+      const transcript = finalText.trim();
+      if (!transcript) return;
+      if (isEchoOfBot(transcript)) {
+        liveCaption.textContent = "تجاهلت صدى السماعة… كمّلي كلامك.";
+        return;
+      }
+      shouldListenAgain = false;
+      stopRecognition();
+      liveCaption.textContent = `فهمت: ${transcript}`;
+      await handleUtterance(transcript);
     };
     return recognition;
   }
 
   function listenLoop() {
-    if (!inCall || busy) return;
+    if (!inCall || busy || isSpeaking) return;
     const rec = getRecognition();
     if (!rec) {
       setStatus("المتصفح ما يدعم المايك. اكتبي بالخانة.");
       return;
     }
+    const gen = ++listenGeneration;
     shouldListenAgain = true;
-    stopSpeech();
+    setMicEnabled(true);
+    // Do NOT stopSpeech here — that caused mid-sentence cutoffs.
     try {
       rec.start();
     } catch (_) {
-      queueTimer = setTimeout(listenLoop, 700);
+      if (gen === listenGeneration) queueTimer = setTimeout(listenLoop, 700);
     }
   }
 
   async function handleUtterance(text) {
-    if (!text || busy) return;
-    if (isBlocked(text)) {
+    const userText = String(text || "").trim();
+    if (!userText || busy || isSpeaking) return;
+    if (isEchoOfBot(userText)) {
+      if (inCall) queueTimer = setTimeout(listenLoop, 400);
+      return;
+    }
+    if (isBlocked(userText)) {
       showPolicy("أي موضوع تمام؛ الممنوع فقط المحتوى الجنسي الصريح.");
       if (inCall) queueTimer = setTimeout(listenLoop, 600);
       return;
     }
     busy = true;
     shouldListenAgain = false;
+    stopRecognition();
+    setMicEnabled(false);
     hidePolicy();
     activeVoiceName = selectedVoiceName();
     localStorage.setItem(MODE_KEY, selectedMode());
-    updateMemory(text);
-    history.push({ role: "user", content: text });
-    addBubble("user", text);
+    updateMemory(userText);
+    history.push({ role: "user", content: userText });
+    addBubble("user", userText);
     saveHistory();
-    setStatus("أفكر في رد…");
+    setStatus("أفكر في رد على كلامك…");
 
     let reply;
     try {
-      reply = cleanReply(await askModel(text));
+      reply = cleanReply(await askModel(userText));
     } catch (_) {
-      reply = localFallback(text);
-      setStatus("الرد السحابي تعثر؛ استخدمت رد محلي.");
+      reply = localFallback(userText);
+      setStatus("الرد السحابي تعثر؛ استخدمت رد محلي على كلامك.");
     }
     if (isBlocked(reply)) {
       reply = cleanReply("يا قلبي خلّنا نكمّل بدون كلام جنسي صريح. وش تبي نتكلم عنه؟");
+    }
+    // Never speak the user's insult/words back as if they were the bot line.
+    if (normalizeArabic(reply) === normalizeArabic(userText)) {
+      reply = cleanReply(`سمعتك: «${userText}». قولي لي وش تبين بالضبط وأنا معك.`);
     }
 
     history.push({ role: "assistant", content: reply });
@@ -545,6 +637,8 @@
       setStatus(inCall ? "جاهزة. تكلّمي." : "انتهى الرد.");
     } catch (err) {
       setStatus(`فشل الصوت: ${err.message}`);
+      isSpeaking = false;
+      setMicEnabled(true);
     }
     busy = false;
     if (inCall) listenLoop();
@@ -558,6 +652,7 @@
     localStorage.setItem(MODE_KEY, selectedMode());
     setCallUi(true);
     setStatus("أجهّز الصوت والمايك…");
+    lastBotText = "";
 
     try {
       const health = await fetch(`${API_BASE}/api/health`).then((r) => r.json());
@@ -567,33 +662,32 @@
       setCallUi(false);
       return;
     }
+    // Warmup with a real word ("." returns no audio from edge-tts and used to
+    // abort the whole call). Failure here must not block listening.
+    try {
+      await fetchFemaleTtsBlob("هلا", activeVoiceName, selectedDelivery());
+    } catch (_) {}
 
     try {
       await ensureMicPermission();
+      setMicEnabled(true);
     } catch (err) {
-      setStatus(`ما قدرت أفتح المايك (${err.message}). تقدرين تكتبين بالخانة والصوت يشتغل.`);
+      setStatus(`ما قدرت أفتح المايك (${err.message}). تقدرين تكتبين والرد الصوتي يشتغل.`);
     }
 
-    // Short warm Saudi opener — no boilerplate loops. Real TTS check.
-    const open = `هلا والله، معك ${activeVoiceName}. تكلّمي يا قلبي وش تبي.`;
-    history.push({ role: "assistant", content: open });
-    addBubble("bot", open);
-    saveHistory();
-    try {
-      setStatus(`${activeVoiceName} تتكلم…`);
-      await speakText(open);
-      setStatus("جاهزة. تكلّمي أو اكتبي.");
-    } catch (err) {
-      setStatus(`فشل الصوت: ${err.message}. ارفعي صوت الجهاز واضغطي بدء مرة ثانية.`);
-    }
+    // No canned spoken opener — listen immediately for real user speech.
+    setStatus("جاهزة. تكلّمي الحين وبرد على كلامك.");
+    liveCaption.textContent = "أسمعك…";
     listenLoop();
   }
 
   function endCall() {
     shouldListenAgain = false;
     busy = false;
+    isSpeaking = false;
+    listenGeneration += 1;
     stopSpeech();
-    if (recognition) { try { recognition.stop(); } catch (_) {} }
+    stopRecognition();
     if (micStream) {
       micStream.getTracks().forEach((t) => t.stop());
       micStream = null;

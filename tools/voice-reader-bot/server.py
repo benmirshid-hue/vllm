@@ -16,6 +16,37 @@ from fastapi.responses import FileResponse, Response
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_VOICE = "Zariyah"
+
+# Natural Cursor voice-call register for client prompts (not a caricature).
+VOICE_PERSONA = {
+    "id": "cursor-call-saudi",
+    "default_voice": DEFAULT_VOICE,
+    "dialect": "saudi_gulf_white",
+    "register": (
+        "Match Cursor's real live voice-call Arabic: natural Saudi/Gulf white "
+        "dialect, short practical sentences, careful listening, ordinary word "
+        "choice. Warm but not theatrical. Never Modern Standard Arabic skits "
+        "or canned romantic lines."
+    ),
+    "do": [
+        "بشوف",
+        "تمام",
+        "فهمت عليك",
+        "خلّيني أتأكد",
+        "لحظة",
+    ],
+    "dont": [
+        "هيا بنا نذهب بعيدًا",
+        "يا ثقل صدرك يا روحي",
+        "أود أن أتحدث معك الآن",
+        "تكلمي يا قلبي وش تبي",
+        "اليومِي",
+    ],
+    "spelling": {
+        "اليومي": "بدون كسرة زائدة على الياء",
+    },
+}
+
 MALE_MARKERS = (
     "Hamed",
     "Hamdan",
@@ -143,7 +174,14 @@ async def health() -> dict:
         "device_voices_required": False,
         "uptime_sec": int(time.time() - _started_at),
         "scope": "tools/voice-reader-bot only",
+        "persona": VOICE_PERSONA["id"],
     }
+
+
+@app.get("/api/persona")
+async def persona() -> dict:
+    """Expose the Cursor-call voice register for clients/prompts."""
+    return VOICE_PERSONA
 
 
 @app.get("/api/voices")
@@ -176,8 +214,12 @@ async def tts(
     catalog = await load_arabic_female_voices()
     chosen = resolve_female_voice(voice, catalog)
     preset = DELIVERY_PRESETS.get(delivery, DELIVERY_PRESETS["warm"])
+    # edge-tts returns no audio for punctuation-only strings like "."
+    speak_text = text.strip()
+    if not any(ch.isalnum() or ("\u0600" <= ch <= "\u06FF") for ch in speak_text):
+        speak_text = "هلا"
     communicate = edge_tts.Communicate(
-        text=text,
+        text=speak_text,
         voice=chosen["id"],
         rate=preset["rate"],
         pitch=preset["pitch"],
@@ -262,8 +304,13 @@ async def index() -> FileResponse:
 
 
 @app.get("/app.js")
-async def app_js() -> FileResponse:
-    return FileResponse(ROOT / "app.js", media_type="application/javascript")
+async def app_js() -> Response:
+    body = (ROOT / "app.js").read_bytes()
+    return Response(
+        content=body,
+        media_type="application/javascript",
+        headers={"Cache-Control": "no-store, max-age=0"},
+    )
 
 
 @app.get("/styles.css")
