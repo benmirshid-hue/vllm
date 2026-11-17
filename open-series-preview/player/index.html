@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>مشغّل الحلقات — Open Series Episode Player</title>
+  <link href="https://cdn.jsdelivr.net/npm/video.js@8.16.1/dist/video-js.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="rail" aria-label="Episode list">
+      <header class="rail-head">
+        <h1>الحلقات</h1>
+        <p class="muted">قبل النشر — Preview before publish</p>
+      </header>
+      <ul id="episodeList" class="episode-list"></ul>
+      <footer class="rail-foot">
+        <button id="btnRefresh" type="button">تحديث القائمة</button>
+        <a id="linkSettings" href="../ui/web/" title="Right settings">الإعدادات</a>
+      </footer>
+    </aside>
+
+    <main class="stage">
+      <div class="toolbar">
+        <div>
+          <h2 id="title">—</h2>
+          <p id="meta" class="muted"></p>
+        </div>
+        <div class="actions">
+          <span id="publishBadge" class="badge">مسودة / Draft</span>
+          <button id="btnPreview" type="button">معاينة قبل النشر</button>
+          <button id="btnPublish" type="button" disabled>تعليمشر (لاحقاً)</button>
+        </div>
+      </div>
+
+      <video
+        id="player"
+        class="video-js vjs-big-play-centered"
+        controls
+        preload="metadata"
+        playsinline
+      ></video>
+
+      <section class="panels">
+        <div>
+          <h3>فصول المشاهد / Chapters</h3>
+          <ol id="chapters"></ol>
+        </div>
+        <div>
+          <h3>ترجمة / Softsubs</h3>
+          <pre id="subsPreview" class="subs"></pre>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- video.js OSS CDN for scaffold; pin/vendoring recommended for air-gap -->
+  <script src="https://cdn.jsdelivr.net/npm/video.js@8.16.1/dist/video.min.js"></script>
+  <script src="./episode_player.js"></script>
+</body>
+</html>
