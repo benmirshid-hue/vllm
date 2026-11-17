@@ -3,51 +3,66 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>قارئ صوت أنثوي هادئ</title>
+  <title>بوت المكالمة الصوتية العربية</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
+<body class="call-mode">
   <main class="app">
     <header class="header">
-      <h1>قارئ الصوت</h1>
+      <p class="eyebrow">edge-tts · صوت ↔ صوت · رد ذكي</p>
+      <h1>بوت المكالمة الصوتية</h1>
       <p class="subtitle">
-        صوت أنثوي دافئ وهادئ يقرأ النص الذي تكتبينه.
-        هذا القارئ للقراءة العامة فقط، وليس للمحتوى الجنسي أو الصريح.
+        16 صوت عربي أنثوي عبر edge-tts. اختر الصوت، ابدأ المكالمة، والرد الذكي يفهم السياق.
+        بدون محتوى جنسي أو دلع.
       </p>
     </header>
 
-    <label class="field-label" for="text">النص</label>
-    <textarea
-      id="text"
-      rows="12"
-      placeholder="اكتبي النص هنا، ثم اضغطي قراءة…"
-    ></textarea>
+    <section class="call-card">
+      <div id="callPulse" class="pulse" aria-hidden="true"></div>
+      <p id="callState" class="call-state">جاهز للمكالمة</p>
+      <p id="liveCaption" class="caption">اختر الصوت ثم ابدأ.</p>
 
-    <section class="controls">
+      <div class="call-actions">
+        <button id="startCall" type="button">بدء المكالمة</button>
+        <button id="endCall" type="button" class="danger" hidden>إنهاء</button>
+      </div>
+
       <label class="control">
-        <span>الصوت</span>
+        <span>الصوت العربي الأنثوي (16)</span>
         <select id="voice"></select>
       </label>
       <label class="control">
-        <span>الأنوثة / الطبقة</span>
-        <input id="pitch" type="range" min="1.2" max="1.75" step="0.05" value="1.55" />
+        <span>أسلوب الإلقاء</span>
+        <select id="delivery">
+          <option value="warm">واضح</option>
+          <option value="soft">ناعم</option>
+          <option value="calm">هادئ</option>
+          <option value="lively">أسرع قليلاً</option>
+          <option value="close">أبطأ أوضح</option>
+        </select>
       </label>
       <label class="control">
-        <span>الهدوء / السرعة</span>
-        <input id="rate" type="range" min="0.7" max="1.05" step="0.05" value="0.84" />
+        <span>نمط الرد الذكي</span>
+        <select id="replyMode">
+          <option value="helpful">مفيد وواضح</option>
+          <option value="thoughtful">تحليلي</option>
+          <option value="curious">أسئلة متابعة</option>
+          <option value="concise">مختصر</option>
+          <option value="balanced">متوازن</option>
+        </select>
       </label>
+      <p id="voiceHint" class="hint">جارٍ تحميل الأصوات…</p>
     </section>
 
+    <section id="chat" class="chat" aria-live="polite"></section>
+
+    <details class="fallback" open>
+      <summary>إدخال نص إذا المايك غير متاح</summary>
+      <textarea id="text" rows="3" placeholder="اكتب رسالتك…"></textarea>
+      <button id="send" type="button" class="secondary">إرسال</button>
+    </details>
+
     <p id="policyNote" class="policy" hidden></p>
-
-    <div class="actions">
-      <button id="demo" type="button">عرض تجريبي</button>
-      <button id="speak" type="button">قراءة</button>
-      <button id="pause" type="button" class="secondary">إيقاف مؤقت</button>
-      <button id="resume" type="button" class="secondary">متابعة</button>
-      <button id="stop" type="button" class="secondary">إيقاف</button>
-    </div>
-
     <p id="status" class="status" aria-live="polite"></p>
   </main>
   <script src="app.js"></script>

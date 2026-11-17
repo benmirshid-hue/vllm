@@ -1,0 +1,5 @@
+.voice-bot.pid
+.voice-bot.log
+__pycache__/
+*.mp3
+.venv/
