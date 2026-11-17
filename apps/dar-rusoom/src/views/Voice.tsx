@@ -77,7 +77,7 @@ export function Voice() {
     <section>
       <header className="page-head">
         <h1>الصوت</h1>
-        <p>يسمع ويقترح حتى ترتاح للاختيار، ثم يفتح الصالة. بلا مقدمة رسمية.</p>
+        <p>الأذن عربية. يطوي التشكيل ثم يقترح حتى ترتاح للاختيار، وبعدها يفتح الصالة.</p>
       </header>
       <div className="chat">
         {lines.length === 0 ? <p className="note">قول وش تبي تشوف.</p> : null}

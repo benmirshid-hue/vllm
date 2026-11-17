@@ -14,7 +14,13 @@ import {
   reduce,
   splitSale,
   visibleTitles,
+  hearArabic,
+  mouthCues,
+  assembleEpisode,
+  guardianCanPay,
+  basketFitsChild,
 } from "../src/domain.ts";
+import { harasCharacters, harasShots } from "../src/data.ts";
 
 function adEarningsCheck(): number {
   return creatorAdEarnings(
@@ -128,6 +134,50 @@ test("guardian checkout pays the merchant net and clears the cart", () => {
   assert.equal(earned.gross, 189);
   assert.equal(earned.platform, 22.68);
   assert.equal(earned.merchant, 166.32);
+});
+
+test("arabic hearing folds the same word into the offer", () => {
+  const heard = hearArabic("أَرْنَبٌ");
+  assert.equal(heard, "ارنب");
+  const offer = assist(profileById("layan"), "أَرْنَب", []);
+  assert.equal(offer.openId, null);
+  assert.ok(offer.offerIds.includes("bunny"));
+});
+
+test("each locked voice has its own pitch and the mouth follows the line", () => {
+  const pitches = harasCharacters.map((character) => character.pitch);
+  assert.equal(new Set(pitches).size, pitches.length);
+  assert.deepEqual(mouthCues("ميرال"), ["closed", "closed", "open", "round", "open"]);
+});
+
+test("episode one stitches locked faces and rejects a stranger", () => {
+  const locked = harasCharacters.map((character) => character.id);
+  const cut = assembleEpisode(1, harasShots, locked);
+  assert.equal(cut.ok, true);
+  if (cut.ok) {
+    assert.equal(cut.seconds, 360);
+    assert.equal(cut.shotIds.length, 4);
+  }
+  const broken = assembleEpisode(1, [{ id: "x", episode: 1, seconds: 90, faceIds: ["guest"] }], locked);
+  assert.equal(broken.ok, false);
+  const later = assembleEpisode(2, harasShots, locked);
+  assert.equal(later.ok, false);
+});
+
+test("a guardian pays for the child when the goods fit that age", () => {
+  const layan = profileById("layan");
+  const child = profileById("mishaal");
+  assert.equal(guardianCanPay(layan, child), true);
+  assert.equal(guardianCanPay(profileById("nora"), child), false);
+  assert.equal(basketFitsChild(child, ["coat"]), true);
+  assert.equal(basketFitsChild(child, ["notebooks"]), false);
+  let state = reduce(initialState(), { type: "addCart", productId: "notebooks" });
+  state = reduce(state, { type: "checkout", forProfileId: "mishaal" });
+  assert.equal(state.orders.length, 0);
+  state = reduce(initialState(), { type: "addCart", productId: "coat" });
+  state = reduce(state, { type: "checkout", forProfileId: "mishaal" });
+  assert.equal(state.orders[0]?.forProfileId, "mishaal");
+  assert.equal(state.orders[0]?.profileId, "layan");
 });
 
 test("enterprise payments label the order as Moyasar without charging a card", () => {

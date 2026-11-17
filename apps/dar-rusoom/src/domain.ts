@@ -61,6 +61,7 @@ export type Order = {
   productId: string;
   qty: number;
   profileId: string;
+  forProfileId: string;
   at: number;
   provider: "ledger" | "moyasar";
 };
@@ -115,7 +116,7 @@ export type Action =
   | { type: "prerollSeen"; titleId: string }
   | { type: "addCart"; productId: string }
   | { type: "setQty"; productId: string; qty: number }
-  | { type: "checkout" }
+  | { type: "checkout"; forProfileId?: string }
   | { type: "submit"; submission: SubmissionInput }
   | { type: "resolve"; id: string; decision: "approve" | "reject" }
   | { type: "layer"; key: LayerKey; mode: LayerMode }
@@ -531,9 +532,13 @@ export function reduce(state: State, action: Action): State {
       return { ...state, cart };
     }
     case "checkout": {
-      const profile = profileById(state.profileId);
+      const payer = profileById(state.profileId);
+      const beneficiary = profileById(action.forProfileId ?? payer.id);
       const lines = Object.entries(state.cart).filter(([, qty]) => qty > 0);
-      if (!canCheckout(profile) || lines.length === 0) {
+      if (!guardianCanPay(payer, beneficiary) || lines.length === 0) {
+        return state;
+      }
+      if (!basketFitsChild(beneficiary, lines.map(([productId]) => productId))) {
         return state;
       }
       const provider = state.layers.payments === "enterprise" ? "moyasar" : "ledger";
@@ -541,7 +546,8 @@ export function reduce(state: State, action: Action): State {
         id: crypto.randomUUID(),
         productId,
         qty,
-        profileId: profile.id,
+        profileId: payer.id,
+        forProfileId: beneficiary.id,
         at: Date.now(),
         provider,
       }));
@@ -601,9 +607,76 @@ export type AssistResult = {
   openId: string | null;
 };
 
+export type Mouth = "open" | "round" | "closed";
+
+export type EpisodeCut =
+  | { ok: true; seconds: number; shotIds: string[] }
+  | { ok: false; reason: string };
+
+export function hearArabic(text: string): string {
+  return text
+    .replace(/[\u064B-\u065F\u0670]/g, "")
+    .replace(/[أإآ]/g, "ا")
+    .replace(/ة/g, "ه")
+    .replace(/ى/g, "ي")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function mouthCues(line: string): Mouth[] {
+  const cues: Mouth[] = [];
+  for (const mark of hearArabic(line)) {
+    if (mark === " " || mark === "،" || mark === ".") {
+      continue;
+    }
+    if (mark === "ا" || mark === "و") {
+      cues.push("round");
+    } else if ("يبمف".includes(mark)) {
+      cues.push("closed");
+    } else if (/[\u0600-\u06FF]/.test(mark)) {
+      cues.push("open");
+    }
+  }
+  return cues.length > 0 ? cues : ["closed"];
+}
+
+export function assembleEpisode(
+  episode: number,
+  shots: { id: string; episode: number; seconds: number; faceIds: string[] }[],
+  lockedIds: string[],
+): EpisodeCut {
+  const mine = shots.filter((shot) => shot.episode === episode);
+  if (mine.length === 0) {
+    return { ok: false, reason: "لا لقطات لهذه الحلقة." };
+  }
+  const stranger = mine.find((shot) => shot.faceIds.some((face) => !lockedIds.includes(face)));
+  if (stranger) {
+    return { ok: false, reason: "لقطة بوجه خارج البطاقات المقفلة." };
+  }
+  return {
+    ok: true,
+    seconds: mine.reduce((sum, shot) => sum + shot.seconds, 0),
+    shotIds: mine.map((shot) => shot.id),
+  };
+}
+
+export function guardianCanPay(payer: Profile, beneficiary: Profile): boolean {
+  return canCheckout(payer) && payer.familyId === beneficiary.familyId;
+}
+
+export function basketFitsChild(beneficiary: Profile, productIds: string[]): boolean {
+  if (beneficiary.role !== "child") {
+    return true;
+  }
+  return productIds.every((id) => {
+    const product = productById(id);
+    return beneficiary.ageYears >= product.ageMin && beneficiary.ageYears <= product.ageMax;
+  });
+}
+
 export function assist(profile: Profile, text: string, offeredIds: string[]): AssistResult {
   const library = visibleTitles(profile);
-  const said = text.replace(/\s+/g, " ").trim();
+  const said = hearArabic(text);
   const blocked = titles.find(
     (title) => title.rating > profile.maxRating && aliasHit(title.id, said),
   );
@@ -645,11 +718,12 @@ export function assist(profile: Profile, text: string, offeredIds: string[]): As
 
 function aliasHit(titleId: string, said: string): boolean {
   const words: Record<string, string[]> = {
-    bunny: ["الأرنب باك", "باك", "أرنب", "ضحك", "مضحك", "كوميديا"],
-    elephants: ["حلم الفيلة", "فيلة", "خيال"],
-    sintel: ["سينتل", "مغامرة", "ثلج"],
+    bunny: ["الارنب باك", "باك", "ارنب", "ضحك", "مضحك", "كوميديا"],
+    elephants: ["حلم الفيله", "فيله", "خيال"],
+    sintel: ["سينتل", "مغامره", "ثلج"],
   };
-  return (words[titleId] ?? []).some((word) => said.includes(word));
+  const heard = hearArabic(said);
+  return (words[titleId] ?? []).some((word) => heard.includes(hearArabic(word)));
 }
 
 function wantsPlay(said: string): boolean {

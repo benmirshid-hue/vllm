@@ -298,9 +298,44 @@ export const products: Product[] = [
   },
 ];
 
+export type HarasCharacter = {
+  id: string;
+  name: string;
+  detail: string;
+  pitch: number;
+  rate: number;
+  line: string;
+};
+
+export type HarasShot = {
+  id: string;
+  episode: number;
+  seconds: number;
+  speakerId: string;
+  line: string;
+  faceIds: string[];
+};
+
+export const harasCharacters: HarasCharacter[] = [
+  { id: "miral", name: "الأميرة ميرال", detail: "9 سنوات", pitch: 1.45, rate: 0.95, line: "أنا ميرال، أحرس الباب." },
+  { id: "lamar", name: "لمار", detail: "13 سنة", pitch: 1.2, rate: 1, line: "لمار ترى الطريق." },
+  { id: "ghina", name: "غنى", detail: "سنتان ونصف", pitch: 1.7, rate: 0.9, line: "غنى تضحك." },
+  { id: "mohammed", name: "الأمير محمد", detail: "7 سنوات", pitch: 1.15, rate: 1.05, line: "محمد معك." },
+  { id: "king", name: "الملك", detail: "بطاقة مظهر ثابتة", pitch: 0.7, rate: 0.85, line: "الملك يثبّت العهد." },
+  { id: "sakhrub", name: "صخروب", detail: "مخلوق", pitch: 0.55, rate: 0.8, line: "صخروب يفتح الطريق." },
+  { id: "nawras", name: "نوراس", detail: "مخلوق", pitch: 1.55, rate: 1.1, line: "نوراس يضيء." },
+];
+
+export const harasShots: HarasShot[] = [
+  { id: "e1s1", episode: 1, seconds: 90, speakerId: "miral", line: "أنا ميرال، أحرس الباب.", faceIds: ["miral"] },
+  { id: "e1s2", episode: 1, seconds: 90, speakerId: "mohammed", line: "محمد معك.", faceIds: ["mohammed", "miral"] },
+  { id: "e1s3", episode: 1, seconds: 90, speakerId: "sakhrub", line: "صخروب يفتح الطريق.", faceIds: ["sakhrub"] },
+  { id: "e1s4", episode: 1, seconds: 90, speakerId: "king", line: "الملك يثبّت العهد.", faceIds: ["king", "miral"] },
+];
+
 export const harasSeries = {
   name: "حراس الأثير",
-  note: "برنامج القصص ما زال سقالة. السيناريو مقفل للحلقات 1 إلى 4، والصورة والصوت لم يُولَّدا. بعد المراجعة تدخل الحلقة المكتبة.",
+  note: "الحلقة الأولى تُجمع من لقطات وجوهها مقفلة. الحلقات 2 إلى 4 سيناريو مقفل بلا لقطات بعد.",
   stages: [
     "قصة",
     "سيناريو مقفل",
@@ -312,19 +347,14 @@ export const harasSeries = {
     "مراجعة",
     "نشر في المكتبة",
   ],
-  characters: [
-    { name: "الأميرة ميرال", detail: "9 سنوات" },
-    { name: "لمار", detail: "13 سنة" },
-    { name: "غنى", detail: "سنتان ونصف" },
-    { name: "الأمير محمد", detail: "7 سنوات" },
-    { name: "الملك", detail: "بطاقة مظهر ثابتة" },
-    { name: "صخروب", detail: "مخلوق" },
-    { name: "نوراس", detail: "مخلوق" },
-  ],
+  characters: harasCharacters,
   episodes: [1, 2, 3, 4].map((number) => ({
     number,
     minutes: 25,
-    status: "السيناريو مقفل. لا يوجد ملف فيديو بعد.",
+    status:
+      number === 1
+        ? "أربع لقطات، كل واحدة 90 ثانية، والوجوه من البطاقات المقفلة."
+        : "السيناريو مقفل. لا توجد لقطات بعد.",
   })),
 };
 

@@ -247,6 +247,10 @@ textarea { min-height: 5rem; width: 100%; }
 .voice-form input { flex: 1; min-width: 12rem; background: #fffaf2; border: 1px solid #d9cbb6; border-radius: 0.7rem; padding: 0.45rem 0.6rem; }
 .stages { display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0; margin: 0 0 1rem; list-style: none; }
 .stages li { background: #fffaf2; border: 1px solid #e4d5bf; border-radius: 999px; padding: 0.3rem 0.7rem; }
+.mouth { display: inline-block; width: 2.4rem; border-radius: 999px; background: #241910; margin: 0.4rem 0 1rem; }
+.mouth.open { height: 1.6rem; }
+.mouth.round { height: 1.1rem; border-radius: 50%; }
+.mouth.closed { height: 0.28rem; }
 
 @media (max-width: 860px) {
   .shell { grid-template-columns: 1fr; }
