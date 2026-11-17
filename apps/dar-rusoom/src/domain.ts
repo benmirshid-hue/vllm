@@ -16,6 +16,8 @@ import {
 export type View =
   | "library"
   | "theater"
+  | "voice"
+  | "studio"
   | "community"
   | "ads"
   | "channels"
@@ -591,4 +593,107 @@ export function sharedWatchers(titleId: string, likes: Record<string, string[]>,
 
 export function playCount(state: State, titleId: string): number {
   return state.plays.filter((play) => play.titleId === titleId).length;
+}
+
+export type AssistResult = {
+  say: string;
+  offerIds: string[];
+  openId: string | null;
+};
+
+export function assist(profile: Profile, text: string, offeredIds: string[]): AssistResult {
+  const library = visibleTitles(profile);
+  const said = text.replace(/\s+/g, " ").trim();
+  const blocked = titles.find(
+    (title) => title.rating > profile.maxRating && aliasHit(title.id, said),
+  );
+  if (blocked) {
+    return {
+      say: `${blocked.name} فوق عمر هذا الملف. أقدر أفتح لك اللي يناسبه.`,
+      offerIds: library.map((title) => title.id),
+      openId: null,
+    };
+  }
+  const named = library.find((title) => aliasHit(title.id, said));
+  if (wantsPlay(said)) {
+    const pick = named ?? (offeredIds.length > 0 ? indexPick(said, offeredIds, library) : null);
+    if (pick) {
+      return { say: `أفتح ${pick.name}.`, offerIds: [pick.id], openId: pick.id };
+    }
+  }
+  const mood = moodOf(said);
+  if (!mood && !named) {
+    return { say: "تبغى ضحك، ولا خيال، ولا مغامرة؟", offerIds: [], openId: null };
+  }
+  const pool = named ? [named] : library.filter((title) => title.style === styleFor(mood));
+  if (pool.length === 0) {
+    return {
+      say: "هذا النوع فوق عمر الملف. هذا اللي يناسبه.",
+      offerIds: library.map((title) => title.id),
+      openId: null,
+    };
+  }
+  const lines = pool
+    .map((title, index) => `${index + 1}. ${title.name}. ${title.lengthLabel}. ${title.logline}`)
+    .join(" ");
+  return {
+    say: `${lines} إذا ارتحت قول شغّله.`,
+    offerIds: pool.map((title) => title.id),
+    openId: null,
+  };
+}
+
+function aliasHit(titleId: string, said: string): boolean {
+  const words: Record<string, string[]> = {
+    bunny: ["الأرنب باك", "باك", "أرنب", "ضحك", "مضحك", "كوميديا"],
+    elephants: ["حلم الفيلة", "فيلة", "خيال"],
+    sintel: ["سينتل", "مغامرة", "ثلج"],
+  };
+  return (words[titleId] ?? []).some((word) => said.includes(word));
+}
+
+function wantsPlay(said: string): boolean {
+  return /شغ|خلاص|الأول|الاول|الثاني|الثالث/.test(said);
+}
+
+function moodOf(said: string): "comedy" | "fantasy" | "adventure" | null {
+  if (/ضحك|مضحك|كوميد|أرنب|باك/.test(said)) {
+    return "comedy";
+  }
+  if (/خيال|فيلة|حلم/.test(said)) {
+    return "fantasy";
+  }
+  if (/مغامر|سينتل|ثلج/.test(said)) {
+    return "adventure";
+  }
+  return null;
+}
+
+function styleFor(mood: "comedy" | "fantasy" | "adventure" | null): string {
+  switch (mood) {
+    case "comedy":
+      return "كوميديا";
+    case "fantasy":
+      return "خيال";
+    case "adventure":
+      return "مغامرة";
+    case null:
+      return "";
+    default: {
+      const unreachable: never = mood;
+      return unreachable;
+    }
+  }
+}
+
+function indexPick(said: string, offeredIds: string[], library: Title[]): Title | null {
+  const ids = offeredIds.length > 0 ? offeredIds : library.map((title) => title.id);
+  let index = 0;
+  if (/الثاني|2/.test(said)) {
+    index = 1;
+  } else if (/الثالث|3/.test(said)) {
+    index = 2;
+  }
+  const id = ids[index];
+  return library.find((title) => title.id === id) ?? null;
 }

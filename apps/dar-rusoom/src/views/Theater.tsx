@@ -211,7 +211,7 @@ export function Theater() {
                       {follows ? "تتابعه" : "متابعة"}
                     </button>
                   ) : (
-                    <span>ملف طفل</span>
+                    <span>{person.role === "child" ? "ملف طفل" : "خارج المتابعة"}</span>
                   )}
                 </li>
               );

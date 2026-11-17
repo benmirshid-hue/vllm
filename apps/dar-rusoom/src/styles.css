@@ -240,6 +240,14 @@ textarea { min-height: 5rem; width: 100%; }
 .stack-list li { align-items: center; }
 .stack-side { display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-start; min-width: 11rem; }
 
+.chat { display: flex; flex-direction: column; gap: 0.55rem; max-width: 42rem; }
+.bubble { margin: 0; background: #fffaf2; border: 1px solid #e4d5bf; border-radius: 1rem; padding: 0.75rem 0.9rem; }
+.bubble.viewer { background: #241910; color: #f8f1e4; }
+.voice-form { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.8rem; }
+.voice-form input { flex: 1; min-width: 12rem; background: #fffaf2; border: 1px solid #d9cbb6; border-radius: 0.7rem; padding: 0.45rem 0.6rem; }
+.stages { display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0; margin: 0 0 1rem; list-style: none; }
+.stages li { background: #fffaf2; border: 1px solid #e4d5bf; border-radius: 999px; padding: 0.3rem 0.7rem; }
+
 @media (max-width: 860px) {
   .shell { grid-template-columns: 1fr; }
   .nav { flex-direction: row; overflow-x: auto; border-inline-end: 0; border-bottom: 1px solid #ddcfb8; }

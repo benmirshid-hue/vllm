@@ -8,11 +8,15 @@ import { Library } from "./views/Library.tsx";
 import { Market } from "./views/Market.tsx";
 import { Moderation } from "./views/Moderation.tsx";
 import { Stack } from "./views/Stack.tsx";
+import { Studio } from "./views/Studio.tsx";
 import { Theater } from "./views/Theater.tsx";
+import { Voice } from "./views/Voice.tsx";
 
 const nav: { view: View; label: string }[] = [
   { view: "library", label: "المكتبة" },
   { view: "theater", label: "الصالة" },
+  { view: "voice", label: "الصوت" },
+  { view: "studio", label: "الاستوديو" },
   { view: "community", label: "الناس" },
   { view: "ads", label: "الإعلانات" },
   { view: "channels", label: "القنوات" },
@@ -71,6 +75,10 @@ function Screen({ view }: { view: View }) {
       return <Library />;
     case "theater":
       return <Theater />;
+    case "voice":
+      return <Voice />;
+    case "studio":
+      return <Studio />;
     case "community":
       return <Community />;
     case "ads":

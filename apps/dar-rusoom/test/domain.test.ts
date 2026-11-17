@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  assist,
   prerollFor,
   assessSubmission,
   canCheckout,
@@ -39,6 +40,19 @@ function adEarningsCheck(): number {
     0.55,
   );
 }
+
+test("the assistant offers a fit and opens it only after the viewer accepts", () => {
+  const layan = profileById("layan");
+  const first = assist(layan, "شيء مضحك", []);
+  assert.equal(first.openId, null);
+  assert.deepEqual(first.offerIds, ["bunny"]);
+  assert.equal(first.say.includes("مرحبا"), false);
+  const second = assist(layan, "شغّله", first.offerIds);
+  assert.equal(second.openId, "bunny");
+  const child = assist(profileById("mishaal"), "سينتل", []);
+  assert.equal(child.openId, null);
+  assert.equal(child.say.includes("فوق عمر"), true);
+});
 
 test("guardians still see kids ads they can buy", () => {
   assert.equal(prerollFor(profileById("layan"))?.id, "bag");
