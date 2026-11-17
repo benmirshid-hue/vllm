@@ -1,6 +1,14 @@
 import { useState } from "react";
-import { categories, merchants, products, type ProductCategory } from "../data.ts";
-import { canCheckout, merchantById, productById, profileById, sar, splitSale } from "../domain.ts";
+import { categories, merchants, products, profiles, type ProductCategory } from "../data.ts";
+import {
+  basketFitsChild,
+  guardianCanPay,
+  merchantById,
+  productById,
+  profileById,
+  sar,
+  splitSale,
+} from "../domain.ts";
 import { useStore } from "../store.tsx";
 
 export function Market() {
@@ -9,20 +17,27 @@ export function Market() {
   const [category, setCategory] = useState<ProductCategory | "الكل">("الكل");
   const [age, setAge] = useState<number | "الكل">("الكل");
   const [notice, setNotice] = useState("");
+  const [forId, setForId] = useState(profile.role === "child" ? profile.id : "mishaal");
+  const family = profiles.filter((item) => item.familyId === profile.familyId);
+  const beneficiary = profileById(forId);
   const visible = products.filter((product) => {
     const categoryOk = category === "الكل" || product.category === category;
     const ageOk = age === "الكل" || (age >= product.ageMin && age <= product.ageMax);
     return categoryOk && ageOk;
   });
   const lines = Object.entries(state.cart).filter(([, qty]) => qty > 0);
-  const payer = canCheckout(profile);
+  const payer = guardianCanPay(profile, beneficiary);
+  const agesOk = basketFitsChild(
+    beneficiary,
+    lines.map(([productId]) => productId),
+  );
   const provider = state.layers.payments === "enterprise" ? "ميسر" : "سجل داخلي";
 
   return (
     <section>
       <header className="page-head">
         <h1>المتجر</h1>
-        <p>ملابس، حقائب مدرسية، أدوات مدرسية، ومستلزمات بنات. الأعمار من 1 إلى 18. الدفع لولي الأمر أو البالغ، بلا خصم حقيقي في هذه النسخة.</p>
+        <p>ملابس، حقائب مدرسية، أدوات مدرسية، ومستلزمات بنات. الدفع من ولي الأمر أو البالغ لنفس الأسرة، والقطعة تناسب عمر الطفل.</p>
       </header>
       <div className="filters">
         <button type="button" className={category === "الكل" ? "on" : ""} onClick={() => setCategory("الكل")}>
@@ -70,6 +85,16 @@ export function Market() {
         </div>
         <aside className="cart">
           <h2>سلة الأسرة</h2>
+          <label>
+            السلة لـ
+            <select value={forId} onChange={(event) => setForId(event.target.value)}>
+              {family.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          </label>
           {lines.length === 0 ? <p>السلة فارغة.</p> : null}
           <ul>
             {lines.map(([productId, qty]) => {
@@ -96,14 +121,18 @@ export function Market() {
             type="button"
             onClick={() => {
               if (!payer) {
-                setNotice("الدفع من ملف ولي الأمر أو البالغ. سلّم السلة لليان أو فهد.");
+                setNotice("الدفع من ملف ولي الأمر أو البالغ داخل الأسرة.");
+                return;
+              }
+              if (!agesOk) {
+                setNotice("قطعة خارج عمر الطفل. غيّر السلة أو اختر ملفًا أكبر.");
                 return;
               }
               if (lines.length === 0) {
                 setNotice("أضف قطعة أولًا.");
                 return;
               }
-              dispatch({ type: "checkout" });
+              dispatch({ type: "checkout", forProfileId: beneficiary.id });
               setNotice(`تم تسجيل الطلب عبر ${provider}. لا توجد عملية بنكية.`);
             }}
           >

@@ -41,11 +41,13 @@ export function Channels() {
 function ChannelDetail({ id }: { id: string }) {
   const { state, dispatch } = useStore();
   const creator = creatorById(id);
-  const ownTitles = titles.filter((title) => title.creatorId === creator.id);
+  const ownTitles = [...titles, ...state.catalog].filter((title) => title.creatorId === creator.id);
   const adsEarned = creatorAdEarnings(state.adEvents, creator.id, creator.adShare);
   const shop = creator.merchantId ? merchantEarnings(state.orders, creator.merchantId) : null;
   const following = (state.followsCreators[state.profileId] ?? []).includes(creator.id);
-  const completed = state.adEvents.filter((event) => event.creatorId === creator.id && !event.skipped).length;
+  const ownAds = state.adEvents.filter((event) => event.creatorId === creator.id);
+  const completed = ownAds.filter((event) => !event.skipped).length;
+  const skipped = ownAds.length - completed;
 
   return (
     <section>
@@ -75,10 +77,17 @@ function ChannelDetail({ id }: { id: string }) {
           <strong>{sar(adsEarned)}</strong>
         </article>
         <article>
+          <span>إعلانات متجاوزة</span>
+          <strong>{skipped}</strong>
+        </article>
+        <article>
           <span>صافي المتجر</span>
           <strong>{sar(shop?.merchant ?? 0)}</strong>
         </article>
       </div>
+      <p className="note">
+        الإعلان المتجاوز عائده صفر. المكتمل يُقسَّم: القناة تأخذ حصتها والباقي يبقى للمنصة.
+      </p>
       {shop ? (
         <p className="note">
           مبيعات التاجر {sar(shop.gross)}، عمولة المنصة {sar(shop.platform)}، صافي التاجر {sar(shop.merchant)}.

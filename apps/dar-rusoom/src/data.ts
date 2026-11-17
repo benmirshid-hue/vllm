@@ -21,8 +21,18 @@ export type Title = {
   src: string;
   credit: string;
   introEndSec: number;
-  chapters: { t: number; label: string }[];
+  chapters: {
+    t: number;
+    label: string;
+    line?: string;
+    speakerId?: string;
+    pitch?: number;
+    rate?: number;
+  }[];
   hue: string;
+  playback?: "board";
+  runtimeSec?: number;
+  aliases?: string[];
 };
 
 export type Creator = {
@@ -82,6 +92,12 @@ export const creators: Creator[] = [
     adShare: 0.55,
   },
   {
+    id: "studio",
+    name: "استوديو الدار",
+    bio: "أي مسلسل يُجمع هنا من بطاقات مقفلة، ثم يدخل المكتبة.",
+    adShare: 0.55,
+  },
+  {
     id: "noor-studio",
     name: "استوديو نور",
     bio: "رسوم قصيرة مضيئة، ومتجر حقائب وملابس للأطفال.",
@@ -115,6 +131,7 @@ export const titles: Title[] = [
       { t: 7, label: "الرد" },
     ],
     hue: "#e2b15a",
+    aliases: ["الارنب باك", "باك", "ارنب", "ضحك", "مضحك", "كوميديا"],
   },
   {
     id: "elephants",
@@ -134,6 +151,7 @@ export const titles: Title[] = [
       { t: 8, label: "المخرج" },
     ],
     hue: "#d07a5a",
+    aliases: ["حلم الفيله", "فيله", "خيال"],
   },
   {
     id: "sintel",
@@ -153,6 +171,7 @@ export const titles: Title[] = [
       { t: 8, label: "المطاردة" },
     ],
     hue: "#8ea4b8",
+    aliases: ["سينتل", "مغامره", "ثلج"],
   },
 ];
 
@@ -298,35 +317,74 @@ export const products: Product[] = [
   },
 ];
 
-export const harasSeries = {
-  name: "حراس الأثير",
-  note: "برنامج القصص ما زال سقالة. السيناريو مقفل للحلقات 1 إلى 4، والصورة والصوت لم يُولَّدا. بعد المراجعة تدخل الحلقة المكتبة.",
-  stages: [
-    "قصة",
-    "سيناريو مقفل",
-    "مشاهد نحو 90 ثانية",
-    "بطاقات شخصيات",
-    "صوت عربي محلي",
-    "مقاطع",
-    "دمج",
-    "مراجعة",
-    "نشر في المكتبة",
-  ],
-  characters: [
-    { name: "الأميرة ميرال", detail: "9 سنوات" },
-    { name: "لمار", detail: "13 سنة" },
-    { name: "غنى", detail: "سنتان ونصف" },
-    { name: "الأمير محمد", detail: "7 سنوات" },
-    { name: "الملك", detail: "بطاقة مظهر ثابتة" },
-    { name: "صخروب", detail: "مخلوق" },
-    { name: "نوراس", detail: "مخلوق" },
-  ],
-  episodes: [1, 2, 3, 4].map((number) => ({
-    number,
-    minutes: 25,
-    status: "السيناريو مقفل. لا يوجد ملف فيديو بعد.",
-  })),
+export type CastMember = {
+  id: string;
+  name: string;
+  detail: string;
+  pitch: number;
+  rate: number;
+  line: string;
 };
+
+export type SeriesShot = {
+  id: string;
+  episode: number;
+  seconds: number;
+  speakerId: string;
+  line: string;
+  faceIds: string[];
+};
+
+export type Series = {
+  id: string;
+  name: string;
+  creatorId: string;
+  rating: 3 | 7 | 13;
+  hue: string;
+  cast: CastMember[];
+  shots: SeriesShot[];
+};
+
+const harasCast: CastMember[] = [
+  { id: "miral", name: "الأميرة ميرال", detail: "9 سنوات", pitch: 1.45, rate: 0.95, line: "أنا ميرال، أحرس الباب." },
+  { id: "lamar", name: "لمار", detail: "13 سنة", pitch: 1.2, rate: 1, line: "لمار ترى الطريق." },
+  { id: "ghina", name: "غنى", detail: "سنتان ونصف", pitch: 1.7, rate: 0.9, line: "غنى تضحك." },
+  { id: "mohammed", name: "الأمير محمد", detail: "7 سنوات", pitch: 1.15, rate: 1.05, line: "محمد معك." },
+  { id: "king", name: "الملك", detail: "بطاقة مظهر ثابتة", pitch: 0.7, rate: 0.85, line: "الملك يثبّت العهد." },
+  { id: "sakhrub", name: "صخروب", detail: "مخلوق", pitch: 0.55, rate: 0.8, line: "صخروب يفتح الطريق." },
+  { id: "nawras", name: "نوراس", detail: "مخلوق", pitch: 1.55, rate: 1.1, line: "نوراس يضيء." },
+];
+
+const harasShots: SeriesShot[] = [
+  { id: "e1s1", episode: 1, seconds: 90, speakerId: "miral", line: "أنا ميرال، أحرس الباب.", faceIds: ["miral"] },
+  { id: "e1s2", episode: 1, seconds: 90, speakerId: "mohammed", line: "محمد معك.", faceIds: ["mohammed", "miral"] },
+  { id: "e1s3", episode: 1, seconds: 90, speakerId: "sakhrub", line: "صخروب يفتح الطريق.", faceIds: ["sakhrub"] },
+  { id: "e1s4", episode: 1, seconds: 90, speakerId: "king", line: "الملك يثبّت العهد.", faceIds: ["king", "miral"] },
+  { id: "e2s1", episode: 2, seconds: 90, speakerId: "lamar", line: "لمار ترى الطريق.", faceIds: ["lamar"] },
+  { id: "e2s2", episode: 2, seconds: 90, speakerId: "ghina", line: "غنى تضحك.", faceIds: ["ghina", "lamar"] },
+  { id: "e2s3", episode: 2, seconds: 90, speakerId: "nawras", line: "نوراس يضيء.", faceIds: ["nawras"] },
+  { id: "e2s4", episode: 2, seconds: 90, speakerId: "miral", line: "ميرال تكمل الدرب.", faceIds: ["miral", "nawras"] },
+  { id: "e3s1", episode: 3, seconds: 90, speakerId: "mohammed", line: "محمد يسأل الملك.", faceIds: ["mohammed"] },
+  { id: "e3s2", episode: 3, seconds: 90, speakerId: "king", line: "الملك يثبّت العهد.", faceIds: ["king", "mohammed"] },
+  { id: "e3s3", episode: 3, seconds: 90, speakerId: "lamar", line: "لمار تحفظ الاسم.", faceIds: ["lamar"] },
+  { id: "e3s4", episode: 3, seconds: 90, speakerId: "sakhrub", line: "صخروب يحرس السور.", faceIds: ["sakhrub", "king"] },
+  { id: "e4s1", episode: 4, seconds: 90, speakerId: "ghina", line: "غنى تشير للضوء.", faceIds: ["ghina"] },
+  { id: "e4s2", episode: 4, seconds: 90, speakerId: "nawras", line: "نوراس يفتح الأثير.", faceIds: ["nawras", "ghina"] },
+  { id: "e4s3", episode: 4, seconds: 90, speakerId: "miral", line: "ميرال تجمع الحراس.", faceIds: ["miral", "lamar", "mohammed"] },
+  { id: "e4s4", episode: 4, seconds: 90, speakerId: "king", line: "الملك يغلق الحلقة.", faceIds: ["king", "miral"] },
+];
+
+export const seedSeries: Series[] = [
+  {
+    id: "haras",
+    name: "حراس الأثير",
+    creatorId: "haras",
+    rating: 3,
+    hue: "#c4522a",
+    cast: harasCast,
+    shots: harasShots,
+  },
+];
 
 export const categories: ProductCategory[] = [
   "ملابس",

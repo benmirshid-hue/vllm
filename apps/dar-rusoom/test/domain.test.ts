@@ -14,7 +14,14 @@ import {
   reduce,
   splitSale,
   visibleTitles,
+  hearArabic,
+  mouthCues,
+  assembleEpisode,
+  episodeTitle,
+  guardianCanPay,
+  basketFitsChild,
 } from "../src/domain.ts";
+import { seedSeries } from "../src/data.ts";
 
 function adEarningsCheck(): number {
   return creatorAdEarnings(
@@ -128,6 +135,103 @@ test("guardian checkout pays the merchant net and clears the cart", () => {
   assert.equal(earned.gross, 189);
   assert.equal(earned.platform, 22.68);
   assert.equal(earned.merchant, 166.32);
+});
+
+test("arabic hearing folds the same word into the offer", () => {
+  const heard = hearArabic("أَرْنَبٌ");
+  assert.equal(heard, "ارنب");
+  const offer = assist(profileById("layan"), "أَرْنَب", []);
+  assert.equal(offer.openId, null);
+  assert.ok(offer.offerIds.includes("bunny"));
+});
+
+test("each cast keeps a distinct pitch and the mouth follows the line", () => {
+  const series = seedSeries[0];
+  assert.ok(series);
+  const pitches = series.cast.map((member) => member.pitch);
+  assert.equal(new Set(pitches).size, pitches.length);
+  assert.deepEqual(mouthCues("ميرال"), ["closed", "closed", "open", "round", "open"]);
+});
+
+test("any series stitches its own faces and rejects a stranger", () => {
+  const series = seedSeries[0];
+  assert.ok(series);
+  const locked = series.cast.map((member) => member.id);
+  const cut = assembleEpisode(1, series.shots, locked);
+  assert.equal(cut.ok, true);
+  if (cut.ok) {
+    assert.equal(cut.seconds, 360);
+  }
+  const title = episodeTitle(series, 1);
+  assert.equal(title?.id, "haras-1");
+  const broken = assembleEpisode(1, [{ id: "x", episode: 1, seconds: 90, faceIds: ["guest"] }], locked);
+  assert.equal(broken.ok, false);
+});
+
+test("a second series is built, locked, and published with the same tools", () => {
+  let state = reduce(initialState(), { type: "createSeries", name: "غيمة", rating: 3 });
+  const created = state.series.find((series) => series.name === "غيمة");
+  assert.ok(created);
+  assert.equal(created.creatorId, "studio");
+  state = reduce(state, {
+    type: "addCast",
+    seriesId: created.id,
+    name: "سما",
+    detail: "8 سنوات",
+    line: "سما تطير.",
+  });
+  state = reduce(state, {
+    type: "addCast",
+    seriesId: created.id,
+    name: "قمر",
+    detail: "10 سنوات",
+    line: "قمر ينير.",
+  });
+  const cast = state.series.find((series) => series.id === created.id)?.cast ?? [];
+  assert.equal(cast.length, 2);
+  assert.notEqual(cast[0]?.pitch, cast[1]?.pitch);
+  const first = cast[0];
+  const second = cast[1];
+  assert.ok(first && second);
+  state = reduce(state, {
+    type: "addShot",
+    seriesId: created.id,
+    episode: 1,
+    speakerId: first.id,
+    line: "سما تطير.",
+    faceIds: [first.id, "ghost"],
+  });
+  assert.equal(state.series.find((series) => series.id === created.id)?.shots.length, 0);
+  state = reduce(state, {
+    type: "addShot",
+    seriesId: created.id,
+    episode: 1,
+    speakerId: first.id,
+    line: "سما تطير.",
+    faceIds: [first.id, second.id],
+  });
+  assert.equal(state.series.find((series) => series.id === created.id)?.shots.length, 1);
+  state = reduce(state, { type: "release", seriesId: created.id, episode: 1 });
+  const library = visibleTitles(profileById("mishaal"), state.catalog);
+  assert.ok(library.some((title) => title.name.startsWith("غيمة")));
+  const offer = assist(profileById("mishaal"), "غيمة", [], state.catalog);
+  assert.equal(offer.offerIds[0], `${created.id}-1`);
+});
+
+test("a guardian pays for the child when the goods fit that age", () => {
+  const layan = profileById("layan");
+  const child = profileById("mishaal");
+  assert.equal(guardianCanPay(layan, child), true);
+  assert.equal(guardianCanPay(profileById("nora"), child), false);
+  assert.equal(basketFitsChild(child, ["coat"]), true);
+  assert.equal(basketFitsChild(child, ["notebooks"]), false);
+  let state = reduce(initialState(), { type: "addCart", productId: "notebooks" });
+  state = reduce(state, { type: "checkout", forProfileId: "mishaal" });
+  assert.equal(state.orders.length, 0);
+  state = reduce(initialState(), { type: "addCart", productId: "coat" });
+  state = reduce(state, { type: "checkout", forProfileId: "mishaal" });
+  assert.equal(state.orders[0]?.forProfileId, "mishaal");
+  assert.equal(state.orders[0]?.profileId, "layan");
 });
 
 test("enterprise payments label the order as Moyasar without charging a card", () => {

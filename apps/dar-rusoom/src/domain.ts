@@ -4,12 +4,16 @@ import {
   merchants,
   products,
   profiles,
+  seedSeries,
   titles,
   type Ad,
+  type CastMember,
   type Creator,
   type Merchant,
   type Product,
   type Profile,
+  type Series,
+  type SeriesShot,
   type Title,
 } from "./data.ts";
 
@@ -61,6 +65,7 @@ export type Order = {
   productId: string;
   qty: number;
   profileId: string;
+  forProfileId: string;
   at: number;
   provider: "ledger" | "moyasar";
 };
@@ -93,6 +98,8 @@ export type State = {
   plays: { titleId: string; profileId: string; at: number }[];
   positions: Record<string, number>;
   prerollSeen: string[];
+  series: Series[];
+  catalog: Title[];
   layers: StackLayers;
 };
 
@@ -115,10 +122,21 @@ export type Action =
   | { type: "prerollSeen"; titleId: string }
   | { type: "addCart"; productId: string }
   | { type: "setQty"; productId: string; qty: number }
-  | { type: "checkout" }
+  | { type: "checkout"; forProfileId?: string }
   | { type: "submit"; submission: SubmissionInput }
   | { type: "resolve"; id: string; decision: "approve" | "reject" }
   | { type: "layer"; key: LayerKey; mode: LayerMode }
+  | { type: "createSeries"; name: string; rating: 3 | 7 | 13 }
+  | { type: "addCast"; seriesId: string; name: string; detail: string; line: string }
+  | {
+      type: "addShot";
+      seriesId: string;
+      episode: number;
+      speakerId: string;
+      line: string;
+      faceIds: string[];
+    }
+  | { type: "release"; seriesId: string; episode: number }
   | { type: "reset" };
 
 export function profileById(id: string): Profile {
@@ -129,8 +147,134 @@ export function profileById(id: string): Profile {
   return found;
 }
 
-export function titleById(id: string): Title {
-  const found = titles.find((title) => title.id === id);
+const pitchLadder = [0.55, 0.7, 0.85, 1, 1.15, 1.3, 1.45, 1.6, 1.75];
+
+export function copySeries(list: Series[]): Series[] {
+  return list.map((series) => ({
+    ...series,
+    cast: series.cast.map((member) => ({ ...member })),
+    shots: series.shots.map((shot) => ({ ...shot, faceIds: [...shot.faceIds] })),
+  }));
+}
+
+export function seriesById(list: Series[], id: string): Series | undefined {
+  return list.find((series) => series.id === id);
+}
+
+export function episodeNumbers(series: Series): number[] {
+  return [...new Set(series.shots.map((shot) => shot.episode))].sort((a, b) => a - b);
+}
+
+export function episodeTitle(series: Series, episode: number): Title | null {
+  const locked = series.cast.map((member) => member.id);
+  const cut = assembleEpisode(episode, series.shots, locked);
+  if (!cut.ok) {
+    return null;
+  }
+  const shots = series.shots.filter((shot) => shot.episode === episode);
+  let cursor = 0;
+  const chapters = shots.map((shot) => {
+    const member = series.cast.find((item) => item.id === shot.speakerId);
+    const chapter = {
+      t: cursor,
+      label: member?.name ?? shot.speakerId,
+      line: shot.line,
+      speakerId: shot.speakerId,
+      pitch: member?.pitch ?? 1,
+      rate: member?.rate ?? 1,
+    };
+    cursor += shot.seconds;
+    return chapter;
+  });
+  const names = shots.flatMap((shot) => {
+    const member = series.cast.find((item) => item.id === shot.speakerId);
+    return member ? [member.name] : [];
+  });
+  return {
+    id: `${series.id}-${episode}`,
+    name: `${series.name} — ${episode}`,
+    logline: shots[0]?.line ?? series.name,
+    creatorId: series.creatorId,
+    minutes: Math.round(cut.seconds / 60),
+    lengthLabel: `${Math.round(cut.seconds / 60)} د`,
+    rating: series.rating,
+    style: "مسلسل",
+    src: "",
+    credit: `${series.name} · وجوه مقفلة · حلقة مجمّعة`,
+    introEndSec: 8,
+    chapters,
+    hue: series.hue,
+    playback: "board",
+    runtimeSec: cut.seconds,
+    aliases: [series.name, ...names],
+  };
+}
+
+export function createSeries(list: Series[], name: string, rating: 3 | 7 | 13): Series[] | null {
+  const clean = name.trim();
+  if (clean.length < 2) {
+    return null;
+  }
+  const series: Series = {
+    id: `series-${list.length + 1}`,
+    name: clean,
+    creatorId: "studio",
+    rating,
+    hue: "#6e8b74",
+    cast: [],
+    shots: [],
+  };
+  return [...list, series];
+}
+
+export function addCast(
+  series: Series,
+  input: { name: string; detail: string; line: string },
+): Series | null {
+  const name = input.name.trim();
+  const line = input.line.trim();
+  if (name.length < 2 || line.length < 2) {
+    return null;
+  }
+  const used = new Set(series.cast.map((member) => member.pitch));
+  const pitch = pitchLadder.find((value) => !used.has(value)) ?? 1;
+  const member: CastMember = {
+    id: `${series.id}-c${series.cast.length + 1}`,
+    name,
+    detail: input.detail.trim() || "بطاقة",
+    pitch,
+    rate: 1,
+    line,
+  };
+  return { ...series, cast: [...series.cast, member] };
+}
+
+export function addShot(
+  series: Series,
+  input: { episode: number; speakerId: string; line: string; faceIds: string[] },
+): Series | null {
+  const line = input.line.trim();
+  const locked = new Set(series.cast.map((member) => member.id));
+  const faces = [...new Set(input.faceIds)];
+  if (!Number.isInteger(input.episode) || input.episode < 1 || line.length < 2) {
+    return null;
+  }
+  if (!locked.has(input.speakerId) || faces.length === 0 || faces.some((face) => !locked.has(face))) {
+    return null;
+  }
+  const shot: SeriesShot = {
+    id: `${series.id}-e${input.episode}-s${series.shots.length + 1}`,
+    episode: input.episode,
+    seconds: 90,
+    speakerId: input.speakerId,
+    line,
+    faceIds: faces,
+  };
+  return { ...series, shots: [...series.shots, shot] };
+}
+
+export function titleById(id: string, catalog: Title[] = []): Title {
+  const found = titles.find((title) => title.id === id) ?? catalog.find((title) => title.id === id);
   if (!found) {
     throw new Error(`unknown title ${id}`);
   }
@@ -169,8 +313,8 @@ export function adById(id: string): Ad {
   return found;
 }
 
-export function visibleTitles(profile: Profile): Title[] {
-  return titles.filter((title) => title.rating <= profile.maxRating);
+export function visibleTitles(profile: Profile, catalog: Title[] = []): Title[] {
+  return [...titles, ...catalog].filter((title) => title.rating <= profile.maxRating);
 }
 
 export function visibleAds(profile: Profile, surface: "preroll" | "feed"): Ad[] {
@@ -189,8 +333,8 @@ export function prerollFor(profile: Profile): Ad | null {
   return visibleAds(profile, "preroll")[0] ?? null;
 }
 
-export function buildFeed(profile: Profile): FeedItem[] {
-  const library = visibleTitles(profile);
+export function buildFeed(profile: Profile, catalog: Title[] = []): FeedItem[] {
+  const library = visibleTitles(profile, catalog);
   const commercials = visibleAds(profile, "feed");
   const items: FeedItem[] = [];
   library.forEach((title, index) => {
@@ -424,6 +568,8 @@ export function initialState(): State {
     plays: [{ titleId: "bunny", profileId: "layan", at: 1_700_000_050_000 }],
     positions: {},
     prerollSeen: [],
+    series: copySeries(seedSeries),
+    catalog: [],
     layers: {
       video: "foundation",
       payments: "foundation",
@@ -439,7 +585,7 @@ export function reduce(state: State, action: Action): State {
       return { ...state, view: action.view, channelId: null };
     case "profile": {
       const next = profileById(action.id);
-      const allowed = visibleTitles(next);
+      const allowed = visibleTitles(next, state.catalog);
       const titleId = allowed.some((title) => title.id === state.titleId)
         ? state.titleId
         : allowed[0]?.id ?? state.titleId;
@@ -447,7 +593,7 @@ export function reduce(state: State, action: Action): State {
     }
     case "open": {
       const profile = profileById(state.profileId);
-      if (!visibleTitles(profile).some((title) => title.id === action.titleId)) {
+      if (!visibleTitles(profile, state.catalog).some((title) => title.id === action.titleId)) {
         return state;
       }
       return { ...state, titleId: action.titleId, view: "theater" };
@@ -531,9 +677,13 @@ export function reduce(state: State, action: Action): State {
       return { ...state, cart };
     }
     case "checkout": {
-      const profile = profileById(state.profileId);
+      const payer = profileById(state.profileId);
+      const beneficiary = profileById(action.forProfileId ?? payer.id);
       const lines = Object.entries(state.cart).filter(([, qty]) => qty > 0);
-      if (!canCheckout(profile) || lines.length === 0) {
+      if (!guardianCanPay(payer, beneficiary) || lines.length === 0) {
+        return state;
+      }
+      if (!basketFitsChild(beneficiary, lines.map(([productId]) => productId))) {
         return state;
       }
       const provider = state.layers.payments === "enterprise" ? "moyasar" : "ledger";
@@ -541,7 +691,8 @@ export function reduce(state: State, action: Action): State {
         id: crypto.randomUUID(),
         productId,
         qty,
-        profileId: profile.id,
+        profileId: payer.id,
+        forProfileId: beneficiary.id,
         at: Date.now(),
         provider,
       }));
@@ -577,6 +728,43 @@ export function reduce(state: State, action: Action): State {
       };
     case "layer":
       return { ...state, layers: { ...state.layers, [action.key]: action.mode } };
+    case "createSeries": {
+      const next = createSeries(state.series, action.name, action.rating);
+      return next ? { ...state, series: next } : state;
+    }
+    case "addCast":
+    case "addShot": {
+      const series = seriesById(state.series, action.seriesId);
+      if (!series) {
+        return state;
+      }
+      const next = action.type === "addCast" ? addCast(series, action) : addShot(series, action);
+      if (!next) {
+        return state;
+      }
+      return {
+        ...state,
+        series: state.series.map((item) => (item.id === next.id ? next : item)),
+      };
+    }
+    case "release": {
+      const series = seriesById(state.series, action.seriesId);
+      const title = series ? episodeTitle(series, action.episode) : null;
+      if (!title || state.catalog.some((item) => item.id === title.id)) {
+        return state;
+      }
+      const review = assessSubmission({
+        title: title.name,
+        medium: "animation",
+        rights: true,
+        rating: title.rating,
+        notes: "وجوه من بطاقات المسلسل.",
+      });
+      if (review.decision !== "approve") {
+        return state;
+      }
+      return { ...state, catalog: [...state.catalog, title] };
+    }
     case "reset":
       return initialState();
     default: {
@@ -601,12 +789,83 @@ export type AssistResult = {
   openId: string | null;
 };
 
-export function assist(profile: Profile, text: string, offeredIds: string[]): AssistResult {
-  const library = visibleTitles(profile);
-  const said = text.replace(/\s+/g, " ").trim();
-  const blocked = titles.find(
-    (title) => title.rating > profile.maxRating && aliasHit(title.id, said),
-  );
+export type Mouth = "open" | "round" | "closed";
+
+export type EpisodeCut =
+  | { ok: true; seconds: number; shotIds: string[] }
+  | { ok: false; reason: string };
+
+export function hearArabic(text: string): string {
+  return text
+    .replace(/[\u064B-\u065F\u0670]/g, "")
+    .replace(/[أإآ]/g, "ا")
+    .replace(/ة/g, "ه")
+    .replace(/ى/g, "ي")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function mouthCues(line: string): Mouth[] {
+  const cues: Mouth[] = [];
+  for (const mark of hearArabic(line)) {
+    if (mark === " " || mark === "،" || mark === ".") {
+      continue;
+    }
+    if (mark === "ا" || mark === "و") {
+      cues.push("round");
+    } else if ("يبمف".includes(mark)) {
+      cues.push("closed");
+    } else if (/[\u0600-\u06FF]/.test(mark)) {
+      cues.push("open");
+    }
+  }
+  return cues.length > 0 ? cues : ["closed"];
+}
+
+export function assembleEpisode(
+  episode: number,
+  shots: { id: string; episode: number; seconds: number; faceIds: string[] }[],
+  lockedIds: string[],
+): EpisodeCut {
+  const mine = shots.filter((shot) => shot.episode === episode);
+  if (mine.length === 0) {
+    return { ok: false, reason: "لا لقطات لهذه الحلقة." };
+  }
+  const stranger = mine.find((shot) => shot.faceIds.some((face) => !lockedIds.includes(face)));
+  if (stranger) {
+    return { ok: false, reason: "لقطة بوجه خارج البطاقات المقفلة." };
+  }
+  return {
+    ok: true,
+    seconds: mine.reduce((sum, shot) => sum + shot.seconds, 0),
+    shotIds: mine.map((shot) => shot.id),
+  };
+}
+
+export function guardianCanPay(payer: Profile, beneficiary: Profile): boolean {
+  return canCheckout(payer) && payer.familyId === beneficiary.familyId;
+}
+
+export function basketFitsChild(beneficiary: Profile, productIds: string[]): boolean {
+  if (beneficiary.role !== "child") {
+    return true;
+  }
+  return productIds.every((id) => {
+    const product = productById(id);
+    return beneficiary.ageYears >= product.ageMin && beneficiary.ageYears <= product.ageMax;
+  });
+}
+
+export function assist(
+  profile: Profile,
+  text: string,
+  offeredIds: string[],
+  catalog: Title[] = [],
+): AssistResult {
+  const library = visibleTitles(profile, catalog);
+  const said = hearArabic(text);
+  const shelf = [...titles, ...catalog];
+  const blocked = shelf.find((title) => title.rating > profile.maxRating && aliasHit(title, said));
   if (blocked) {
     return {
       say: `${blocked.name} فوق عمر هذا الملف. أقدر أفتح لك اللي يناسبه.`,
@@ -614,7 +873,7 @@ export function assist(profile: Profile, text: string, offeredIds: string[]): As
       openId: null,
     };
   }
-  const named = library.find((title) => aliasHit(title.id, said));
+  const named = library.find((title) => aliasHit(title, said));
   if (wantsPlay(said)) {
     const pick = named ?? (offeredIds.length > 0 ? indexPick(said, offeredIds, library) : null);
     if (pick) {
@@ -643,13 +902,13 @@ export function assist(profile: Profile, text: string, offeredIds: string[]): As
   };
 }
 
-function aliasHit(titleId: string, said: string): boolean {
-  const words: Record<string, string[]> = {
-    bunny: ["الأرنب باك", "باك", "أرنب", "ضحك", "مضحك", "كوميديا"],
-    elephants: ["حلم الفيلة", "فيلة", "خيال"],
-    sintel: ["سينتل", "مغامرة", "ثلج"],
-  };
-  return (words[titleId] ?? []).some((word) => said.includes(word));
+function aliasHit(title: Title, said: string): boolean {
+  const heard = hearArabic(said);
+  const words = [title.name, ...(title.aliases ?? [])].flatMap((word) => {
+    const folded = hearArabic(word);
+    return [folded, ...folded.split(" ").filter((part) => part.length >= 3)];
+  });
+  return words.some((word) => heard.includes(word));
 }
 
 function wantsPlay(said: string): boolean {

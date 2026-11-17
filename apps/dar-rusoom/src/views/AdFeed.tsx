@@ -5,7 +5,7 @@ import { useStore } from "../store.tsx";
 export function AdFeed() {
   const { state, dispatch } = useStore();
   const profile = profileById(state.profileId);
-  const items = buildFeed(profile);
+  const items = buildFeed(profile, state.catalog);
 
   return (
     <section>
@@ -41,7 +41,8 @@ export function AdFeed() {
 }
 
 function Clip({ titleId }: { titleId: string }) {
-  const title = titleById(titleId);
+  const { state } = useStore();
+  const title = titleById(titleId, state.catalog);
   const ref = useRef<HTMLVideoElement>(null);
   const wrap = useRef<HTMLElement>(null);
 
@@ -69,7 +70,11 @@ function Clip({ titleId }: { titleId: string }) {
 
   return (
     <article className="reel" ref={wrap}>
-      <video ref={ref} src={title.src} muted playsInline loop preload="metadata" />
+      {title.playback === "board" ? (
+        <div className="reel-board" style={{ background: title.hue }} />
+      ) : (
+        <video ref={ref} src={title.src} muted playsInline loop preload="metadata" />
+      )}
       <div className="reel-copy">
         <p className="ad-flag">كرتون</p>
         <strong>{title.name}</strong>

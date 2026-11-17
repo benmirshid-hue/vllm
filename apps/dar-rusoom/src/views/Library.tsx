@@ -5,7 +5,7 @@ import { useStore } from "../store.tsx";
 export function Library() {
   const { state, dispatch } = useStore();
   const profile = profileById(state.profileId);
-  const library = visibleTitles(profile);
+  const library = visibleTitles(profile, state.catalog);
 
   return (
     <section>
