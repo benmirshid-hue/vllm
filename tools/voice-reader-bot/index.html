@@ -3,49 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>قارئ صوت أنثوي هادئ</title>
+  <title>بوت محادثة شخصي</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main class="app">
     <header class="header">
-      <h1>قارئ الصوت</h1>
+      <h1>بوتك الشخصي</h1>
       <p class="subtitle">
-        صوت أنثوي دافئ وهادئ يقرأ النص الذي تكتبينه.
-        هذا القارئ للقراءة العامة فقط، وليس للمحتوى الجنسي أو الصريح.
+        محادثة نصية بالعربية، خاصة بك على هذا الجهاز.
+        المحادثات تُحفظ محلياً فقط، وليست للمحتوى الجنسي أو الصريح.
       </p>
     </header>
 
-    <label class="field-label" for="text">النص</label>
+    <section id="chat" class="chat" aria-live="polite"></section>
+
+    <label class="field-label" for="text">رسالتك</label>
     <textarea
       id="text"
-      rows="12"
-      placeholder="اكتبي النص هنا، ثم اضغطي قراءة…"
+      rows="4"
+      placeholder="اكتبي هنا مثل ما تكلمين Cursor…"
     ></textarea>
-
-    <section class="controls">
-      <label class="control">
-        <span>الصوت</span>
-        <select id="voice"></select>
-      </label>
-      <label class="control">
-        <span>الأنوثة / الطبقة</span>
-        <input id="pitch" type="range" min="1.2" max="1.75" step="0.05" value="1.55" />
-      </label>
-      <label class="control">
-        <span>الهدوء / السرعة</span>
-        <input id="rate" type="range" min="0.7" max="1.05" step="0.05" value="0.84" />
-      </label>
-    </section>
 
     <p id="policyNote" class="policy" hidden></p>
 
     <div class="actions">
-      <button id="demo" type="button">عرض تجريبي</button>
-      <button id="speak" type="button">قراءة</button>
-      <button id="pause" type="button" class="secondary">إيقاف مؤقت</button>
-      <button id="resume" type="button" class="secondary">متابعة</button>
-      <button id="stop" type="button" class="secondary">إيقاف</button>
+      <button id="send" type="button">أرسل</button>
+      <button id="clear" type="button" class="secondary">مسح المحادثة</button>
     </div>
 
     <p id="status" class="status" aria-live="polite"></p>
