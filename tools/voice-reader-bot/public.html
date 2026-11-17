@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>قارئ صوت أنثوي هادئ</title>
+  <style>
+:root {
+  --bg: #1a1520;
+  --panel: #261f2e;
+  --text: #f6f0f7;
+  --muted: #c9b8cf;
+  --accent: #e8a0bf;
+  --accent-strong: #f0bfd4;
+  --border: #3b3044;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Segoe UI", "Tahoma", "Arial", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(ellipse at top, #3a2438 0%, transparent 55%),
+    linear-gradient(160deg, #1a1520, #120e18 70%);
+}
+
+.app {
+  width: min(720px, 92vw);
+  margin: 2.5rem auto;
+  padding: 1.5rem;
+  background: color-mix(in srgb, var(--panel) 92%, black);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
+
+.header h1 {
+  margin: 0 0 0.4rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.subtitle {
+  margin: 0 0 1.2rem;
+  color: var(--muted);
+  line-height: 1.7;
+  font-size: 0.95rem;
+}
+
+.field-label,
+.control span {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--accent-strong);
+  font-size: 0.9rem;
+}
+
+textarea,
+select,
+input[type="range"] {
+  width: 100%;
+}
+
+textarea {
+  resize: vertical;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #17121c;
+  color: var(--text);
+  line-height: 1.8;
+  font-size: 1rem;
+}
+
+.controls {
+  display: grid;
+  gap: 0.9rem;
+  margin: 1rem 0;
+}
+
+.control {
+  display: block;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+button {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.7rem 1.2rem;
+  background: var(--accent);
+  color: #2a1520;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+button:hover {
+  filter: brightness(1.05);
+}
+
+.policy {
+  margin: 0.4rem 0 0.8rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  background: #3a2230;
+  color: #ffd7e4;
+  line-height: 1.6;
+}
+
+.status {
+  min-height: 1.4rem;
+  margin-top: 1rem;
+  color: var(--muted);
+}
+
+</style>
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <h1>قارئ الصوت</h1>
+      <p class="subtitle">
+        صوت أنثوي دافئ وهادئ يقرأ النص الذي تكتبينه.
+        هذا القارئ للقراءة العامة فقط، وليس للمحتوى الجنسي أو الصريح.
+      </p>
+    </header>
+
+    <label class="field-label" for="text">النص</label>
+    <textarea
+      id="text"
+      rows="12"
+      placeholder="اكتبي النص هنا، ثم اضغطي قراءة…"
+    ></textarea>
+
+    <section class="controls">
+      <label class="control">
+        <span>الصوت</span>
+        <select id="voice"></select>
+      </label>
+      <label class="control">
+        <span>الأنوثة / الطبقة</span>
+        <input id="pitch" type="range" min="1.2" max="1.75" step="0.05" value="1.55" />
+      </label>
+      <label class="control">
+        <span>الهدوء / السرعة</span>
+        <input id="rate" type="range" min="0.7" max="1.05" step="0.05" value="0.84" />
+      </label>
+    </section>
+
+    <p id="policyNote" class="policy" hidden></p>
+
+    <div class="actions">
+      <button id="demo" type="button">عرض تجريبي</button>
+      <button id="speak" type="button">قراءة</button>
+      <button id="pause" type="button" class="secondary">إيقاف مؤقت</button>
+      <button id="resume" type="button" class="secondary">متابعة</button>
+      <button id="stop" type="button" class="secondary">إيقاف</button>
+    </div>
+
+    <p id="status" class="status" aria-live="polite"></p>
+  </main>
+  <script>
+(() => {
+  const textEl = document.getElementById("text");
+  const voiceEl = document.getElementById("voice");
+  const pitchEl = document.getElementById("pitch");
+  const rateEl = document.getElementById("rate");
+  const statusEl = document.getElementById("status");
+  const policyNote = document.getElementById("policyNote");
+
+  const speakBtn = document.getElementById("speak");
+  const demoBtn = document.getElementById("demo");
+  const pauseBtn = document.getElementById("pause");
+  const resumeBtn = document.getElementById("resume");
+  const stopBtn = document.getElementById("stop");
+
+  // Soft blocklist for explicit sexual content. This bot is intentionally
+  // not an unrestricted reader.
+  const blockedPatterns = [
+    /نيك/i,
+    /أنیک/i,
+    /انيك/i,
+    /طيز/i,
+    /زب\b/i,
+    /كس\b/i,
+    /قحب/i,
+    /ممحون/i,
+    /منيوك/i,
+    /\bsex\b/i,
+    /\bporn\b/i,
+    /\bfuck\b/i,
+    /\bcock\b/i,
+    /\bpussy\b/i,
+    /\banal\b/i,
+  ];
+
+  const DEMO_TEXT = [
+    "مرحباً… أنا هنا معك بهدوء.",
+    "صوتي أقرب، وأدفأ، وأهدى مما تسمعه عادة.",
+    "خذ نفساً معي… ثم أكمل الاستماع.",
+    "أقرأ الكلمات ببطء، مع توقفات صغيرة بين الجمل.",
+    "إذا أعجبك الإحساس، استخدم المربع لتكتب أي نص عام وأقرأه لك.",
+  ].join(" ");
+
+  let queueTimer = null;
+  let audioCtx = null;
+
+  function setStatus(message) {
+    statusEl.textContent = message;
+  }
+
+  function isBlocked(text) {
+    return blockedPatterns.some((pattern) => pattern.test(text));
+  }
+
+  function scoreFeminineVoice(voice) {
+    const name = `${voice.name} ${voice.lang}`.toLowerCase();
+    let score = 0;
+    if (/female|woman|girl|feminine|samantha|victoria|karen|moira|zira|susan|linda|sara|nora|salma|laila|hoda|aria|jenny|neural/.test(name)) {
+      score += 5;
+    }
+    if (/male|man|david|mark|george|guy|ryan|andrew/.test(name)) {
+      score -= 5;
+    }
+    if (/ar|arab/.test(name)) {
+      score += 2;
+    }
+    return score;
+  }
+
+  function populateVoices() {
+    const voices = speechSynthesis.getVoices();
+    const ranked = [...voices].sort((a, b) => scoreFeminineVoice(b) - scoreFeminineVoice(a));
+    voiceEl.innerHTML = "";
+    ranked.forEach((voice, index) => {
+      const option = document.createElement("option");
+      option.value = String(index);
+      option.textContent = `${voice.name} (${voice.lang})`;
+      voiceEl.appendChild(option);
+    });
+    voiceEl.dataset.ranked = JSON.stringify(
+      ranked.map((voice) => ({ name: voice.name, lang: voice.lang }))
+    );
+    if (ranked.length) {
+      voiceEl.selectedIndex = 0;
+      setStatus(`تم اختيار صوت أنثوي مفضّل: ${ranked[0].name}`);
+    } else {
+      setStatus("لم يتم العثور على أصوات بعد. افتحي الصفحة في كروم أو إيدج.");
+    }
+  }
+
+  function selectedVoice() {
+    const rankedMeta = JSON.parse(voiceEl.dataset.ranked || "[]");
+    const meta = rankedMeta[Number(voiceEl.value)];
+    if (!meta) return null;
+    return speechSynthesis.getVoices().find((v) => v.name === meta.name && v.lang === meta.lang) || null;
+  }
+
+  function splitSentences(text) {
+    return text
+      .split(/(?<=[.!?…。؟！])\s+|\n+/)
+      .map((part) => part.trim())
+      .filter(Boolean);
+  }
+
+  function ensureAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
+    return audioCtx;
+  }
+
+  // Soft breath-like exhale between sentences (not speech, just atmosphere).
+  function playBreath() {
+    try {
+      const ctx = ensureAudio();
+      const duration = 0.45;
+      const sampleRate = ctx.sampleRate;
+      const frameCount = Math.floor(sampleRate * duration);
+      const buffer = ctx.createBuffer(1, frameCount, sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < frameCount; i += 1) {
+        const t = i / frameCount;
+        const envelope = Math.sin(Math.PI * t) * (1 - t) * 0.045;
+        data[i] = (Math.random() * 2 - 1) * envelope;
+      }
+      const source = ctx.createBufferSource();
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.value = 900;
+      source.buffer = buffer;
+      source.connect(filter);
+      filter.connect(ctx.destination);
+      source.start();
+    } catch (_) {
+      // Breath is optional; reading still works without it.
+    }
+  }
+
+  function stopQueue() {
+    if (queueTimer) {
+      clearTimeout(queueTimer);
+      queueTimer = null;
+    }
+    speechSynthesis.cancel();
+  }
+
+  function speakSentence(sentence, onDone) {
+    const utterance = new SpeechSynthesisUtterance(sentence);
+    const voice = selectedVoice();
+    if (voice) utterance.voice = voice;
+    utterance.pitch = Number(pitchEl.value);
+    utterance.rate = Number(rateEl.value);
+    utterance.volume = 1;
+    utterance.onend = () => onDone();
+    utterance.onerror = () => onDone();
+    speechSynthesis.speak(utterance);
+  }
+
+  function speakText(text, { demo = false } = {}) {
+    if (!text) {
+      setStatus("اكتبي نصاً أولاً.");
+      return;
+    }
+    if (isBlocked(text)) {
+      policyNote.hidden = false;
+      policyNote.textContent =
+        "هذا القارئ لا يقرأ المحتوى الجنسي أو الصريح. احذفي العبارات الصريحة وجرّبي نصاً عاماً.";
+      setStatus("تم رفض القراءة بسبب محتوى صريح.");
+      return;
+    }
+    policyNote.hidden = true;
+    stopQueue();
+
+    const sentences = splitSentences(text);
+    let index = 0;
+    setStatus(demo ? "عرض تجريبي أنثوي هادئ…" : "تقرأ الآن بصوت أنثوي هادئ…");
+
+    const next = () => {
+      if (index >= sentences.length) {
+        setStatus(demo ? "انتهى العرض التجريبي." : "انتهت القراءة.");
+        return;
+      }
+      const sentence = sentences[index];
+      index += 1;
+      speakSentence(sentence, () => {
+        if (index < sentences.length) {
+          playBreath();
+          // Pause + breath gap between sentences for a close, calm delivery.
+          queueTimer = setTimeout(next, 700);
+        } else {
+          setStatus(demo ? "انتهى العرض التجريبي." : "انتهت القراءة.");
+        }
+      });
+    };
+
+    next();
+  }
+
+  function speak() {
+    speakText(textEl.value.trim(), { demo: false });
+  }
+
+  function runDemo() {
+    textEl.value = DEMO_TEXT;
+    // Strongly feminine demo defaults.
+    pitchEl.value = "1.55";
+    rateEl.value = "0.84";
+    speakText(DEMO_TEXT, { demo: true });
+  }
+
+  speakBtn.addEventListener("click", speak);
+  demoBtn.addEventListener("click", runDemo);
+  pauseBtn.addEventListener("click", () => {
+    speechSynthesis.pause();
+    setStatus("إيقاف مؤقت.");
+  });
+  resumeBtn.addEventListener("click", () => {
+    speechSynthesis.resume();
+    setStatus("متابعة القراءة.");
+  });
+  stopBtn.addEventListener("click", () => {
+    stopQueue();
+    setStatus("توقفت القراءة.");
+  });
+
+  populateVoices();
+  speechSynthesis.onvoiceschanged = populateVoices;
+})();
+
+</script>
+</body>
+</html>
