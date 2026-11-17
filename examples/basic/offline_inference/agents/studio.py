@@ -4,11 +4,13 @@
 
 import argparse
 import json
+import subprocess
 import sys
 from pathlib import Path
 
 from catalog import StudioError, agents, find_agent, prepare_fields
 from local import HANDLERS, redact
+from oss import complete, inventory, serve_argv
 
 DRY_RUN = {"auto-publisher", "auto-publisher-v7"}
 
@@ -66,6 +68,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.allow_abbrev = False
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("list")
+    sub.add_parser("inventory")
+    serve = sub.add_parser("serve")
+    serve.add_argument(
+        "--run",
+        action="store_true",
+        help="تشغيل llamafile إذا كان الملف والنموذج موجودين",
+    )
+    ask = sub.add_parser("ask")
+    ask.add_argument("--text", required=True)
+    ask.add_argument("--port", type=int, default=None)
     show = sub.add_parser("show")
     show.add_argument("agent")
     run = sub.add_parser("run")
@@ -75,6 +87,22 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--keys", type=Path, default=None)
     args = parser.parse_args(argv)
     try:
+        if args.command == "inventory":
+            print(json.dumps(inventory(), ensure_ascii=False))
+            return 0
+        if args.command == "serve":
+            argv = serve_argv()
+            if not args.run:
+                print(json.dumps({"command": argv}, ensure_ascii=False))
+                return 0
+            binary = Path(argv[0])
+            model = Path(argv[2])
+            if not binary.is_file() or not model.is_file():
+                raise StudioError("llamafile أو النموذج غير موجود خارج المستودع")
+            return subprocess.call(argv)
+        if args.command == "ask":
+            print(json.dumps(complete(args.text, args.port), ensure_ascii=False))
+            return 0
         if args.command == "list":
             rows = [
                 {"slug": item["slug"], "kind": item["kind"], "name": item["name"]}

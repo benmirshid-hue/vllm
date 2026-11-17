@@ -301,7 +301,10 @@ def video_plan(fields: dict, label: str) -> dict:
         "aspect_ratio": fields.get("aspect_ratio") or "16:9",
         "resolution": fields.get("resolution") or "720p",
         "generate_audio": bool(fields.get("generate_audio", True)),
-        "note": f"{label}: الخطة جاهزة ولم يُرسل طلب توليد.",
+        "note": (
+            f"{label}: الخطة جاهزة. HeyGen API مغلق، "
+            "وHyperFrames مفتوح للتأليف ولم يُستدعَ."
+        ),
     }
 
 
