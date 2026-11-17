@@ -39,6 +39,7 @@
   let audioCtx = null;
   let queueTimer = null;
   let shouldListenAgain = false;
+  let currentAudio = null;
 
   function loadJson(key, fallback) {
     try {
@@ -107,40 +108,99 @@
   function femininityScore(voice) {
     const s = `${voice.name} ${voice.lang}`.toLowerCase();
     if (isChineseVoice(voice) || isMaleVoice(voice)) return -100;
+    // Strict: only Arabic-capable female-ish voices for optional system fallback.
+    if (!/ar|arab|saudi|egypt|gulf|levant|arabic/.test(s)) return -50;
     let score = 0;
-    if (/female|woman|girl|feminine/.test(s)) score += 10;
-    if (/samantha|victoria|karen|moira|zira|susan|linda|sara|nora|salma|laila|hoda|aria|jenny|mia|sonia|natasha|neural/.test(s)) score += 8;
-    if (/ar|arab|saudi|egypt|gulf|levant/.test(s)) score += 9;
-    if (/en|us|gb|uk/.test(s)) score += 1;
+    if (/female|woman|girl|feminine|salma|laila|hoda|noura|sara|neural/.test(s)) score += 12;
+    if (/ar|arab|saudi|egypt|gulf|levant|arabic/.test(s)) score += 10;
     if (/premium|enhanced|natural|quality/.test(s)) score += 3;
     return score;
   }
 
   function populateVoices() {
+    const selected = voiceEl.value || "arabic-female";
     const ranked = speechSynthesis.getVoices()
       .filter((v) => femininityScore(v) > 0)
       .sort((a, b) => femininityScore(b) - femininityScore(a));
+
     voiceEl.innerHTML = "";
-    if (!ranked.length) {
-      voiceHint.textContent = "ما لقيت صوت أنثوي مناسب. جرّبي Chrome/Safari مع صوت نسائي عربي.";
-      return;
-    }
-    ranked.forEach((voice, index) => {
+    const primary = document.createElement("option");
+    primary.value = "arabic-female";
+    primary.textContent = "عربي أنثوي (محرك عربي مخصص)";
+    voiceEl.appendChild(primary);
+
+    ranked.forEach((voice) => {
       const opt = document.createElement("option");
-      opt.value = String(index);
-      opt.textContent = `${voice.name} (${voice.lang})`;
+      opt.value = `sys:${voice.name}||${voice.lang}`;
+      opt.textContent = `نظام: ${voice.name} (${voice.lang})`;
       voiceEl.appendChild(opt);
     });
-    voiceEl.dataset.ranked = JSON.stringify(ranked.map((v) => ({ name: v.name, lang: v.lang })));
-    voiceEl.selectedIndex = 0;
-    voiceHint.textContent = `أنثوي فقط ✓ | المختار: ${ranked[0].name}`;
+
+    const exists = Array.from(voiceEl.options).some((o) => o.value === selected);
+    voiceEl.value = exists ? selected : "arabic-female";
+    voiceHint.textContent = ranked.length
+      ? "الافتراضي: محرك عربي أنثوي. أصوات النظام الرجالية/الصينية مستبعدة."
+      : "جهازك ما فيه صوت عربي أنثوي. بنستخدم المحرك العربي الأنثوي المخصص.";
   }
 
-  function selectedVoice() {
-    const ranked = JSON.parse(voiceEl.dataset.ranked || "[]");
-    const meta = ranked[Number(voiceEl.value)];
-    if (!meta) return null;
-    return speechSynthesis.getVoices().find((v) => v.name === meta.name && v.lang === meta.lang) || null;
+  function selectedSystemVoice() {
+    const value = voiceEl.value || "";
+    if (!value.startsWith("sys:")) return null;
+    const raw = value.slice(4);
+    const [name, lang] = raw.split("||");
+    return speechSynthesis.getVoices().find((v) => v.name === name && v.lang === lang) || null;
+  }
+
+  function useArabicFemaleEngine() {
+    return (voiceEl.value || "arabic-female") === "arabic-female";
+  }
+
+  function arabicTtsUrl(text) {
+    // Google Translate Arabic TTS tends to sound feminine and avoids local male/Chinese voices.
+    return `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=ar&q=${encodeURIComponent(text)}`;
+  }
+
+  function chunkForTts(text, maxLen = 140) {
+    const parts = [];
+    const sentences = splitParts(text);
+    let buf = "";
+    sentences.forEach((sentence) => {
+      if ((buf + " " + sentence).trim().length <= maxLen) {
+        buf = `${buf} ${sentence}`.trim();
+        return;
+      }
+      if (buf) parts.push(buf);
+      if (sentence.length <= maxLen) {
+        buf = sentence;
+        return;
+      }
+      for (let i = 0; i < sentence.length; i += maxLen) {
+        parts.push(sentence.slice(i, i + maxLen));
+      }
+      buf = "";
+    });
+    if (buf) parts.push(buf);
+    return parts.length ? parts : [text.slice(0, maxLen)];
+  }
+
+  function playAudioUrl(url) {
+    return new Promise((resolve, reject) => {
+      const audio = new Audio(url);
+      currentAudio = audio;
+      audio.preload = "auto";
+      audio.onended = () => {
+        if (currentAudio === audio) currentAudio = null;
+        resolve();
+      };
+      audio.onerror = () => {
+        if (currentAudio === audio) currentAudio = null;
+        reject(new Error("audio failed"));
+      };
+      const playAttempt = audio.play();
+      if (playAttempt && playAttempt.catch) {
+        playAttempt.catch(reject);
+      }
+    });
   }
 
   function ensureAudio() {
@@ -180,6 +240,13 @@
       queueTimer = null;
     }
     speechSynthesis.cancel();
+    if (currentAudio) {
+      try {
+        currentAudio.pause();
+        currentAudio.src = "";
+      } catch (_) {}
+      currentAudio = null;
+    }
   }
 
   function splitParts(text) {
@@ -203,9 +270,8 @@
     return { pitch: basePitch + (index % 2) * 0.04, rate: baseRate, vol: 0.93, pause: 920 + closeness * 180, breath: "soft" };
   }
 
-  function speakText(text) {
+  function speakWithSystemVoice(text) {
     return new Promise((resolve) => {
-      stopSpeech();
       const parts = splitParts(text);
       if (!parts.length) {
         resolve();
@@ -221,9 +287,9 @@
         const expr = expressionFor(part, i, parts.length);
         i += 1;
         const u = new SpeechSynthesisUtterance(part);
-        const voice = selectedVoice();
+        const voice = selectedSystemVoice();
         if (voice) u.voice = voice;
-        u.lang = (voice && voice.lang) || "ar-SA";
+        u.lang = "ar-SA";
         u.pitch = Math.min(1.85, expr.pitch);
         u.rate = Math.max(0.68, expr.rate);
         u.volume = expr.vol;
@@ -239,6 +305,45 @@
       playBreath("soft");
       queueTimer = setTimeout(next, 280);
     });
+  }
+
+  async function speakWithArabicFemaleEngine(text) {
+    const parts = chunkForTts(text);
+    playBreath("soft");
+    await new Promise((r) => setTimeout(r, 220));
+    for (let i = 0; i < parts.length; i += 1) {
+      const part = parts[i];
+      const expr = expressionFor(part, i, parts.length);
+      try {
+        await playAudioUrl(arabicTtsUrl(part));
+      } catch (_) {
+        // Fallback only to Arabic-lang utterance, never assign Chinese/male voice objects.
+        await new Promise((resolve) => {
+          const u = new SpeechSynthesisUtterance(part);
+          u.lang = "ar-SA";
+          u.pitch = Math.min(1.85, expr.pitch);
+          u.rate = Math.max(0.7, expr.rate);
+          u.onend = resolve;
+          u.onerror = resolve;
+          speechSynthesis.speak(u);
+        });
+      }
+      if (i < parts.length - 1) {
+        playBreath(expr.breath);
+        await new Promise((r) => {
+          queueTimer = setTimeout(r, expr.pause);
+        });
+      }
+    }
+  }
+
+  async function speakText(text) {
+    stopSpeech();
+    if (useArabicFemaleEngine()) {
+      await speakWithArabicFemaleEngine(text);
+      return;
+    }
+    await speakWithSystemVoice(text);
   }
 
   function updateMemory(text) {
@@ -333,18 +438,24 @@
   async function softAck() {
     if (level(dalaaEl) < 0.8) return;
     const ack = softSighs[Math.floor(Math.random() * 3)];
-    const u = new SpeechSynthesisUtterance(ack);
-    const voice = selectedVoice();
-    if (voice) u.voice = voice;
-    u.lang = (voice && voice.lang) || "ar-SA";
-    u.pitch = 1.7;
-    u.rate = 0.72;
-    u.volume = 0.75;
-    await new Promise((resolve) => {
-      u.onend = resolve;
-      u.onerror = resolve;
-      speechSynthesis.speak(u);
-    });
+    try {
+      if (useArabicFemaleEngine()) {
+        await playAudioUrl(arabicTtsUrl(ack));
+      } else {
+        const u = new SpeechSynthesisUtterance(ack);
+        const voice = selectedSystemVoice();
+        if (voice) u.voice = voice;
+        u.lang = "ar-SA";
+        u.pitch = 1.7;
+        u.rate = 0.72;
+        u.volume = 0.75;
+        await new Promise((resolve) => {
+          u.onend = resolve;
+          u.onerror = resolve;
+          speechSynthesis.speak(u);
+        });
+      }
+    } catch (_) {}
     playBreath("sigh");
   }
 
