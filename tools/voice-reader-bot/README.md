@@ -14,6 +14,14 @@ python3 -m pip install -r requirements.txt
 
 Open: http://127.0.0.1:8765/
 
+## Direct bot page
+
+Open the bot UI (not the GitHub folder):
+
+https://htmlpreview.github.io/?https://raw.githubusercontent.com/benmirshid-hue/vllm/cursor/voice-reader-public-d925/tools/voice-reader-bot/public.html
+
+Local full TTS (edge-tts): http://127.0.0.1:8765/
+
 ## Project links
 
 - Folder: https://github.com/benmirshid-hue/vllm/tree/cursor/voice-reader-public-d925/tools/voice-reader-bot
