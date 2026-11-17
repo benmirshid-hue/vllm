@@ -40,16 +40,16 @@
 
   const DEFAULT_VOICE = "Zariyah";
   const API_BASE = "";
-  const HISTORY_KEY = "voice-bot-history-v13";
-  const MEMORY_KEY = "voice-bot-memory-v13";
-  const VOICE_KEY = "voice-bot-voice-v13";
-  const DELIVERY_KEY = "voice-bot-delivery-v13";
+  const HISTORY_KEY = "voice-bot-history-v14";
+  const MEMORY_KEY = "voice-bot-memory-v14";
+  const VOICE_KEY = "voice-bot-voice-v14";
+  const DELIVERY_KEY = "voice-bot-delivery-v14";
   const CALL_OPENER = "هلا، تكلّمي.";
 
   // Sensitive VAD — catch whispers; do not require clear words.
-  const WHISPER_RMS = 0.0035;
-  const SILENCE_MS = 850;
-  const MIN_SPEECH_MS = 180;
+  const WHISPER_RMS = 0.0012;
+  const SILENCE_MS = 700;
+  const MIN_SPEECH_MS = 120;
   const MAX_UTTERANCE_MS = 20000;
 
   let catalog = FALLBACK_VOICES.slice();
@@ -73,6 +73,7 @@
   let vadRaf = 0;
   let captureChunks = [];
   let capturing = false;
+  let vadCloneTracks = [];
 
   function loadJson(key, fallback) {
     try {
@@ -253,6 +254,10 @@
       vadSource = null;
     }
     vadAnalyser = null;
+    vadCloneTracks.forEach((t) => {
+      try { t.stop(); } catch (_) {}
+    });
+    vadCloneTracks = [];
   }
 
   async function fetchFemaleTtsBlob(text, voiceName, delivery) {
@@ -272,19 +277,50 @@
     const objectUrl = URL.createObjectURL(blob);
     stopSpeech();
     currentAudio = audio;
+    try { audio.pause(); } catch (_) {}
     audio.src = objectUrl;
     audio.muted = false;
     audio.volume = 1;
-    const finished = new Promise((resolve, reject) => {
-      audio.onended = () => resolve();
-      audio.onerror = () => reject(new Error("audio playback failed"));
+    try { audio.load(); } catch (_) {}
+
+    await new Promise((resolve) => {
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        audio.removeEventListener("canplaythrough", finish);
+        audio.removeEventListener("loadeddata", finish);
+        resolve();
+      };
+      audio.addEventListener("canplaythrough", finish, { once: true });
+      audio.addEventListener("loadeddata", finish, { once: true });
+      setTimeout(finish, 2500);
     });
+
+    const finished = new Promise((resolve) => {
+      const done = () => {
+        clearTimeout(watchdog);
+        resolve();
+      };
+      const ms = Number.isFinite(audio.duration) && audio.duration > 0
+        ? Math.min(90000, (audio.duration + 2) * 1000)
+        : 20000;
+      const watchdog = setTimeout(done, ms);
+      audio.onended = done;
+      audio.onerror = done;
+    });
+
     try {
       await audio.play();
     } catch (_) {
       await unlockAudioPlayback();
       audio.muted = false;
-      await audio.play();
+      audio.volume = 1;
+      try {
+        await audio.play();
+      } catch (err2) {
+        throw new Error(`playback blocked: ${err2 && err2.message ? err2.message : err2}`);
+      }
     }
     try {
       await finished;
@@ -401,7 +437,7 @@
     }
   }
 
-  function listenLoop() {
+  async function listenLoop() {
     if (!inCall || busy || isSpeaking) return;
     if (!micStream) {
       setStatus("افتحي المايك أول.");
@@ -413,10 +449,28 @@
     liveCaption.textContent = "التقاط مباشر — الهمس والكلام غير الواضح ما ينحذف.";
 
     const ctx = ensureAudio();
+    try {
+      if (ctx.state === "suspended") await ctx.resume();
+    } catch (_) {}
+
+    // Clone mic track for VAD so MediaRecorder keeps a clean original stream.
+    vadCloneTracks.forEach((t) => {
+      try { t.stop(); } catch (_) {}
+    });
+    vadCloneTracks = [];
     if (vadSource) {
       try { vadSource.disconnect(); } catch (_) {}
+      vadSource = null;
     }
-    vadSource = ctx.createMediaStreamSource(micStream);
+    let vadStream = micStream;
+    try {
+      const clones = micStream.getAudioTracks().map((t) => t.clone());
+      vadCloneTracks = clones;
+      vadStream = new MediaStream(clones);
+    } catch (_) {
+      vadStream = micStream;
+    }
+    vadSource = ctx.createMediaStreamSource(vadStream);
     vadAnalyser = ctx.createAnalyser();
     vadAnalyser.fftSize = 2048;
     vadSource.connect(vadAnalyser);
@@ -427,6 +481,7 @@
     let speechStartedAt = 0;
     let lastLoudAt = 0;
     let utteranceStartedAt = 0;
+    const armedAt = performance.now();
 
     try {
       mediaRecorder = mime
@@ -442,17 +497,27 @@
     };
     mediaRecorder.onstop = async () => {
       if (gen !== listenGeneration) return;
-      const blob = new Blob(captureChunks, { type: mediaRecorder.mimeType || "audio/webm" });
+      const blob = new Blob(captureChunks, { type: (mediaRecorder && mediaRecorder.mimeType) || "audio/webm" });
       captureChunks = [];
       capturing = false;
+      if (!blob.size) {
+        if (inCall && !busy && !isSpeaking) queueTimer = setTimeout(() => { listenLoop(); }, 250);
+        return;
+      }
       await handleVoiceBlob(blob);
     };
 
     const tick = () => {
       if (gen !== listenGeneration || !inCall || busy || isSpeaking) return;
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {});
+      }
       const rms = rmsFromAnalyser(vadAnalyser);
       const now = performance.now();
       const loud = rms >= WHISPER_RMS;
+      if ((now - armedAt) > 400 && (now - armedAt) < 520) {
+        liveCaption.textContent = `أسمعك — مستوى ${rms.toFixed(4)}`;
+      }
 
       if (loud) {
         lastLoudAt = now;
@@ -464,6 +529,7 @@
           try {
             mediaRecorder.start(100);
             liveCaption.textContent = `يلتقط… (rms ${rms.toFixed(3)})`;
+            setStatus("ألتقط صوتك…");
           } catch (_) {
             capturing = false;
           }
@@ -554,12 +620,16 @@
     try {
       isSpeaking = true;
       setMicEnabled(false);
-      await playBlob(readyBlob);
-      await waitMs(400);
+      await Promise.race([
+        playBlob(readyBlob),
+        waitMs(15000),
+      ]);
+      await waitMs(250);
     } catch (err) {
       setStatus(`فشل التشغيل: ${err.message}`);
     } finally {
       isSpeaking = false;
+      busy = false;
       setMicEnabled(true);
     }
 
