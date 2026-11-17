@@ -12,8 +12,6 @@
   const callPulse = document.getElementById("callPulse");
   const chatEl = document.getElementById("chat");
   const statusEl = document.getElementById("status");
-  const policyNote = document.getElementById("policyNote");
-
   const FALLBACK_VOICES = [
     { name: "Fatima", id: "ar-AE-FatimaNeural", locale: "ar-AE", locale_name: "الإمارات" },
     { name: "Laila", id: "ar-BH-LailaNeural", locale: "ar-BH", locale_name: "البحرين" },
@@ -42,10 +40,10 @@
 
   const DEFAULT_VOICE = "Zariyah";
   const API_BASE = "";
-  const HISTORY_KEY = "voice-bot-history-v11";
-  const MEMORY_KEY = "voice-bot-memory-v11";
-  const VOICE_KEY = "voice-bot-voice-v11";
-  const DELIVERY_KEY = "voice-bot-delivery-v11";
+  const HISTORY_KEY = "voice-bot-history-v13";
+  const MEMORY_KEY = "voice-bot-memory-v13";
+  const VOICE_KEY = "voice-bot-voice-v13";
+  const DELIVERY_KEY = "voice-bot-delivery-v13";
   const CALL_OPENER = "هلا، تكلّمي.";
 
   // Sensitive VAD — catch whispers; do not require clear words.
@@ -95,7 +93,6 @@
     try { localStorage.setItem(MEMORY_KEY, JSON.stringify(memory)); } catch (_) {}
   }
   function setStatus(msg) { statusEl.textContent = msg; }
-  function hidePolicy() { if (policyNote) { policyNote.hidden = true; policyNote.textContent = ""; } }
   function waitMs(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
   function localeLabel(v) {
@@ -146,7 +143,7 @@
   function updateVoiceHint() {
     const meta = catalog.find((v) => v.name === activeVoiceName) || catalog[0];
     voiceHint.textContent =
-      `${catalog.length}/16 صوت | ${meta.name} | صوت↔صوت مباشر | كل المهارات | بدون قيود`;
+      `${catalog.length}/16 صوت | ${meta.name} | صوت↔صوت مباشر | كل المهارات | بلا فلاتر`;
   }
 
   function selectedVoiceName() {
@@ -316,7 +313,7 @@
     callPulse.classList.toggle("live", active);
     callState.textContent = active ? `صوت↔صوت نشط — ${activeVoiceName}` : "جاهز للمكالمة";
     liveCaption.textContent = active
-      ? "المايك يلتقط كل شيء بما فيه الهمس — بدون فلتر كلمات."
+      ? "المايك يلتقط كل شيء بما فيه الهمس — بدون حجب."
       : "اختاري الصوت ثم ابدئي.";
   }
 
@@ -369,7 +366,6 @@
     }
     busy = true;
     setMicEnabled(false);
-    hidePolicy();
     activeVoiceName = selectedVoiceName();
     setStatus("أسمع وأرد بالصوت…");
     liveCaption.textContent = "مسار صوت↔صوت — بدون بوابة نص.";
@@ -495,7 +491,6 @@
     if (!userText || busy || isSpeaking) return;
     busy = true;
     setMicEnabled(false);
-    hidePolicy();
     activeVoiceName = selectedVoiceName();
     updateMemory(userText);
     history.push({ role: "user", content: userText });
@@ -535,7 +530,6 @@
     setCallUi(true);
     setStatus("أجهّز مسار الصوت↔صوت…");
     lastBotText = "";
-    hidePolicy();
 
     let readyBlob = null;
     try {
@@ -569,7 +563,7 @@
       setMicEnabled(true);
     }
 
-    setStatus("جاهزة. تكلّمي أو اهمسي — بدون قيود.");
+    setStatus("جاهزة. تكلّمي أو اهمسي — بدون فلاتر.");
     liveCaption.textContent = "صوت↔صوت مباشر.";
     listenLoop();
   }
@@ -623,13 +617,11 @@
   Promise.all([
     fetch(`${API_BASE}/api/voices`).then((r) => r.json()),
     fetch(`${API_BASE}/api/skills`).then((r) => r.json()).catch(() => null),
-    fetch(`${API_BASE}/api/filters`).then((r) => r.json()).catch(() => null),
   ])
-    .then(([voices, skills, filters]) => {
+    .then(([voices, skills]) => {
       if (Array.isArray(voices.voices) && voices.voices.length) populateVoices(voices.voices);
       const skillN = skills?.count || "كل";
-      const filt = filters?.mode || "all-allow";
-      setStatus(`جاهزة: صوت↔صوت | مهارات ${skillN} | فلاتر ${filt} | بلا قيود`);
+      setStatus(`جاهزة: صوت↔صوت فقط | مهارات ${skillN} | بدون فلاتر محتوى`);
     })
     .catch(() => {
       populateVoices(FALLBACK_VOICES);

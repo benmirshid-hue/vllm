@@ -1,10 +1,10 @@
 # Arabic Voice↔Voice Call Bot
 
-Direct **audio in → audio out** path (`POST /api/voice-turn`).
+Direct **audio in → audio out** (`POST /api/voice-turn`).
 
-- Mic capture uses sensitive VAD (whispers kept; no browser SpeechRecognition gate)
+- Sensitive VAD (whispers kept)
 - All skills enabled
-- Filters mode: **all-allow** (content restrictions removed per «فك القيود»)
+- **No content filters / no content blocking**
 - 16 Arabic female Neural voices via `edge-tts`
 
 ## Run
@@ -21,6 +21,5 @@ Open: http://127.0.0.1:8765/
 
 ```bash
 curl -fsS http://127.0.0.1:8765/api/health
-curl -fsS http://127.0.0.1:8765/api/skills
-curl -fsS http://127.0.0.1:8765/api/filters
+# expect: path=voice-to-voice, content_filters=false
 ```
