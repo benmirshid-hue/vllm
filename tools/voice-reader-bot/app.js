@@ -4,42 +4,70 @@
   const sendBtn = document.getElementById("send");
   const textEl = document.getElementById("text");
   const voiceEl = document.getElementById("voice");
+  const deliveryEl = document.getElementById("delivery");
+  const replyModeEl = document.getElementById("replyMode");
   const voiceHint = document.getElementById("voiceHint");
-  const dalaaEl = document.getElementById("dalaa");
-  const closenessEl = document.getElementById("closeness");
   const callState = document.getElementById("callState");
   const liveCaption = document.getElementById("liveCaption");
   const callPulse = document.getElementById("callPulse");
   const chatEl = document.getElementById("chat");
   const statusEl = document.getElementById("status");
   const policyNote = document.getElementById("policyNote");
+  const svcStatusBtn = document.getElementById("svcStatus");
+  const svcRestartBtn = document.getElementById("svcRestartTts");
+  const svcLog = document.getElementById("svcLog");
 
-  const HISTORY_KEY = "personal-call-history-v2";
-  const MEMORY_KEY = "personal-call-memory-v2";
+  const FALLBACK_VOICES = [
+    { name: "Fatima", id: "ar-AE-FatimaNeural", locale: "ar-AE" },
+    { name: "Laila", id: "ar-BH-LailaNeural", locale: "ar-BH" },
+    { name: "Amina", id: "ar-DZ-AminaNeural", locale: "ar-DZ" },
+    { name: "Salma", id: "ar-EG-SalmaNeural", locale: "ar-EG" },
+    { name: "Rana", id: "ar-IQ-RanaNeural", locale: "ar-IQ" },
+    { name: "Sana", id: "ar-JO-SanaNeural", locale: "ar-JO" },
+    { name: "Noura", id: "ar-KW-NouraNeural", locale: "ar-KW" },
+    { name: "Layla", id: "ar-LB-LaylaNeural", locale: "ar-LB" },
+    { name: "Iman", id: "ar-LY-ImanNeural", locale: "ar-LY" },
+    { name: "Mouna", id: "ar-MA-MounaNeural", locale: "ar-MA" },
+    { name: "Aysha", id: "ar-OM-AyshaNeural", locale: "ar-OM" },
+    { name: "Amal", id: "ar-QA-AmalNeural", locale: "ar-QA" },
+    { name: "Zariyah", id: "ar-SA-ZariyahNeural", locale: "ar-SA" },
+    { name: "Amany", id: "ar-SY-AmanyNeural", locale: "ar-SY" },
+    { name: "Reem", id: "ar-TN-ReemNeural", locale: "ar-TN" },
+    { name: "Maryam", id: "ar-YE-MaryamNeural", locale: "ar-YE" },
+  ];
+
+  const DEFAULT_VOICE = "Noura";
+  const API_BASE = "";
+  const HISTORY_KEY = "voice-bot-history-v5";
+  const MEMORY_KEY = "voice-bot-memory-v5";
+  const VOICE_KEY = "voice-bot-voice-v5";
+  const DELIVERY_KEY = "voice-bot-delivery-v5";
+  const MODE_KEY = "voice-bot-mode-v5";
 
   const blockedPatterns = [
-    /نيك/i, /أنیک/i, /انيك/i, /طيز/i, /زب\b/i, /كس\b/i, /قحب/i, /ممحون/i, /منيوك/i,
+    /نيك/i, /أنيك/i, /انيك/i, /طيز/i, /زب\b/i, /كس\b/i, /قحب/i, /ممحون/i, /منيوك/i,
+    /دلع/i, /مغري/i, /إغراء/i, /اغراء/i, /همس ساخن/i, /تنهد/i,
     /\bsex\b/i, /\bporn\b/i, /\bfuck\b/i, /\bcock\b/i, /\bpussy\b/i, /\banal\b/i,
+    /\bseduce\b/i, /\bflirt\b/i,
   ];
 
-  const softSighs = ["مم…", "آه…", "همم…", "أوه…", "مم مم…", "آه ياه…", "همممم…"];
-  const closePhrases = [
-    "أنا قريبة منك الحين",
-    "صوتي أقرب لك",
-    "خلك معي بهالدلع",
-    "ودي أسمعك أكثر",
-    "أحس فيك وأنا أرد",
+  const followUps = [
+    "هل تريد تفاصيل أكثر؟",
+    "ما النقطة الأهم بالنسبة لك الآن؟",
+    "هل نكمل على نفس الموضوع أم نغيّر؟",
+    "ما الذي تريد أن أوضحه أكثر؟",
   ];
 
+  let catalog = FALLBACK_VOICES.slice();
   let history = loadJson(HISTORY_KEY, []);
-  let memory = loadJson(MEMORY_KEY, { name: "", mood: "", likes: [], notes: [] });
+  let memory = loadJson(MEMORY_KEY, { name: "", topic: "", notes: [] });
   let inCall = false;
   let busy = false;
   let recognition = null;
-  let audioCtx = null;
   let queueTimer = null;
   let shouldListenAgain = false;
   let currentAudio = null;
+  let activeVoiceName = DEFAULT_VOICE;
 
   function loadJson(key, fallback) {
     try {
@@ -54,28 +82,23 @@
   }
 
   function saveHistory() {
-    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(-50))); } catch (_) {}
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(-60))); } catch (_) {}
   }
-
   function saveMemory() {
     try { localStorage.setItem(MEMORY_KEY, JSON.stringify(memory)); } catch (_) {}
   }
-
-  function level(el) {
-    return Number(el.value) / 100;
-  }
-
   function setStatus(msg) { statusEl.textContent = msg; }
   function isBlocked(text) { return blockedPatterns.some((p) => p.test(text)); }
   function showPolicy(msg) { policyNote.hidden = false; policyNote.textContent = msg; }
   function hidePolicy() { policyNote.hidden = true; }
+  function pick(list) { return list[Math.floor(Math.random() * list.length)]; }
 
   function addBubble(role, text) {
     const bubble = document.createElement("div");
     bubble.className = `bubble ${role}`;
     const who = document.createElement("span");
     who.className = "who";
-    who.textContent = role === "user" ? "أنت" : "رفيقتك";
+    who.textContent = role === "user" ? "أنت" : `البوت (${activeVoiceName})`;
     const body = document.createElement("div");
     body.textContent = text;
     bubble.appendChild(who);
@@ -92,146 +115,41 @@
     });
   }
 
-  function isChineseVoice(voice) {
-    const s = `${voice.name} ${voice.lang}`.toLowerCase();
-    return /zh|cmn|chinese|china|cantonese|mandarin|taiwan|hong kong|yue/.test(s);
-  }
-
-  function isMaleVoice(voice) {
-    const s = `${voice.name} ${voice.lang}`.toLowerCase();
-    if (/female|woman|girl|feminine|samantha|victoria|karen|moira|zira|susan|linda|sara|nora|salma|laila|hoda|aria|jenny|mia|sonia|natasha/.test(s)) {
-      return false;
-    }
-    return /male|man\b|david|mark|george|guy|ryan|andrew|thomas|richard|daniel|james|brian|eric/.test(s);
-  }
-
-  function femininityScore(voice) {
-    const s = `${voice.name} ${voice.lang}`.toLowerCase();
-    if (isChineseVoice(voice) || isMaleVoice(voice)) return -100;
-    // Strict: only Arabic-capable female-ish voices for optional system fallback.
-    if (!/ar|arab|saudi|egypt|gulf|levant|arabic/.test(s)) return -50;
-    let score = 0;
-    if (/female|woman|girl|feminine|salma|laila|hoda|noura|sara|neural/.test(s)) score += 12;
-    if (/ar|arab|saudi|egypt|gulf|levant|arabic/.test(s)) score += 10;
-    if (/premium|enhanced|natural|quality/.test(s)) score += 3;
-    return score;
-  }
-
-  function populateVoices() {
-    const selected = voiceEl.value || "arabic-female";
-    const ranked = speechSynthesis.getVoices()
-      .filter((v) => femininityScore(v) > 0)
-      .sort((a, b) => femininityScore(b) - femininityScore(a));
-
+  function populateVoices(voices) {
+    catalog = voices.length ? voices : FALLBACK_VOICES;
     voiceEl.innerHTML = "";
-    const primary = document.createElement("option");
-    primary.value = "arabic-female";
-    primary.textContent = "عربي أنثوي (محرك عربي مخصص)";
-    voiceEl.appendChild(primary);
-
-    ranked.forEach((voice) => {
+    catalog.forEach((v) => {
       const opt = document.createElement("option");
-      opt.value = `sys:${voice.name}||${voice.lang}`;
-      opt.textContent = `نظام: ${voice.name} (${voice.lang})`;
+      opt.value = v.name;
+      const locale = v.locale_name || v.locale || "";
+      opt.textContent = `${v.name} — ${v.id}${locale ? ` · ${locale}` : ""}`;
       voiceEl.appendChild(opt);
     });
-
-    const exists = Array.from(voiceEl.options).some((o) => o.value === selected);
-    voiceEl.value = exists ? selected : "arabic-female";
-    voiceHint.textContent = ranked.length
-      ? "الافتراضي: محرك عربي أنثوي. أصوات النظام الرجالية/الصينية مستبعدة."
-      : "جهازك ما فيه صوت عربي أنثوي. بنستخدم المحرك العربي الأنثوي المخصص.";
+    const saved = localStorage.getItem(VOICE_KEY);
+    const names = catalog.map((v) => v.name);
+    activeVoiceName = names.includes(saved)
+      ? saved
+      : (names.includes(DEFAULT_VOICE) ? DEFAULT_VOICE : names[0]);
+    voiceEl.value = activeVoiceName;
+    const meta = catalog.find((v) => v.name === activeVoiceName) || catalog[0];
+    voiceHint.textContent =
+      `${catalog.length} صوت عربي أنثوي عبر edge-tts | الحالي ${meta.name} (${meta.id})`;
   }
 
-  function selectedSystemVoice() {
-    const value = voiceEl.value || "";
-    if (!value.startsWith("sys:")) return null;
-    const raw = value.slice(4);
-    const [name, lang] = raw.split("||");
-    return speechSynthesis.getVoices().find((v) => v.name === name && v.lang === lang) || null;
+  function selectedVoiceName() {
+    const name = voiceEl.value;
+    if (catalog.some((v) => v.name === name)) return name;
+    const fallback = catalog.find((v) => v.name === DEFAULT_VOICE) || catalog[0];
+    voiceEl.value = fallback.name;
+    return fallback.name;
   }
 
-  function useArabicFemaleEngine() {
-    return (voiceEl.value || "arabic-female") === "arabic-female";
+  function selectedDelivery() {
+    return deliveryEl.value || "warm";
   }
 
-  function arabicTtsUrl(text) {
-    // Google Translate Arabic TTS tends to sound feminine and avoids local male/Chinese voices.
-    return `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=ar&q=${encodeURIComponent(text)}`;
-  }
-
-  function chunkForTts(text, maxLen = 140) {
-    const parts = [];
-    const sentences = splitParts(text);
-    let buf = "";
-    sentences.forEach((sentence) => {
-      if ((buf + " " + sentence).trim().length <= maxLen) {
-        buf = `${buf} ${sentence}`.trim();
-        return;
-      }
-      if (buf) parts.push(buf);
-      if (sentence.length <= maxLen) {
-        buf = sentence;
-        return;
-      }
-      for (let i = 0; i < sentence.length; i += maxLen) {
-        parts.push(sentence.slice(i, i + maxLen));
-      }
-      buf = "";
-    });
-    if (buf) parts.push(buf);
-    return parts.length ? parts : [text.slice(0, maxLen)];
-  }
-
-  function playAudioUrl(url) {
-    return new Promise((resolve, reject) => {
-      const audio = new Audio(url);
-      currentAudio = audio;
-      audio.preload = "auto";
-      audio.onended = () => {
-        if (currentAudio === audio) currentAudio = null;
-        resolve();
-      };
-      audio.onerror = () => {
-        if (currentAudio === audio) currentAudio = null;
-        reject(new Error("audio failed"));
-      };
-      const playAttempt = audio.play();
-      if (playAttempt && playAttempt.catch) {
-        playAttempt.catch(reject);
-      }
-    });
-  }
-
-  function ensureAudio() {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === "suspended") audioCtx.resume();
-    return audioCtx;
-  }
-
-  function playBreath(kind = "soft") {
-    try {
-      const closeness = level(closenessEl);
-      const ctx = ensureAudio();
-      const duration = (kind === "deep" ? 0.95 : kind === "sigh" ? 0.62 : 0.45) * (0.85 + closeness * 0.35);
-      const frameCount = Math.floor(ctx.sampleRate * duration);
-      const buffer = ctx.createBuffer(1, frameCount, ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      const amp = (kind === "deep" ? 0.08 : 0.05) * (0.7 + closeness * 0.6);
-      for (let i = 0; i < frameCount; i += 1) {
-        const t = i / frameCount;
-        const env = Math.sin(Math.PI * t) * (1 - t * 0.75) * amp;
-        data[i] = (Math.random() * 2 - 1) * env;
-      }
-      const src = ctx.createBufferSource();
-      const filter = ctx.createBiquadFilter();
-      filter.type = "lowpass";
-      filter.frequency.value = kind === "deep" ? 620 : 880;
-      src.buffer = buffer;
-      src.connect(filter);
-      filter.connect(ctx.destination);
-      src.start();
-    } catch (_) {}
+  function selectedMode() {
+    return replyModeEl.value || "balanced";
   }
 
   function stopSpeech() {
@@ -239,12 +157,8 @@
       clearTimeout(queueTimer);
       queueTimer = null;
     }
-    speechSynthesis.cancel();
     if (currentAudio) {
-      try {
-        currentAudio.pause();
-        currentAudio.src = "";
-      } catch (_) {}
+      try { currentAudio.pause(); currentAudio.src = ""; } catch (_) {}
       currentAudio = null;
     }
   }
@@ -256,172 +170,151 @@
       .filter(Boolean);
   }
 
-  function expressionFor(part, index, total) {
-    const dalaa = level(dalaaEl);
-    const closeness = level(closenessEl);
-    const soft = /مم|آه|همم|أوه|قربي|دلع|بهـ?دوء|أحس|يا قلبي|قريبة/i.test(part);
-    const question = /[؟?]\s*$/.test(part);
-    const basePitch = 1.55 + dalaa * 0.22;
-    const baseRate = 0.86 - closeness * 0.14;
-    if (soft) return { pitch: basePitch + 0.08, rate: baseRate - 0.05, vol: 0.86, pause: 1100 + closeness * 350, breath: "deep" };
-    if (question) return { pitch: basePitch + 0.1, rate: baseRate, vol: 0.92, pause: 980 + closeness * 220, breath: "sigh" };
-    if (index === 0) return { pitch: basePitch, rate: baseRate - 0.02, vol: 0.95, pause: 880 + closeness * 200, breath: "soft" };
-    if (index === total - 1) return { pitch: basePitch + 0.03, rate: baseRate - 0.03, vol: 0.9, pause: 820, breath: "soft" };
-    return { pitch: basePitch + (index % 2) * 0.04, rate: baseRate, vol: 0.93, pause: 920 + closeness * 180, breath: "soft" };
-  }
-
-  function speakWithSystemVoice(text) {
-    return new Promise((resolve) => {
-      const parts = splitParts(text);
-      if (!parts.length) {
-        resolve();
+  function chunkForTts(text, maxLen = 220) {
+    const parts = [];
+    let buf = "";
+    splitParts(text).forEach((sentence) => {
+      if ((`${buf} ${sentence}`).trim().length <= maxLen) {
+        buf = `${buf} ${sentence}`.trim();
         return;
       }
-      let i = 0;
-      const next = () => {
-        if (i >= parts.length) {
-          resolve();
-          return;
+      if (buf) parts.push(buf);
+      if (sentence.length <= maxLen) buf = sentence;
+      else {
+        for (let i = 0; i < sentence.length; i += maxLen) {
+          parts.push(sentence.slice(i, i + maxLen));
         }
-        const part = parts[i];
-        const expr = expressionFor(part, i, parts.length);
-        i += 1;
-        const u = new SpeechSynthesisUtterance(part);
-        const voice = selectedSystemVoice();
-        if (voice) u.voice = voice;
-        u.lang = "ar-SA";
-        u.pitch = Math.min(1.85, expr.pitch);
-        u.rate = Math.max(0.68, expr.rate);
-        u.volume = expr.vol;
-        u.onend = () => {
-          if (i < parts.length) {
-            playBreath(expr.breath);
-            queueTimer = setTimeout(next, expr.pause);
-          } else resolve();
-        };
-        u.onerror = () => resolve();
-        speechSynthesis.speak(u);
-      };
-      playBreath("soft");
-      queueTimer = setTimeout(next, 280);
+        buf = "";
+      }
     });
+    if (buf) parts.push(buf);
+    return parts.length ? parts : [text.slice(0, maxLen)];
   }
 
-  async function speakWithArabicFemaleEngine(text) {
-    const parts = chunkForTts(text);
-    playBreath("soft");
-    await new Promise((r) => setTimeout(r, 220));
-    for (let i = 0; i < parts.length; i += 1) {
-      const part = parts[i];
-      const expr = expressionFor(part, i, parts.length);
-      try {
-        await playAudioUrl(arabicTtsUrl(part));
-      } catch (_) {
-        // Fallback only to Arabic-lang utterance, never assign Chinese/male voice objects.
-        await new Promise((resolve) => {
-          const u = new SpeechSynthesisUtterance(part);
-          u.lang = "ar-SA";
-          u.pitch = Math.min(1.85, expr.pitch);
-          u.rate = Math.max(0.7, expr.rate);
-          u.onend = resolve;
-          u.onerror = resolve;
-          speechSynthesis.speak(u);
-        });
-      }
-      if (i < parts.length - 1) {
-        playBreath(expr.breath);
-        await new Promise((r) => {
-          queueTimer = setTimeout(r, expr.pause);
-        });
-      }
+  async function fetchFemaleTtsBlob(text, voiceName, delivery) {
+    const url =
+      `${API_BASE}/api/tts?voice=${encodeURIComponent(voiceName)}` +
+      `&delivery=${encodeURIComponent(delivery)}` +
+      `&text=${encodeURIComponent(text)}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error((await res.text()) || `TTS HTTP ${res.status}`);
+    const gender = res.headers.get("X-Voice-Gender");
+    if (gender && gender.toLowerCase() !== "female") {
+      throw new Error("Rejected non-female voice response");
     }
+    return res.blob();
+  }
+
+  function playBlob(blob) {
+    return new Promise((resolve, reject) => {
+      const audio = new Audio(URL.createObjectURL(blob));
+      currentAudio = audio;
+      audio.onended = () => {
+        URL.revokeObjectURL(audio.src);
+        if (currentAudio === audio) currentAudio = null;
+        resolve();
+      };
+      audio.onerror = () => {
+        if (currentAudio === audio) currentAudio = null;
+        reject(new Error("audio playback failed"));
+      };
+      audio.play().catch(reject);
+    });
   }
 
   async function speakText(text) {
     stopSpeech();
-    if (useArabicFemaleEngine()) {
-      await speakWithArabicFemaleEngine(text);
-      return;
+    activeVoiceName = selectedVoiceName();
+    const delivery = selectedDelivery();
+    localStorage.setItem(VOICE_KEY, activeVoiceName);
+    localStorage.setItem(DELIVERY_KEY, delivery);
+    const parts = chunkForTts(text);
+    for (let i = 0; i < parts.length; i += 1) {
+      const blob = await fetchFemaleTtsBlob(parts[i], activeVoiceName, delivery);
+      await playBlob(blob);
+      if (i < parts.length - 1) {
+        await new Promise((r) => { queueTimer = setTimeout(r, 350); });
+      }
     }
-    await speakWithSystemVoice(text);
   }
 
   function updateMemory(text) {
-    const nameMatch = text.match(/(?:اسمي|ناديني)\s+([^\s،.!?؟]{2,20})/i);
+    const nameMatch = text.match(/(?:اسمي|نادني)\s+([^\s،.!?؟]{2,20})/i);
     if (nameMatch) memory.name = nameMatch[1];
-    if (/تعبان|حزين|ضايق|متوتر|وحشني|اشتقت/i.test(text)) memory.mood = "يحتاج احتواء";
-    if (/فرحان|تمام|بخير|سعيد|مرتاح/i.test(text)) memory.mood = "إيجابي";
-    const like = text.match(/(?:أحب|يعجبني|ودي)\s+(.{3,40})/i);
-    if (like) memory.likes = [like[1], ...(memory.likes || [])].slice(0, 6);
-    if (text.length > 8) memory.notes = [text.slice(0, 90), ...(memory.notes || [])].slice(0, 10);
+    if (text.length > 8) {
+      memory.topic = text.slice(0, 80);
+      memory.notes = [text.slice(0, 100), ...(memory.notes || [])].slice(0, 10);
+    }
     saveMemory();
   }
 
+  function modeInstructions(mode) {
+    const map = {
+      helpful: "أجب بوضوح وبشكل عملي ومفيد.",
+      thoughtful: "حلّل باختصار وقدّم تفكيراً مرتباً.",
+      curious: "أجب ثم اطرح سؤالاً متابعة واحداً مفيداً.",
+      concise: "أجب بجملتين إلى ثلاث جمل فقط.",
+      balanced: "امزج الوضوح والفائدة مع سؤال متابعة قصير.",
+    };
+    return map[mode] || map.balanced;
+  }
+
   function stylizeReply(reply) {
-    const dalaa = level(dalaaEl);
-    let out = reply.trim();
-    if (!/^(مم|آه|همم|أوه)/i.test(out)) {
-      out = `${softSighs[Math.floor(Math.random() * softSighs.length)]} ${out}`;
-    }
-    if (dalaa > 0.85 && !/قريبة|دلع|أقرب/i.test(out)) {
-      out += ` ${softSighs[1]} ${closePhrases[Math.floor(Math.random() * closePhrases.length)]}.`;
-    }
-    if (!/[؟?]\s*$/.test(out)) {
-      out += " كيف تحسين معي الحين؟";
-    }
-    // Ensure enough spoken beats for breathy delivery.
-    while (splitParts(out).length < 4) {
-      out += ` ${softSighs[Math.floor(Math.random() * softSighs.length)]} خلك معي شوي، أبي أسمعك أكثر.`;
+    let out = reply.trim().replace(/\s+/g, " ");
+    // Strip flirt/dalaa phrasing if the model inserts it.
+    out = out
+      .replace(/\b(مم+|آه+|همم+)\b/gi, "")
+      .replace(/يا قلبي|يا بعدي|دلوع|دلع|همس|تنهد|قريبة منك/gi, "")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+    if (!out) out = "حسناً، وضّح لي أكثر لأساعدك بشكل أدق.";
+    if (selectedMode() !== "concise" && !/[؟?]\s*$/.test(out)) {
+      out += ` ${pick(followUps)}`;
     }
     return out;
   }
 
   function systemPrompt() {
-    const dalaa = Math.round(level(dalaaEl) * 100);
-    const closeness = Math.round(level(closenessEl) * 100);
+    const mode = selectedMode();
     const mem = [
       memory.name ? `الاسم: ${memory.name}` : "",
-      memory.mood ? `المزاج: ${memory.mood}` : "",
-      memory.likes?.length ? `يحب: ${memory.likes.slice(0, 3).join("؛ ")}` : "",
+      memory.topic ? `آخر موضوع: ${memory.topic}` : "",
       memory.notes?.length ? `ملاحظات: ${memory.notes.slice(0, 3).join(" | ")}` : "",
-    ].filter(Boolean).join("\n") || "لا ذكريات كثيرة بعد.";
-
+    ].filter(Boolean).join("\n") || "لا ذاكرة سابقة.";
     return [
-      "أنتِ رفيقة مكالمة صوتية أنثوية جداً، دلعة، قريبة، همس ناعم، كأنكِ على الهاتف ملتصقة بالأذن.",
-      `مستوى الدلع المطلوب: ${dalaa}/100. مستوى القرب والتنفس: ${closeness}/100.`,
-      "زيدي مم… آه… همم… والتنهدات الخفيفة غير الجنسية، والجمل القصيرة الدافئة.",
-      "كوني مبادرة: اسألي عن اليوم، اطمئني، ذكّري بلطف بأشياء قالها، وقدّمي تشجيعاً قريباً.",
-      "اجعلي الرد 4 إلى 6 جمل صوتية قصيرة.",
-      "ممنوع تماماً المحتوى الجنسي أو الصريح أو أوصاف جسدية جنسية.",
-      "إذا طُلب محتوى جنسي، ارفضي بلطف وارجعي لدلع عاطفي مسموح فقط.",
-      "ذاكرة خاصة:",
+      `أنت مساعد مكالمة صوتية. الصوت الحالي: ${activeVoiceName}.`,
+      "افهم السياق ورد برد ذكي طبيعي ومفيد.",
+      modeInstructions(mode),
+      "ممنوع الدلع والإغراء والإيحاء الجنسي والتنهدات العاطفية.",
+      "ممنوع المحتوى الجنسي الصريح.",
+      "اللغة العربية الفصحى أو البيضاء الواضحة.",
+      "ذاكرة:",
       mem,
     ].join("\n");
-  }
-
-  function localFallback() {
-    const name = memory.name ? ` ${memory.name}` : "";
-    return stylizeReply(`أنا معك${name}. يومك عندي مهم، وأبي أكون قريبة منك بهالدلع الهادئ.`);
   }
 
   async function askModel(userText) {
     const messages = [
       { role: "system", content: systemPrompt() },
-      ...history.slice(-12),
-      {
-        role: "user",
-        content: `${userText}\n\nتذكير: مكالمة هاتفية أنثوية دلعة جداً، قرب عالي، تنهدات خفيفة غير جنسية، ومتابعة دافئة.`,
-      },
+      ...history.slice(-16),
+      { role: "user", content: userText },
     ];
     const response = await fetch("https://text.pollinations.ai/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ messages, model: "openai", seed: Date.now() % 100000 }),
     });
-    if (!response.ok) throw new Error("bad status");
+    if (!response.ok) throw new Error(`smart reply HTTP ${response.status}`);
     const reply = (await response.text()).trim();
-    if (!reply) throw new Error("empty");
+    if (!reply) throw new Error("empty smart reply");
     return reply;
+  }
+
+  function localFallback() {
+    const name = memory.name ? ` ${memory.name}` : "";
+    return stylizeReply(
+      `أنا ${activeVoiceName}.${name} فهمت طلبك. لنكمل بشكل واضح ومفيد.`
+    );
   }
 
   function setCallUi(active) {
@@ -429,34 +322,10 @@
     startCallBtn.hidden = active;
     endCallBtn.hidden = !active;
     callPulse.classList.toggle("live", active);
-    callState.textContent = active ? "المكالمة شغّالة… قريبة منك" : "جاهزة للمكالمة";
+    callState.textContent = active ? `المكالمة نشطة — ${activeVoiceName}` : "جاهز للمكالمة";
     liveCaption.textContent = active
-      ? "تكلّمي… أسمعك وأرد بدلع وتنفس وقرب."
-      : "اضغطي «ابدئي المكالمة» وتكلّمي بالعربي.";
-  }
-
-  async function softAck() {
-    if (level(dalaaEl) < 0.8) return;
-    const ack = softSighs[Math.floor(Math.random() * 3)];
-    try {
-      if (useArabicFemaleEngine()) {
-        await playAudioUrl(arabicTtsUrl(ack));
-      } else {
-        const u = new SpeechSynthesisUtterance(ack);
-        const voice = selectedSystemVoice();
-        if (voice) u.voice = voice;
-        u.lang = "ar-SA";
-        u.pitch = 1.7;
-        u.rate = 0.72;
-        u.volume = 0.75;
-        await new Promise((resolve) => {
-          u.onend = resolve;
-          u.onerror = resolve;
-          speechSynthesis.speak(u);
-        });
-      }
-    } catch (_) {}
-    playBreath("sigh");
+      ? `${activeVoiceName} يستمع ويرد بذكاء.`
+      : "اختر الصوت ثم ابدأ.";
   }
 
   function getRecognition() {
@@ -468,24 +337,23 @@
     recognition.interimResults = false;
     recognition.continuous = false;
     recognition.maxAlternatives = 1;
-
     recognition.onstart = () => {
-      setStatus("أسمعلك… مم");
-      liveCaption.textContent = "سمّعني صوتك… أنا قريبة.";
-      softAck();
+      setStatus(`${activeVoiceName} يستمع…`);
+      liveCaption.textContent = "تكلم الآن.";
     };
     recognition.onerror = (e) => {
       setStatus(`مشكلة بالمايك: ${e.error}`);
       if (inCall && !busy) queueTimer = setTimeout(listenLoop, 700);
     };
     recognition.onend = () => {
-      if (shouldListenAgain && inCall && !busy) {
-        queueTimer = setTimeout(listenLoop, 420);
-      }
+      if (shouldListenAgain && inCall && !busy) queueTimer = setTimeout(listenLoop, 420);
     };
     recognition.onresult = async (event) => {
-      const transcript = Array.from(event.results).map((r) => r[0].transcript).join(" ").trim();
-      if (transcript) await handleUtterance(transcript, true);
+      const transcript = Array.from(event.results)
+        .map((r) => r[0].transcript)
+        .join(" ")
+        .trim();
+      if (transcript) await handleUtterance(transcript);
       else if (inCall) queueTimer = setTimeout(listenLoop, 500);
     };
     return recognition;
@@ -495,66 +363,75 @@
     if (!inCall || busy) return;
     const rec = getRecognition();
     if (!rec) {
-      setStatus("المتصفح ما يدعم المايك. استخدمي خانة النص.");
+      setStatus("المتصفح لا يدعم المايك. استخدم إدخال النص.");
       return;
     }
     shouldListenAgain = true;
     stopSpeech();
-    try {
-      rec.start();
-    } catch (_) {
-      queueTimer = setTimeout(listenLoop, 800);
-    }
+    try { rec.start(); }
+    catch (_) { queueTimer = setTimeout(listenLoop, 800); }
   }
 
-  async function handleUtterance(text, fromVoice) {
+  async function handleUtterance(text) {
     if (!text || busy) return;
     if (isBlocked(text)) {
-      showPolicy("ما أكمّل محتوى جنسي صريح. أقدر أزيد الدلع والقرب العاطفي فقط.");
-      setStatus("تم رفض المحتوى الصريح.");
+      showPolicy("المحتوى الجنسي والدلع والإغراء غير مسموح.");
       if (inCall) queueTimer = setTimeout(listenLoop, 600);
       return;
     }
-
     busy = true;
     shouldListenAgain = false;
     hidePolicy();
+    activeVoiceName = selectedVoiceName();
+    localStorage.setItem(MODE_KEY, selectedMode());
     updateMemory(text);
     history.push({ role: "user", content: text });
     addBubble("user", text);
     saveHistory();
-    setStatus("مم… خليني أقرب منك بالرد…");
-    liveCaption.textContent = "أرد عليك بدلع أعلى وتنفس أقرب…";
+    setStatus("الرد الذكي يفكر…");
 
     let reply;
     try {
       reply = stylizeReply(await askModel(text));
     } catch (_) {
       reply = localFallback();
+      setStatus("تعذر الرد السحابي؛ استُخدم رد محلي.");
     }
     if (isBlocked(reply)) {
-      reply = stylizeReply("خلينا نبقى على قرب دافئ مسموح. قولي لي عن يومك وأنا أقرب لك بالكلام.");
+      reply = stylizeReply("دعنا نبقى على حديث واضح ومفيد.");
     }
 
     history.push({ role: "assistant", content: reply });
     addBubble("bot", reply);
     saveHistory();
-    setStatus("أتكلم معك بهمس…");
-    await speakText(reply);
+    setStatus(`${activeVoiceName} يتكلم عبر edge-tts…`);
+    try {
+      await speakText(reply);
+    } catch (err) {
+      setStatus(`فشل الصوت: ${err.message}`);
+    }
     busy = false;
-    setStatus(inCall ? "حاضرة… تكلّمي يا قلبي." : "انتهى الرد.");
-    liveCaption.textContent = inCall ? "دورك… أنا أسمعك." : "اضغطي ابدئي المكالمة.";
+    setStatus(inCall ? "جاهز. تكلم." : "انتهى الرد.");
     if (inCall) listenLoop();
   }
 
   async function startCall() {
-    populateVoices();
-    ensureAudio();
+    activeVoiceName = selectedVoiceName();
+    localStorage.setItem(VOICE_KEY, activeVoiceName);
+    localStorage.setItem(DELIVERY_KEY, selectedDelivery());
+    localStorage.setItem(MODE_KEY, selectedMode());
     setCallUi(true);
+    try {
+      const health = await fetch(`${API_BASE}/api/health`).then((r) => r.json());
+      if (!health.ok) throw new Error("health failed");
+      await fetchFemaleTtsBlob("مرحبا", activeVoiceName, selectedDelivery());
+    } catch (err) {
+      setStatus(`الخدمة الصوتية غير جاهزة: ${err.message}`);
+      setCallUi(false);
+      return;
+    }
     const open = stylizeReply(
-      memory.name
-        ? `أهلاً ${memory.name}. وحشتني نبرتك. أنا أقرب لك الحين، وودي أسمع يومك كامل.`
-        : "أهلاً. أنا هنا بالمكالمة، قريبة ودلعة بهدوء. ودي أسمع يومك وصوتك."
+      `مرحباً. أنا ${activeVoiceName}. المكالمة جاهزة والرد الذكي مفعّل.`
     );
     history.push({ role: "assistant", content: open });
     addBubble("bot", open);
@@ -567,24 +444,78 @@
     shouldListenAgain = false;
     busy = false;
     stopSpeech();
-    if (recognition) {
-      try { recognition.stop(); } catch (_) {}
-    }
+    if (recognition) { try { recognition.stop(); } catch (_) {} }
     setCallUi(false);
-    setStatus("انتهت المكالمة… لين ترجع.");
+    setStatus("انتهت المكالمة.");
   }
 
+  async function refreshServiceStatus() {
+    try {
+      const data = await fetch(`${API_BASE}/api/services`).then((r) => r.json());
+      const lines = data.services.map(
+        (s) => `${s.id}: ${s.status}${s.count != null ? ` (${s.count})` : ""}`
+      );
+      svcLog.textContent =
+        `نطاق: ${data.scope}\nلا يلمس برامجك الشخصية: ${!data.touches_user_personal_apps}\n` +
+        lines.join("\n");
+    } catch (err) {
+      svcLog.textContent = `تعذر قراءة حالة الخدمات: ${err.message}`;
+    }
+  }
+
+  async function reloadVoicesService() {
+    try {
+      const data = await fetch(`${API_BASE}/api/services/reload-voices`, {
+        method: "POST",
+      }).then((r) => r.json());
+      const voices = await fetch(`${API_BASE}/api/voices`).then((r) => r.json());
+      if (voices.voices) populateVoices(voices.voices);
+      svcLog.textContent = `أُعيد تحميل كتالوج الأصوات فقط: ${data.count} صوت.\nالنطاق: ${data.scope}`;
+      setStatus(`تم إعادة تحميل ${data.count} صوت.`);
+    } catch (err) {
+      svcLog.textContent = `فشل إعادة التحميل: ${err.message}`;
+    }
+  }
+
+  voiceEl.addEventListener("change", () => {
+    activeVoiceName = selectedVoiceName();
+    localStorage.setItem(VOICE_KEY, activeVoiceName);
+    setStatus(`الصوت: ${activeVoiceName}`);
+  });
+  deliveryEl.addEventListener("change", () => {
+    localStorage.setItem(DELIVERY_KEY, selectedDelivery());
+  });
+  replyModeEl.addEventListener("change", () => {
+    localStorage.setItem(MODE_KEY, selectedMode());
+  });
   startCallBtn.addEventListener("click", startCall);
   endCallBtn.addEventListener("click", endCall);
   sendBtn.addEventListener("click", () => {
     const t = textEl.value.trim();
     textEl.value = "";
     if (!inCall) setCallUi(true);
-    handleUtterance(t, false);
+    handleUtterance(t);
   });
+  svcStatusBtn.addEventListener("click", refreshServiceStatus);
+  svcRestartBtn.addEventListener("click", reloadVoicesService);
 
-  populateVoices();
-  speechSynthesis.onvoiceschanged = populateVoices;
+  populateVoices(FALLBACK_VOICES);
+  const savedDelivery = localStorage.getItem(DELIVERY_KEY);
+  if (savedDelivery) deliveryEl.value = savedDelivery;
+  const savedMode = localStorage.getItem(MODE_KEY);
+  if (savedMode) replyModeEl.value = savedMode;
   renderHistory();
-  setStatus("جاهزة لمكالمة بأنوثة ودلع وقرب أعلى.");
+
+  fetch(`${API_BASE}/api/voices`)
+    .then((r) => r.json())
+    .then((data) => {
+      if (Array.isArray(data.voices) && data.voices.length) populateVoices(data.voices);
+      setStatus(`جاهز: ${data.count} صوت + رد ذكي + إدارة خدمات البوت فقط.`);
+      refreshServiceStatus();
+    })
+    .catch(() => {
+      populateVoices(FALLBACK_VOICES);
+      setStatus("شغّل: python3 server.py");
+      svcLog.textContent = "الخدمة متوقفة. شغّل server.py داخل tools/voice-reader-bot فقط.";
+    });
 })();

@@ -3,53 +3,73 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>مكالمة صوتية أنثوية</title>
+  <title>بوت المكالمة الصوتية العربية</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body class="call-mode">
   <main class="app">
     <header class="header">
-      <p class="eyebrow">مكالمة صوت ↔ صوت</p>
-      <h1>رفيقتك الصوتية</h1>
+      <p class="eyebrow">edge-tts · صوت ↔ صوت · رد ذكي</p>
+      <h1>بوت المكالمة الصوتية</h1>
       <p class="subtitle">
-        محادثة مباشرة بالصوت، بصوت أنثوي عربي هادئ.
-        بدون أصوات رجال أو أصوات صينية. ليست لقراءة نص ملصوق، وليست للمحتوى الجنسي الصريح.
+        16 صوت عربي أنثوي عبر edge-tts بدون أصوات نظام الجهاز.
+        رد ذكي سياقي. بدون دلع أو إغراء. المحتوى الجنسي محظور.
       </p>
     </header>
 
     <section class="call-card">
       <div id="callPulse" class="pulse" aria-hidden="true"></div>
-      <p id="callState" class="call-state">جاهزة للمكالمة</p>
-      <p id="liveCaption" class="caption">اضغطي «ابدئي المكالمة» وتكلّمي بالعربي.</p>
+      <p id="callState" class="call-state">جاهز للمكالمة</p>
+      <p id="liveCaption" class="caption">اختر الصوت ثم ابدأ.</p>
 
       <div class="call-actions">
-        <button id="startCall" type="button">ابدئي المكالمة</button>
+        <button id="startCall" type="button">بدء المكالمة</button>
         <button id="endCall" type="button" class="danger" hidden>إنهاء</button>
       </div>
 
       <label class="control">
-        <span>محرك الصوت</span>
-        <select id="voice">
-          <option value="arabic-female" selected>عربي أنثوي (موصى به)</option>
+        <span>الصوت العربي الأنثوي</span>
+        <select id="voice"></select>
+      </label>
+      <label class="control">
+        <span>أسلوب الإلقاء</span>
+        <select id="delivery">
+          <option value="warm">واضح دافئ</option>
+          <option value="soft">ناعم</option>
+          <option value="calm">هادئ</option>
+          <option value="lively">سريع قليلاً</option>
+          <option value="close">بطيء واضح</option>
         </select>
       </label>
       <label class="control">
-        <span>الدلع</span>
-        <input id="dalaa" type="range" min="70" max="100" step="1" value="100" />
+        <span>نمط الرد الذكي</span>
+        <select id="replyMode">
+          <option value="helpful">مفيد وواضح</option>
+          <option value="thoughtful">تحليلي</option>
+          <option value="curious">أسئلة متابعة</option>
+          <option value="concise">مختصر</option>
+          <option value="balanced">متوازن</option>
+        </select>
       </label>
-      <label class="control">
-        <span>القرب والتنفس</span>
-        <input id="closeness" type="range" min="70" max="100" step="1" value="100" />
-      </label>
-      <p id="voiceHint" class="hint"></p>
+      <p id="voiceHint" class="hint">جارٍ الربط…</p>
+    </section>
+
+    <section class="admin-card" id="adminPanel">
+      <h2>إدارة الخدمات</h2>
+      <p class="admin-note">يتحكم فقط بخدمات هذا البوت داخل المجلد. لا يلمس برامجك الشخصية.</p>
+      <div class="call-actions">
+        <button id="svcStatus" type="button" class="secondary">حالة الخدمات</button>
+        <button id="svcRestartTts" type="button" class="secondary">إعادة تحميل الأصوات</button>
+      </div>
+      <pre id="svcLog" class="svc-log" aria-live="polite">—</pre>
     </section>
 
     <section id="chat" class="chat" aria-live="polite"></section>
 
-    <details class="fallback">
-      <summary>إذا المايك ما اشتغل، اكتبي هنا</summary>
-      <textarea id="text" rows="3" placeholder="اكتبي رسالة قصيرة…"></textarea>
-      <button id="send" type="button" class="secondary">أرسل نصاً</button>
+    <details class="fallback" open>
+      <summary>إدخال نص إذا المايك غير متاح</summary>
+      <textarea id="text" rows="3" placeholder="اكتب رسالتك…"></textarea>
+      <button id="send" type="button" class="secondary">إرسال</button>
     </details>
 
     <p id="policyNote" class="policy" hidden></p>

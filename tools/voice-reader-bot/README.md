@@ -1,23 +1,24 @@
-# Personal Arabic Companion Bot
+# Arabic Voice Call Bot
 
-Private personal bot with two modes:
+Voice↔voice bot with **edge-tts** (16 Arabic female Neural voices), smart contextual replies, and a **scoped service manager**.
 
-1. **نصي** — Cursor-like Arabic text chat
-2. **صوتي أنثوي** — warm feminine spoken companion with breath pauses
+## Features
 
-## Caring features
+1. Voice↔voice via mic + `edge-tts` (no device Arabic voices needed)
+2. Smart contextual replies
+3. Service control limited to this folder (`manage.sh`, `/api/services`)
+4. No flirtation/seduction; explicit sexual content blocked
 
-- Asks about your day / checks in
-- Remembers name, mood, likes, worries, and goals in **localStorage only**
-- Offers comfort and encouragement
-- Voice mode: clearer feminine pitch, soft rate, breath + pauses, varied delivery
+## Run
 
-## Limits
+```bash
+cd tools/voice-reader-bot
+python3 -m pip install -r requirements.txt
+./manage.sh start
+./manage.sh status
+./manage.sh test-tts
+```
 
-Explicit sexual content is blocked.
+Open `http://127.0.0.1:8765/`
 
-## Open
-
-https://htmlpreview.github.io/?https://raw.githubusercontent.com/benmirshid-hue/vllm/cursor/voice-reader-public-d925/tools/voice-reader-bot/public.html
-
-Use **صوتي أنثوي** for the companion voice, or **نصي** for text chat.
+Stop: `./manage.sh stop`
