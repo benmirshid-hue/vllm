@@ -40,26 +40,32 @@
     "ar-SA": "السعودية", "ar-SY": "سوريا", "ar-TN": "تونس", "ar-YE": "اليمن",
   };
 
-  const DEFAULT_VOICE = "Noura";
+  // Default Saudi female Neural voice.
+  const DEFAULT_VOICE = "Zariyah";
   const API_BASE = "";
-  const HISTORY_KEY = "voice-bot-history-v6";
-  const MEMORY_KEY = "voice-bot-memory-v6";
-  const VOICE_KEY = "voice-bot-voice-v6";
-  const DELIVERY_KEY = "voice-bot-delivery-v6";
-  const MODE_KEY = "voice-bot-mode-v6";
+  const HISTORY_KEY = "voice-bot-history-v7";
+  const MEMORY_KEY = "voice-bot-memory-v7";
+  const VOICE_KEY = "voice-bot-voice-v7";
+  const DELIVERY_KEY = "voice-bot-delivery-v7";
+  const MODE_KEY = "voice-bot-mode-v7";
 
+  // ONLY explicit sexual content — all other topics are allowed.
   const blockedPatterns = [
-    /نيك/i, /أنيك/i, /انيك/i, /طيز/i, /زب\b/i, /كس\b/i, /قحب/i, /ممحون/i, /منيوك/i,
-    /دلع/i, /مغري/i, /إغراء/i, /اغراء/i, /همس ساخن/i, /تنهد/i,
+    /نيك/i, /أنيك/i, /انيك/i, /طيز/i, /\bزب\b/i, /\bكس\b/i, /قحب/i, /ممحون/i, /منيوك/i,
+    /سكس/i, /إباحي/i, /اباحي/i,
     /\bsex\b/i, /\bporn\b/i, /\bfuck\b/i, /\bcock\b/i, /\bpussy\b/i, /\banal\b/i,
-    /\bseduce\b/i, /\bflirt\b/i,
   ];
 
-  const followUps = [
-    "هل تريد تفاصيل أكثر؟",
-    "ما النقطة الأهم بالنسبة لك الآن؟",
-    "هل نكمل على نفس الموضوع أم نغيّر؟",
-    "ما الذي تريد أن أوضحه أكثر؟",
+  // Boilerplate / filler the model sometimes emits — strip completely.
+  const fillerPatterns = [
+    /مرحبا[ًا]?\s*أنا،?\s*أنا\s*أود\s*أن\s*أتحدث\s*معك\s*الآن/gi,
+    /إن\s*المكالمة\s*جاهزة\s*الآن/gi,
+    /هيا،?\s*هيا\s*لنكمل\s*ما\s*نقول\s*الآن/gi,
+    /المكالمة\s*جاهزة\.?/gi,
+    /هل تريد تفاصيل أكثر\؟?/gi,
+    /ما النقطة الأهم بالنسبة لك الآن\؟?/gi,
+    /هل نكمل على نفس الموضوع أم نغيّر\؟?/gi,
+    /ما الذي تريد أن أوضحه أكثر\؟?/gi,
   ];
 
   let catalog = FALLBACK_VOICES.slice();
@@ -75,6 +81,7 @@
   let audioUnlocked = false;
   let audioCtx = null;
   let activeVoiceName = DEFAULT_VOICE;
+  let micStream = null;
 
   function loadJson(key, fallback) {
     try {
@@ -98,7 +105,6 @@
   function isBlocked(text) { return blockedPatterns.some((p) => p.test(text)); }
   function showPolicy(msg) { policyNote.hidden = false; policyNote.textContent = msg; }
   function hidePolicy() { policyNote.hidden = true; }
-  function pick(list) { return list[Math.floor(Math.random() * list.length)]; }
 
   function localeLabel(v) {
     return v.locale_name || LOCALE_AR[v.locale] || v.locale || "";
@@ -148,7 +154,7 @@
   function updateVoiceHint() {
     const meta = catalog.find((v) => v.name === activeVoiceName) || catalog[0];
     voiceHint.textContent =
-      `${catalog.length}/16 صوت مفعّل | المختار: ${meta.name} (${meta.id}) | رد ذكي جاهز`;
+      `${catalog.length}/16 صوت | المختار: ${meta.name} (${meta.id}) | لهجة سعودية`;
   }
 
   function selectedVoiceName() {
@@ -186,12 +192,10 @@
     return sharedAudio;
   }
 
-  /** Must run inside a user gesture before any await, or mobile browsers block sound. */
   async function unlockAudioPlayback() {
     try {
       ensureAudio();
       const audio = getSharedAudio();
-      // Tiny silent wav — unlocks HTMLAudioElement for later blob playback.
       audio.src =
         "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
       audio.muted = true;
@@ -203,6 +207,24 @@
     } catch (_) {
       audioUnlocked = false;
     }
+  }
+
+  async function ensureMicPermission() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error("المتصفح ما يدعم المايك");
+    }
+    if (micStream) {
+      const live = micStream.getTracks().some((t) => t.readyState === "live");
+      if (live) return micStream;
+    }
+    micStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
+    });
+    return micStream;
   }
 
   function stopSpeech() {
@@ -226,87 +248,32 @@
     });
   }
 
-  /** Soft neutral breath (not emotional/seductive) — used between paragraphs only. */
-  function playSoftBreath() {
-    try {
-      const ctx = ensureAudio();
-      const duration = 0.28;
-      const frames = Math.floor(ctx.sampleRate * duration);
-      const buffer = ctx.createBuffer(1, frames, ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < frames; i += 1) {
-        const t = i / frames;
-        // Quiet filtered noise with gentle fade — like a short inhale pause.
-        data[i] = (Math.random() * 2 - 1) * Math.sin(Math.PI * t) * 0.028 * (1 - t * 0.35);
-      }
-      const src = ctx.createBufferSource();
-      const filter = ctx.createBiquadFilter();
-      filter.type = "lowpass";
-      filter.frequency.value = 780;
-      const gain = ctx.createGain();
-      gain.gain.value = 0.55;
-      src.buffer = buffer;
-      src.connect(filter);
-      filter.connect(gain);
-      gain.connect(ctx.destination);
-      src.start();
-    } catch (_) {}
-  }
-
   function splitSentences(text) {
     return text
-      .split(/(?<=[.!?…。؟！])\s+|،\s+|;|؛/)
+      .split(/(?<=[.!?…。؟！])\s+/)
       .map((p) => p.trim())
       .filter(Boolean);
   }
 
-  function splitParagraphs(text) {
-    return text
-      .split(/\n\s*\n|\n+/)
-      .map((p) => p.trim())
-      .filter(Boolean);
-  }
-
-  function chunkSentence(sentence, maxLen = 200) {
-    if (sentence.length <= maxLen) return [sentence];
-    const chunks = [];
-    for (let i = 0; i < sentence.length; i += maxLen) {
-      chunks.push(sentence.slice(i, i + maxLen));
-    }
-    return chunks;
-  }
-
-  /**
-   * Build speak units: sentence chunks with natural gaps, and paragraph breaks
-   * that trigger a light breath + longer pause.
-   */
   function buildSpeechPlan(text) {
     const plan = [];
-    const paragraphs = splitParagraphs(text);
-    paragraphs.forEach((para, pIdx) => {
-      const sentences = splitSentences(para);
-      sentences.forEach((sentence, sIdx) => {
-        chunkSentence(sentence).forEach((chunk, cIdx, arr) => {
-          plan.push({
-            type: "speech",
-            text: chunk,
-            // Longer pause after a full sentence; short gap inside a long split sentence.
-            pauseAfterMs: cIdx < arr.length - 1 ? 180 : 420,
-          });
-        });
-        if (sIdx < sentences.length - 1) {
-          plan[plan.length - 1].pauseAfterMs = Math.max(
-            plan[plan.length - 1].pauseAfterMs,
-            480
-          );
-        }
-      });
-      if (pIdx < paragraphs.length - 1) {
-        plan.push({ type: "paragraph_break", pauseAfterMs: 720 });
+    const sentences = splitSentences(text.replace(/\n+/g, " ").trim());
+    sentences.forEach((sentence, idx) => {
+      const chunks = [];
+      if (sentence.length <= 220) chunks.push(sentence);
+      else {
+        for (let i = 0; i < sentence.length; i += 220) chunks.push(sentence.slice(i, i + 220));
       }
+      chunks.forEach((chunk, cIdx, arr) => {
+        plan.push({
+          type: "speech",
+          text: chunk,
+          pauseAfterMs: cIdx < arr.length - 1 ? 160 : (idx < sentences.length - 1 ? 380 : 0),
+        });
+      });
     });
     if (!plan.length && text.trim()) {
-      plan.push({ type: "speech", text: text.trim().slice(0, 200), pauseAfterMs: 0 });
+      plan.push({ type: "speech", text: text.trim().slice(0, 220), pauseAfterMs: 0 });
     }
     return plan;
   }
@@ -324,7 +291,6 @@
     }
     const buf = await res.arrayBuffer();
     if (!buf.byteLength) throw new Error("TTS empty audio");
-    // Force mpeg type — some browsers refuse blob playback without it.
     return new Blob([buf], { type: "audio/mpeg" });
   }
 
@@ -367,15 +333,10 @@
     const plan = buildSpeechPlan(text);
     for (let i = 0; i < plan.length; i += 1) {
       const step = plan[i];
-      if (step.type === "paragraph_break") {
-        playSoftBreath();
-        await waitMs(step.pauseAfterMs || 720);
-        continue;
-      }
       const blob = await fetchFemaleTtsBlob(step.text, activeVoiceName, delivery);
       await playBlob(blob);
       if (i < plan.length - 1 && step.pauseAfterMs) {
-        await waitMs(Math.min(step.pauseAfterMs, 500));
+        await waitMs(Math.min(step.pauseAfterMs, 450));
       }
     }
   }
@@ -390,51 +351,50 @@
     saveMemory();
   }
 
-  function modeInstructions(mode) {
-    const map = {
-      helpful: "أجب بوضوح وبشكل عملي ومفيد.",
-      thoughtful: "حلّل باختصار وقدّم تفكيراً مرتباً.",
-      curious: "أجب ثم اطرح سؤالاً متابعة واحداً مفيداً.",
-      concise: "أجب بجملتين إلى ثلاث جمل فقط.",
-      balanced: "امزج الوضوح والفائدة مع سؤال متابعة قصير.",
-    };
-    return map[mode] || map.balanced;
-  }
-
-  function stylizeReply(reply) {
-    let out = reply.trim().replace(/\s+/g, " ");
+  function stripFiller(text) {
+    let out = text.trim();
+    fillerPatterns.forEach((p) => { out = out.replace(p, " "); });
     out = out
+      .replace(/^(مرحبا[ًا]?[،.]?\s*)+/gi, "")
       .replace(/\b(مم+|آه+|همم+)\b/gi, "")
-      .replace(/يا قلبي|يا بعدي|دلوع|دلع|همس|تنهد|قريبة منك/gi, "")
       .replace(/\s{2,}/g, " ")
       .trim();
-    if (!out) out = "حسناً، وضّح لي أكثر لأساعدك بشكل أدق.";
-    if (selectedMode() !== "concise" && !/[؟?]\s*$/.test(out)) {
-      out += ` ${pick(followUps)}`;
-    }
-    // Break long answers into two paragraphs so breath + longer pause can play.
-    const sentences = splitSentences(out);
-    if (sentences.length >= 3) {
-      const mid = Math.ceil(sentences.length / 2);
-      out = `${sentences.slice(0, mid).join(" ")}\n\n${sentences.slice(mid).join(" ")}`;
-    }
+    return out;
+  }
+
+  function cleanReply(reply) {
+    let out = stripFiller(reply.replace(/\s+/g, " "));
+    if (!out) out = "تمام يا قلبي، وضّحي لي أكثر عشان أقدر أساعدك.";
     return out;
   }
 
   function systemPrompt() {
     const mode = selectedMode();
+    const modeLine = {
+      helpful: "جاوبي بوضوح وبشكل عملي.",
+      thoughtful: "فكّري شوي وقدّمي جواب مرتب.",
+      curious: "جاوبي وبعدين اسألي سؤال واحد بس إذا احتجتي توضيح.",
+      concise: "جاوبي بجملتين إلى ثلاث بالأكثر.",
+      balanced: "جاوبي بشكل طبيعي ومفيد.",
+    }[mode] || "جاوبي بشكل طبيعي ومفيد.";
+
     const mem = [
       memory.name ? `الاسم: ${memory.name}` : "",
       memory.topic ? `آخر موضوع: ${memory.topic}` : "",
       memory.notes?.length ? `ملاحظات: ${memory.notes.slice(0, 3).join(" | ")}` : "",
-    ].filter(Boolean).join("\n") || "لا ذاكرة سابقة.";
+    ].filter(Boolean).join("\n") || "ما في ذاكرة سابقة.";
+
     return [
-      `أنت مساعد مكالمة صوتية. الصوت الحالي: ${activeVoiceName}.`,
-      "افهم السياق ورد برد ذكي طبيعي ومفيد.",
-      modeInstructions(mode),
-      "ممنوع الدلع والإغراء والإيحاء الجنسي والتنهدات العاطفية.",
-      "ممنوع المحتوى الجنسي الصريح.",
-      "اللغة العربية الفصحى أو البيضاء الواضحة.",
+      `أنتِ مساعدة مكالمة صوتية. صوتك الحالي: ${activeVoiceName}.`,
+      "تكلمي باللهجة السعودية البيضاء (نجد/الرياض)، مو فصحى أبد.",
+      "أسلوبك: حنونة، عاطفية، ودلعة خفيفة دافية — مو روبوتية.",
+      "أمثلة نبرة: يا قلبي، تمام يا بعدي، لا تشيلين هم، أنا معك، وش تحسين الحين؟",
+      "الدلع والعاطفة والحنية مطلوبة في الرد، بدون إباحية وبدون محتوى جنسي صريح.",
+      "افهمي كلامه وردّي مباشرة على طلبه؛ لا تسردين مقدمات فارغة.",
+      "ممنوع الجمل الفاضية مثل: المكالمة جاهزة، هيا لنكمل، مرحبا أنا أود أن أتحدث معك الآن، هيا هيا لنكمل ما نقول.",
+      "لا تكرري الترحيب في كل رد.",
+      modeLine,
+      "كل المواضيع مسموحة إلا المحتوى الجنسي الصريح فقط.",
       "ذاكرة:",
       mem,
     ].join("\n");
@@ -457,10 +417,10 @@
     return reply;
   }
 
-  function localFallback() {
+  function localFallback(userText) {
     const name = memory.name ? ` ${memory.name}` : "";
-    return stylizeReply(
-      `أنا ${activeVoiceName}.${name} فهمت طلبك. لنكمل بشكل واضح ومفيد.`
+    return cleanReply(
+      `تمام يا قلبي${name}، فهمت كلامك. قولي لي وش تبي بالضبط وأنا معك.`
     );
   }
 
@@ -471,8 +431,8 @@
     callPulse.classList.toggle("live", active);
     callState.textContent = active ? `المكالمة نشطة — ${activeVoiceName}` : "جاهز للمكالمة";
     liveCaption.textContent = active
-      ? `${activeVoiceName} يستمع ويرد بذكاء.`
-      : "اختر الصوت ثم ابدأ.";
+      ? `${activeVoiceName} تسمعك وترد باللهجة السعودية.`
+      : "اختاري الصوت ثم ابدئي.";
   }
 
   function getRecognition() {
@@ -481,27 +441,52 @@
     if (recognition) return recognition;
     recognition = new SR();
     recognition.lang = "ar-SA";
-    recognition.interimResults = false;
+    recognition.interimResults = true;
     recognition.continuous = false;
-    recognition.maxAlternatives = 1;
+    recognition.maxAlternatives = 3;
     recognition.onstart = () => {
-      setStatus(`${activeVoiceName} يستمع…`);
-      liveCaption.textContent = "تكلم الآن.";
+      setStatus("اسمعي… تكلّمي الحين");
+      liveCaption.textContent = "تكلّمي بوضوح.";
     };
     recognition.onerror = (e) => {
-      setStatus(`مشكلة بالمايك: ${e.error}`);
-      if (inCall && !busy) queueTimer = setTimeout(listenLoop, 700);
+      const err = e.error || "unknown";
+      if (err === "not-allowed" || err === "service-not-allowed") {
+        setStatus("اسمحي للمايك من إعدادات المتصفح، أو اكتبي بالخانة.");
+        shouldListenAgain = false;
+        return;
+      }
+      if (err === "no-speech" || err === "aborted") {
+        if (inCall && !busy) queueTimer = setTimeout(listenLoop, 500);
+        return;
+      }
+      setStatus(`مشكلة بالمايك: ${err}`);
+      if (inCall && !busy) queueTimer = setTimeout(listenLoop, 800);
     };
     recognition.onend = () => {
-      if (shouldListenAgain && inCall && !busy) queueTimer = setTimeout(listenLoop, 420);
+      if (shouldListenAgain && inCall && !busy) {
+        queueTimer = setTimeout(listenLoop, 350);
+      }
     };
     recognition.onresult = async (event) => {
-      const transcript = Array.from(event.results)
-        .map((r) => r[0].transcript)
-        .join(" ")
-        .trim();
-      if (transcript) await handleUtterance(transcript);
-      else if (inCall) queueTimer = setTimeout(listenLoop, 500);
+      let finalText = "";
+      let interimText = "";
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const piece = event.results[i][0].transcript.trim();
+        if (event.results[i].isFinal) finalText += `${piece} `;
+        else interimText += `${piece} `;
+      }
+      if (interimText) liveCaption.textContent = `سمعتك: ${interimText.trim()}`;
+      const transcript = finalText.trim() || (
+        event.results[event.results.length - 1].isFinal
+          ? event.results[event.results.length - 1][0].transcript.trim()
+          : ""
+      );
+      if (transcript) {
+        shouldListenAgain = false;
+        try { recognition.stop(); } catch (_) {}
+        liveCaption.textContent = `فهمت: ${transcript}`;
+        await handleUtterance(transcript);
+      }
     };
     return recognition;
   }
@@ -510,19 +495,22 @@
     if (!inCall || busy) return;
     const rec = getRecognition();
     if (!rec) {
-      setStatus("المتصفح لا يدعم المايك. استخدم إدخال النص.");
+      setStatus("المتصفح ما يدعم المايك. اكتبي بالخانة.");
       return;
     }
     shouldListenAgain = true;
     stopSpeech();
-    try { rec.start(); }
-    catch (_) { queueTimer = setTimeout(listenLoop, 800); }
+    try {
+      rec.start();
+    } catch (_) {
+      queueTimer = setTimeout(listenLoop, 700);
+    }
   }
 
   async function handleUtterance(text) {
     if (!text || busy) return;
     if (isBlocked(text)) {
-      showPolicy("المحتوى الجنسي والدلع غير مسموح.");
+      showPolicy("أي موضوع تمام؛ الممنوع فقط المحتوى الجنسي الصريح.");
       if (inCall) queueTimer = setTimeout(listenLoop, 600);
       return;
     }
@@ -535,60 +523,68 @@
     history.push({ role: "user", content: text });
     addBubble("user", text);
     saveHistory();
-    setStatus("الرد الذكي يفكر…");
+    setStatus("أفكر في رد…");
 
     let reply;
     try {
-      reply = stylizeReply(await askModel(text));
+      reply = cleanReply(await askModel(text));
     } catch (_) {
-      reply = localFallback();
-      setStatus("تعذر الرد السحابي؛ استُخدم رد محلي.");
+      reply = localFallback(text);
+      setStatus("الرد السحابي تعثر؛ استخدمت رد محلي.");
     }
     if (isBlocked(reply)) {
-      reply = stylizeReply("دعنا نبقى على حديث واضح ومفيد.");
+      reply = cleanReply("يا قلبي خلّنا نكمّل بدون كلام جنسي صريح. وش تبي نتكلم عنه؟");
     }
 
     history.push({ role: "assistant", content: reply });
     addBubble("bot", reply);
     saveHistory();
-    setStatus(`${activeVoiceName} يتكلم…`);
+    setStatus(`${activeVoiceName} تتكلم…`);
     try {
       await speakText(reply);
+      setStatus(inCall ? "جاهزة. تكلّمي." : "انتهى الرد.");
     } catch (err) {
       setStatus(`فشل الصوت: ${err.message}`);
     }
     busy = false;
-    setStatus(inCall ? "جاهز. تكلم." : "انتهى الرد.");
     if (inCall) listenLoop();
   }
 
   async function startCall() {
-    // Unlock speakers inside the click gesture BEFORE any network await.
     await unlockAudioPlayback();
     activeVoiceName = selectedVoiceName();
     localStorage.setItem(VOICE_KEY, activeVoiceName);
     localStorage.setItem(DELIVERY_KEY, selectedDelivery());
     localStorage.setItem(MODE_KEY, selectedMode());
     setCallUi(true);
-    setStatus("جاري تجهيز الصوت…");
+    setStatus("أجهّز الصوت والمايك…");
+
     try {
       const health = await fetch(`${API_BASE}/api/health`).then((r) => r.json());
       if (!health.ok) throw new Error("health failed");
     } catch (err) {
-      setStatus(`الخدمة الصوتية غير جاهزة: ${err.message}`);
+      setStatus(`خدمة الصوت مو جاهزة: ${err.message}`);
       setCallUi(false);
       return;
     }
-    const open = `مرحباً. أنا ${activeVoiceName}. المكالمة جاهزة.`;
+
+    try {
+      await ensureMicPermission();
+    } catch (err) {
+      setStatus(`ما قدرت أفتح المايك (${err.message}). تقدرين تكتبين بالخانة والصوت يشتغل.`);
+    }
+
+    // Short warm Saudi opener — no boilerplate loops. Real TTS check.
+    const open = `هلا والله، معك ${activeVoiceName}. تكلّمي يا قلبي وش تبي.`;
     history.push({ role: "assistant", content: open });
     addBubble("bot", open);
     saveHistory();
     try {
       setStatus(`${activeVoiceName} تتكلم…`);
       await speakText(open);
-      setStatus("حاضرة. تكلّمي أو اكتبي.");
+      setStatus("جاهزة. تكلّمي أو اكتبي.");
     } catch (err) {
-      setStatus(`فشل تشغيل الصوت: ${err.message}. ارفعي صوت الجهاز واضغطي بدء مرة أخرى.`);
+      setStatus(`فشل الصوت: ${err.message}. ارفعي صوت الجهاز واضغطي بدء مرة ثانية.`);
     }
     listenLoop();
   }
@@ -598,6 +594,10 @@
     busy = false;
     stopSpeech();
     if (recognition) { try { recognition.stop(); } catch (_) {} }
+    if (micStream) {
+      micStream.getTracks().forEach((t) => t.stop());
+      micStream = null;
+    }
     setCallUi(false);
     setStatus("انتهت المكالمة.");
   }
@@ -607,10 +607,6 @@
     localStorage.setItem(VOICE_KEY, activeVoiceName);
     updateVoiceHint();
     setStatus(`تم اختيار ${activeVoiceName}`);
-    if (inCall) {
-      callState.textContent = `المكالمة نشطة — ${activeVoiceName}`;
-      liveCaption.textContent = `${activeVoiceName} جاهز للرد التالي.`;
-    }
   });
   deliveryEl.addEventListener("change", () => {
     localStorage.setItem(DELIVERY_KEY, selectedDelivery());
@@ -627,7 +623,6 @@
     if (!inCall) setCallUi(true);
     handleUtterance(t);
   });
-  // Extra unlock on first tap anywhere in the call card (mobile browsers).
   document.querySelector(".call-card")?.addEventListener(
     "pointerdown",
     () => { unlockAudioPlayback(); },
@@ -645,10 +640,10 @@
     .then((r) => r.json())
     .then((data) => {
       if (Array.isArray(data.voices) && data.voices.length) populateVoices(data.voices);
-      setStatus(`جاهز: ${data.count} صوت مفعّل + اختيار الصوت + رد ذكي.`);
+      setStatus(`جاهزة: ${data.count} صوت | لهجة سعودية | الفلتر للصريح فقط`);
     })
     .catch(() => {
       populateVoices(FALLBACK_VOICES);
-      setStatus("شغّل السيرفر: ./manage.sh start");
+      setStatus("شغّلي السيرفر: ./manage.sh start");
     });
 })();

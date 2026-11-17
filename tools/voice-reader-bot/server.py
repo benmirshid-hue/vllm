@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 
 ROOT = Path(__file__).resolve().parent
-DEFAULT_VOICE = "Noura"
+DEFAULT_VOICE = "Zariyah"
 MALE_MARKERS = (
     "Hamed",
     "Hamdan",
