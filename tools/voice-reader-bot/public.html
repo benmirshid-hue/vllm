@@ -9,11 +9,11 @@
 <body class="call-mode">
   <main class="app">
     <header class="header">
-      <p class="eyebrow">edge-tts · صوت ↔ صوت · رد ذكي</p>
+      <p class="eyebrow">edge-tts · صوت ↔ صوت مباشر · بلا قيود</p>
       <h1>بوت المكالمة الصوتية</h1>
       <p class="subtitle">
-        16 صوت عربي أنثوي عبر edge-tts. لهجة سعودية طبيعية زي مكالمة Cursor.
-        كل المواضيع مفتوحة؛ الممنوع فقط المحتوى الجنسي الصريح.
+        مسار صوت↔صوت مباشر: المايك يلتقط الهمس والكلام غير الواضح بدون بوابة نص في المتصفح.
+        كل المهارات مفعّلة، والفلاتر مفتوحة (all-allow).
       </p>
     </header>
 
@@ -42,13 +42,9 @@
         </select>
       </label>
       <label class="control">
-        <span>نمط الرد الذكي</span>
-        <select id="replyMode">
-          <option value="helpful">مفيد وواضح</option>
-          <option value="thoughtful">تحليلي</option>
-          <option value="curious">أسئلة متابعة</option>
-          <option value="concise">مختصر</option>
-          <option value="balanced">متوازن</option>
+        <span>المهارات</span>
+        <select id="replyMode" disabled title="كل المهارات مفعّلة معًا">
+          <option value="all" selected>كل المهارات مفعّلة</option>
         </select>
       </label>
       <p id="voiceHint" class="hint">جارٍ تحميل الأصوات…</p>
@@ -56,8 +52,8 @@
 
     <section id="chat" class="chat" aria-live="polite"></section>
 
-    <details class="fallback" open>
-      <summary>إدخال نص إذا المايك غير متاح</summary>
+    <details class="fallback">
+      <summary>إدخال نص احتياطي إذا المايك غير متاح</summary>
       <textarea id="text" rows="3" placeholder="اكتب رسالتك…"></textarea>
       <button id="send" type="button" class="secondary">إرسال</button>
     </details>
@@ -65,6 +61,6 @@
     <p id="policyNote" class="policy" hidden></p>
     <p id="status" class="status" aria-live="polite"></p>
   </main>
-  <script src="app.js?v=cursor-call-10"></script>
+  <script src="app.js?v=cursor-call-11"></script>
 </body>
 </html>
