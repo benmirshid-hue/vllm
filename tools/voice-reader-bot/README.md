@@ -1,30 +1,23 @@
-# Personal Arabic Text Chat Bot
+# Personal Arabic Companion Bot
 
-Private-to-you text conversation bot (Cursor-like chat style), Arabic-first.
+Private personal bot with two modes:
 
-## What it is
+1. **نصي** — Cursor-like Arabic text chat
+2. **صوتي أنثوي** — warm feminine spoken companion with breath pauses
 
-- Text chat only (no TTS / no phone-call voice mode)
-- Conversation history kept in **browser localStorage** on your device
-- Soft block for explicit sexual content
+## Caring features
 
-## Files
+- Asks about your day / checks in
+- Remembers name, mood, likes, worries, and goals in **localStorage only**
+- Offers comfort and encouragement
+- Voice mode: clearer feminine pitch, soft rate, breath + pauses, varied delivery
 
-- `index.html` — chat UI
-- `app.js` — conversation + local history
-- `styles.css` — styling
-- `public.html` — single-file build for phone/public preview hosting
+## Limits
 
-## Open on phone
+Explicit sexual content is blocked.
 
-After this branch is pushed:
+## Open
 
 https://htmlpreview.github.io/?https://raw.githubusercontent.com/benmirshid-hue/vllm/cursor/voice-reader-public-d925/tools/voice-reader-bot/public.html
 
-Write a message and tap **أرسل**.
-
-## Note on privacy
-
-- Chat history stays on your device (localStorage).
-- Anyone with the preview URL can open the app shell, but they do not see your local history.
-- For a Cursor-hosted private app, confirm Publish as **Private** in Cursor.
+Use **صوتي أنثوي** for the companion voice, or **نصي** for text chat.

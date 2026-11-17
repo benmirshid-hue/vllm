@@ -5,40 +5,43 @@
   const chatEl = document.getElementById("chat");
   const sendBtn = document.getElementById("send");
   const clearBtn = document.getElementById("clear");
+  const micBtn = document.getElementById("mic");
+  const stopVoiceBtn = document.getElementById("stopVoice");
+  const modeTextBtn = document.getElementById("modeText");
+  const modeVoiceBtn = document.getElementById("modeVoice");
+  const voiceControls = document.getElementById("voiceControls");
+  const voiceEl = document.getElementById("voice");
+  const pitchEl = document.getElementById("pitch");
+  const rateEl = document.getElementById("rate");
+  const voiceOnlyEls = document.querySelectorAll(".voice-only");
 
-  const STORAGE_KEY = "personal-arabic-chat-v1";
+  const TEXT_KEY = "personal-arabic-chat-v1";
+  const VOICE_KEY = "personal-arabic-voice-chat-v1";
+  const MEMORY_KEY = "personal-arabic-companion-memory-v1";
 
-  // Soft blocklist for explicit sexual content. Personal bot, not unrestricted.
   const blockedPatterns = [
-    /نيك/i,
-    /أنیک/i,
-    /انيك/i,
-    /طيز/i,
-    /زب\b/i,
-    /كس\b/i,
-    /قحب/i,
-    /ممحون/i,
-    /منيوك/i,
-    /\bsex\b/i,
-    /\bporn\b/i,
-    /\bfuck\b/i,
-    /\bcock\b/i,
-    /\bpussy\b/i,
-    /\banal\b/i,
+    /نيك/i, /أنیک/i, /انيك/i, /طيز/i, /زب\b/i, /كس\b/i, /قحب/i, /ممحون/i, /منيوك/i,
+    /\bsex\b/i, /\bporn\b/i, /\bfuck\b/i, /\bcock\b/i, /\bpussy\b/i, /\banal\b/i,
   ];
 
-  const SYSTEM_PROMPT = [
-    "أنتِ مساعدة محادثة نصية شخصية بالعربية، بأسلوب قريب من مساعد Cursor:",
-    "مفيدة، مباشرة، واضحة، ومتعاونة.",
-    "ردي بالعربية الفصحى المبسطة أو بلهجة مفهومة حسب أسلوب المستخدم.",
-    "افهمي الطلب جيداً، واسألي سؤال توضيح واحد فقط إذا لزم.",
-    "ممنوع تماماً أي محتوى جنسي أو صريح أو إباحي.",
-    "إذا طُلب محتوى ممنوع، ارفضي بلطف واقترحي بديلاً مفيداً.",
-    "لا تدّعي أنكِ صوت أو اتصال هاتفي؛ هذه محادثة نصية فقط.",
-  ].join(" ");
+  const softOpeners = [
+    "همم… خليني أكون معك بهدوء.",
+    "طيب… أنا هنا، وودي أسمعك للنهاية.",
+    "لحظة لطيفة… خليني أرتب الكلام لك بدفء.",
+  ];
 
+  let mode = "text";
   let history = [];
+  let memory = loadMemory();
   let busy = false;
+  let queueTimer = null;
+  let audioCtx = null;
+  let recognition = null;
+  let listening = false;
+
+  function storageKey() {
+    return mode === "voice" ? VOICE_KEY : TEXT_KEY;
+  }
 
   function setStatus(message) {
     statusEl.textContent = message;
@@ -57,17 +60,113 @@
     policyNote.hidden = true;
   }
 
+  function defaultMemory() {
+    return {
+      name: "",
+      mood: "",
+      likes: [],
+      worries: [],
+      goals: [],
+      lastCheckInAt: 0,
+      notes: [],
+    };
+  }
+
+  function loadMemory() {
+    try {
+      const raw = localStorage.getItem(MEMORY_KEY);
+      if (!raw) return defaultMemory();
+      return { ...defaultMemory(), ...JSON.parse(raw) };
+    } catch (_) {
+      return defaultMemory();
+    }
+  }
+
+  function saveMemory() {
+    try {
+      localStorage.setItem(MEMORY_KEY, JSON.stringify(memory));
+    } catch (_) {}
+  }
+
+  function pushUnique(list, value, max = 8) {
+    const clean = value.trim();
+    if (!clean) return;
+    const without = list.filter((item) => item !== clean);
+    without.unshift(clean);
+    return without.slice(0, max);
+  }
+
+  function updateMemoryFromUser(text) {
+    const nameMatch = text.match(/(?:اسمي|ناديني|قلّ?ي لي)\s+([^\s،.!?؟]{2,20})/i);
+    if (nameMatch) memory.name = nameMatch[1];
+
+    if (/تعبان|حزين|ضايق|متوتر|خايف|زهقان|منهار/i.test(text)) {
+      memory.mood = "يحتاج احتواء";
+      memory.worries = pushUnique(memory.worries, text.slice(0, 80));
+    } else if (/فرحان|مرتاح|متحمس|تمام|بخير|سعيد/i.test(text)) {
+      memory.mood = "إيجابي";
+    } else if (/عادي|ماشي الحال/i.test(text)) {
+      memory.mood = "هادئ";
+    }
+
+    const likeMatch = text.match(/(?:أحب|يعجبني|ودي ب|أسوي)\s+(.{3,60})/i);
+    if (likeMatch) memory.likes = pushUnique(memory.likes, likeMatch[1]);
+
+    const goalMatch = text.match(/(?:أبي|أبغى|ودي|هدفي|أحاول)\s+(.{3,60})/i);
+    if (goalMatch) memory.goals = pushUnique(memory.goals, goalMatch[1]);
+
+    if (text.length > 12) {
+      memory.notes = pushUnique(memory.notes, text.slice(0, 100), 10);
+    }
+    memory.lastCheckInAt = Date.now();
+    saveMemory();
+  }
+
+  function memoryContext() {
+    const parts = [];
+    if (memory.name) parts.push(`اسم المستخدم المفضّل: ${memory.name}`);
+    if (memory.mood) parts.push(`آخر مزاج ملاحظ: ${memory.mood}`);
+    if (memory.likes.length) parts.push(`يحب/تهتم بـ: ${memory.likes.slice(0, 3).join("؛ ")}`);
+    if (memory.worries.length) parts.push(`أمور تحتاج متابعة لطيفة: ${memory.worries.slice(0, 3).join("؛ ")}`);
+    if (memory.goals.length) parts.push(`أهداف مذكورة: ${memory.goals.slice(0, 3).join("؛ ")}`);
+    if (memory.notes.length) parts.push(`ملاحظات شخصية سابقة: ${memory.notes.slice(0, 4).join(" | ")}`);
+    return parts.length ? parts.join("\n") : "لا توجد ذكريات كثيرة بعد؛ ابدئي بتعرف لطيف وسؤال عن يومه.";
+  }
+
+  function textSystem() {
+    return [
+      "أنتِ مساعدة محادثة نصية شخصية بالعربية، بأسلوب قريب من مساعد Cursor:",
+      "مفيدة، مباشرة، واضحة، ومتعاونة، ومهتمة بالمستخدم بدون تطفل.",
+      "ممنوع تماماً أي محتوى جنسي أو صريح أو إباحي.",
+      "ذاكرة خاصة بالمستخدم:",
+      memoryContext(),
+    ].join("\n");
+  }
+
+  function voiceSystem() {
+    return [
+      "أنتِ رفيقة صوتية أنثوية دافئة وهادئة وطبيعية بالعربية.",
+      "لستِ قارئ نصوص؛ أنتِ شخص يحاور باهتمام واستباقية لطيفة.",
+      "كوني مبادرة ومهتمة: اسألي عن يومه، تفقدّي شعوره، ذكّريه بلطف بأمور ذكرها سابقاً إن وُجدت.",
+      "قدّمي راحة وتشجيعاً عملياً قصيراً، بدون وعظ ثقيل وبدون أحكام.",
+      "اجعلي الردود أطول قليلاً: 3 إلى 5 جمل قصيرة واضحة تصلح للكلام الصوتي.",
+      "نوّعي التعبير: همم، طيب، أنا معك، خليني أفكر معك، فخور/فخورة فيك على محاولتك.",
+      "اسألي سؤال متابعة واحد دافئ في النهاية غالباً.",
+      "ممنوع تماماً أي محتوى جنسي أو صريح أو إباحي.",
+      "ذاكرة خاصة بالمستخدم (استخدمِها بلطف، لا تسرديها كقائمة):",
+      memoryContext(),
+    ].join("\n");
+  }
+
   function save() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
-    } catch (_) {
-      // private local storage may be unavailable
-    }
+      localStorage.setItem(storageKey(), JSON.stringify(history));
+    } catch (_) {}
   }
 
   function load() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(storageKey());
       if (!raw) return [];
       const parsed = JSON.parse(raw);
       return Array.isArray(parsed) ? parsed : [];
@@ -81,7 +180,7 @@
     bubble.className = `bubble ${role}`;
     const who = document.createElement("span");
     who.className = "who";
-    who.textContent = role === "user" ? "أنت" : "بوتك";
+    who.textContent = role === "user" ? "أنت" : mode === "voice" ? "رفيقتك" : "بوتك";
     const body = document.createElement("div");
     body.textContent = text;
     bubble.appendChild(who);
@@ -90,12 +189,24 @@
     chatEl.scrollTop = chatEl.scrollHeight;
   }
 
+  function proactiveGreeting() {
+    const name = memory.name ? ` ${memory.name}` : "";
+    if (mode === "voice") {
+      if (memory.mood === "يحتاج احتواء") {
+        return `أهلاً${name}… فكرت فيك. كيف أنت اليوم؟ إذا لسه في شيء يضغط عليك، أنا هنا أسمعك بهدوء وأكون معك.`;
+      }
+      if (memory.goals.length) {
+        return `أهلاً${name}… وحشتني درشتنا. كيف يومك؟ وإلى أي حد مشيت اليوم في موضوع «${memory.goals[0]}»؟ أنا معك بتشجيع هادئ.`;
+      }
+      return `أهلاً${name}… أنا هنا معك. كيف كان يومك إلى الآن؟ تكلّمي أو اكتبي، وأرد عليك بصوت دافئ مع توقفات لطيفة.`;
+    }
+    return `مرحباً${name}. أنا بوتك الشخصي. كيف يومك؟ اكتب لي مثل Cursor، وأرد عليك بالعربية مع متابعة لطيفة لما يهمك.`;
+  }
+
   function renderAll() {
     chatEl.innerHTML = "";
     if (!history.length) {
-      const welcome =
-        "مرحباً. أنا بوتك الشخصي النصي. اكتب لي مثل ما تكتب لـ Cursor، وأرد عليك بالعربية.";
-      addBubble("bot", welcome);
+      addBubble("bot", proactiveGreeting());
       return;
     }
     history.forEach((item) => {
@@ -104,24 +215,174 @@
     });
   }
 
+  function scoreFeminineVoice(voice) {
+    const name = `${voice.name} ${voice.lang}`.toLowerCase();
+    let score = 0;
+    if (/female|woman|girl|feminine|samantha|victoria|karen|moira|zira|susan|linda|sara|nora|salma|laila|hoda|aria|jenny|neural|natural/.test(name)) score += 6;
+    if (/premium|enhanced|quality|google|microsoft/.test(name)) score += 2;
+    if (/male|man|david|mark|george|guy|ryan|andrew/.test(name)) score -= 6;
+    if (/ar|arab/.test(name)) score += 3;
+    return score;
+  }
+
+  function populateVoices() {
+    const voices = speechSynthesis.getVoices();
+    const ranked = [...voices].sort((a, b) => scoreFeminineVoice(b) - scoreFeminineVoice(a));
+    voiceEl.innerHTML = "";
+    ranked.forEach((voice, index) => {
+      const option = document.createElement("option");
+      option.value = String(index);
+      option.textContent = `${voice.name} (${voice.lang})`;
+      voiceEl.appendChild(option);
+    });
+    voiceEl.dataset.ranked = JSON.stringify(
+      ranked.map((voice) => ({ name: voice.name, lang: voice.lang }))
+    );
+    if (ranked.length) voiceEl.selectedIndex = 0;
+  }
+
+  function selectedVoice() {
+    const rankedMeta = JSON.parse(voiceEl.dataset.ranked || "[]");
+    const meta = rankedMeta[Number(voiceEl.value)];
+    if (!meta) return null;
+    return speechSynthesis.getVoices().find((v) => v.name === meta.name && v.lang === meta.lang) || null;
+  }
+
+  function splitSentences(text) {
+    return text
+      .split(/(?<=[.!?…。؟！،,;؛])\s+|\n+/)
+      .map((part) => part.trim())
+      .filter(Boolean);
+  }
+
+  function ensureAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    return audioCtx;
+  }
+
+  function playBreath(kind = "soft") {
+    try {
+      const ctx = ensureAudio();
+      const duration = kind === "deep" ? 0.7 : 0.42;
+      const sampleRate = ctx.sampleRate;
+      const frameCount = Math.floor(sampleRate * duration);
+      const buffer = ctx.createBuffer(1, frameCount, sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < frameCount; i += 1) {
+        const t = i / frameCount;
+        const envelope = Math.sin(Math.PI * t) * (1 - t * 0.85) * (kind === "deep" ? 0.055 : 0.04);
+        data[i] = (Math.random() * 2 - 1) * envelope;
+      }
+      const source = ctx.createBufferSource();
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.value = kind === "deep" ? 700 : 980;
+      source.buffer = buffer;
+      source.connect(filter);
+      filter.connect(ctx.destination);
+      source.start();
+    } catch (_) {}
+  }
+
+  function stopSpeech() {
+    if (queueTimer) {
+      clearTimeout(queueTimer);
+      queueTimer = null;
+    }
+    speechSynthesis.cancel();
+  }
+
+  function speakSentence(sentence, expressiveness, onDone) {
+    const utterance = new SpeechSynthesisUtterance(sentence);
+    const voice = selectedVoice();
+    if (voice) utterance.voice = voice;
+    utterance.lang = (voice && voice.lang) || "ar-SA";
+    const basePitch = Number(pitchEl.value);
+    const baseRate = Number(rateEl.value);
+    utterance.pitch = Math.min(1.8, Math.max(1.2, basePitch + expressiveness.pitchDelta));
+    utterance.rate = Math.min(1.0, Math.max(0.7, baseRate + expressiveness.rateDelta));
+    utterance.volume = expressiveness.volume;
+    utterance.onend = () => onDone();
+    utterance.onerror = () => onDone();
+    speechSynthesis.speak(utterance);
+  }
+
+  function expressionFor(sentence, index, total) {
+    const soft = /همم|طيب|خليني|بهـ?دوء|أنا معك|فخور/i.test(sentence);
+    const question = /[؟?]\s*$/.test(sentence);
+    if (index === 0) return { pitchDelta: 0.04, rateDelta: -0.02, volume: 0.95, pause: 780, breath: "soft" };
+    if (question) return { pitchDelta: 0.08, rateDelta: -0.01, volume: 0.92, pause: 940, breath: "soft" };
+    if (soft) return { pitchDelta: 0.02, rateDelta: -0.04, volume: 0.88, pause: 1040, breath: "deep" };
+    if (index === total - 1) return { pitchDelta: 0.03, rateDelta: -0.03, volume: 0.9, pause: 720, breath: "soft" };
+    return { pitchDelta: index % 2 === 0 ? 0.03 : -0.01, rateDelta: -0.015, volume: 0.93, pause: 840, breath: "soft" };
+  }
+
+  function speakText(text) {
+    return new Promise((resolve) => {
+      stopSpeech();
+      const sentences = splitSentences(text);
+      if (!sentences.length) {
+        resolve();
+        return;
+      }
+      let index = 0;
+      const next = () => {
+        if (index >= sentences.length) {
+          resolve();
+          return;
+        }
+        const sentence = sentences[index];
+        const expressiveness = expressionFor(sentence, index, sentences.length);
+        index += 1;
+        speakSentence(sentence, expressiveness, () => {
+          if (index < sentences.length) {
+            playBreath(expressiveness.breath);
+            queueTimer = setTimeout(next, expressiveness.pause);
+          } else resolve();
+        });
+      };
+      playBreath("soft");
+      queueTimer = setTimeout(next, 280);
+    });
+  }
+
   function localFallback(userText) {
-    const t = userText.trim();
-    if (/^(مرحبا|السلام|هلا|أهلا|اهلا)/i.test(t)) {
-      return "أهلاً. كيف أقدر أساعدك اليوم؟";
+    const name = memory.name ? ` ${memory.name}` : "";
+    if (mode === "voice") {
+      return [
+        softOpeners[Math.floor(Math.random() * softOpeners.length)],
+        `أنا معك${name}، وودي أطمّن عليك بهدوء.`,
+        "يومك مهم عندي، حتى لو كان يوم عادي أو ثقيل.",
+        memory.goals[0]
+          ? ` وإذا تبين، نرجع لخطوة بسيطة من موضوع «${memory.goals[0]}».`
+          : " قولي لي كيف تحس الحين، وأشجعك بجملة عملية لطيفة.",
+        "كيف أقدر أكون مفيدة لك في هاللحظة؟",
+      ].join(" ");
     }
-    if (/من أنت|من انتي|وش تسوين/i.test(t)) {
-      return "أنا بوتك الشخصي النصي على هذا الجهاز. اكتب طلبك وأرد عليك خطوة بخطوة.";
+    if (/^(مرحبا|السلام|هلا|أهلا|اهلا)/i.test(userText)) {
+      return `أهلاً${name}. كيف يومك؟ وكيف أقدر أساعدك الآن؟`;
     }
-    return "فهمت طلبك بشكل عام. اكتب لي تفاصيل أوضح (الهدف + أي قيود)، وأعطيك رداً مباشراً.";
+    return `فهمت${name}. أعطني تفاصيل أوضح، وأرد عليك مباشرة مع متابعة لما يهمك.`;
+  }
+
+  function enrichUserPrompt(userText) {
+    if (mode !== "voice") {
+      return `${userText}\n\nإن ناسب، اسألي بلطف عن يومه أو شعوره مرة واحدة فقط.`;
+    }
+    return [
+      userText,
+      "",
+      "تذكير للأسلوب: رفيقة مبادرة ومهتمة، راحة + تشجيع، جمل أطول قليلاً، سؤال متابعة دافئ، واستخدمي الذاكرة بلطف إن وُجدت.",
+    ].join("\n");
   }
 
   async function askModel(userText) {
     const messages = [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: mode === "voice" ? voiceSystem() : textSystem() },
       ...history.slice(-12),
-      { role: "user", content: userText },
+      { role: "user", content: enrichUserPrompt(userText) },
     ];
-
     const response = await fetch("https://text.pollinations.ai/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -131,17 +392,15 @@
         seed: Date.now() % 100000,
       }),
     });
-
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const reply = (await response.text()).trim();
     if (!reply) throw new Error("empty");
     return reply;
   }
 
-  async function handleUserMessage(raw) {
+  async function handleUserMessage(raw, { spoken = false } = {}) {
     const text = raw.trim();
     if (!text || busy) return;
-
     if (isBlocked(text)) {
       showPolicy("هذا البوت الشخصي لا يكمل المحتوى الجنسي أو الصريح.");
       setStatus("تم رفض الرسالة.");
@@ -150,44 +409,145 @@
 
     busy = true;
     sendBtn.disabled = true;
+    if (micBtn) micBtn.disabled = true;
     hidePolicy();
+    updateMemoryFromUser(text);
     history.push({ role: "user", content: text });
     addBubble("user", text);
     textEl.value = "";
     save();
-    setStatus("يفكر في الرد…");
+    setStatus(spoken ? "سمعتك… أفكر معك باهتمام…" : "يفكر في الرد…");
 
     let reply;
     try {
       reply = await askModel(text);
     } catch (_) {
       reply = localFallback(text);
-      setStatus("الخدمة الذكية غير متاحة مؤقتاً؛ استخدمت رداً محلياً.");
+      setStatus("الخدمة الذكية غير متاحة مؤقتاً؛ استخدمت رداً محلياً دافئاً.");
     }
 
     if (isBlocked(reply)) {
-      reply = "أفضل نبتعد عن هذا الموضوع. قل لي طلباً عاماً أو عملياً أقدر أساعدك فيه.";
+      reply = "أفضل نبتعد عن هذا الموضوع. خلينا نرجع لحديث هادئ ومطمّن. كيف يومك الآن؟";
+    }
+
+    if (mode === "voice" && splitSentences(reply).length < 3) {
+      reply = `${softOpeners[0]} ${reply} وأنا هنا أتابع معك بهدوء: كيف تحس الحين؟`;
     }
 
     history.push({ role: "assistant", content: reply });
     addBubble("bot", reply);
     save();
-    setStatus("جاهز. اكتب رسالتك التالية.");
+
+    if (mode === "voice") {
+      setStatus("أرد عليك بصوت أنثوي ناعم…");
+      await speakText(reply);
+      setStatus("جاهزة. تكلّمي أو اكتبي.");
+    } else {
+      setStatus("جاهز. اكتب رسالتك التالية.");
+    }
+
     busy = false;
     sendBtn.disabled = false;
+    if (micBtn) micBtn.disabled = false;
     textEl.focus();
   }
 
+  function getRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return null;
+    if (recognition) return recognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = "ar-SA";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.continuous = false;
+    recognition.onstart = () => {
+      listening = true;
+      micBtn.classList.add("listening");
+      setStatus("أسمعك… تكلّمي بهدوء.");
+    };
+    recognition.onend = () => {
+      listening = false;
+      micBtn.classList.remove("listening");
+      if (!busy) setStatus("انتهى الاستماع.");
+    };
+    recognition.onerror = (event) => {
+      listening = false;
+      micBtn.classList.remove("listening");
+      setStatus(`ما قدرت أسمع بوضوح (${event.error}). اكتبي إن أحببت.`);
+    };
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .map((result) => result[0].transcript)
+        .join(" ")
+        .trim();
+      if (transcript) handleUserMessage(transcript, { spoken: true });
+      else setStatus("ما التقطت كلاماً واضحاً.");
+    };
+    return recognition;
+  }
+
+  function toggleMic() {
+    const rec = getRecognition();
+    if (!rec) {
+      setStatus("المتصفح ما يدعم المايك. اكتبي الرسالة.");
+      return;
+    }
+    if (listening) {
+      rec.stop();
+      return;
+    }
+    stopSpeech();
+    try {
+      rec.start();
+    } catch (_) {
+      setStatus("اسمحي بصلاحية المايك ثم أعيدي المحاولة.");
+    }
+  }
+
+  function setMode(next) {
+    if (busy) return;
+    stopSpeech();
+    if (listening && recognition) recognition.stop();
+    mode = next;
+    const voiceMode = mode === "voice";
+    document.body.classList.toggle("voice-mode", voiceMode);
+    modeTextBtn.classList.toggle("active", !voiceMode);
+    modeVoiceBtn.classList.toggle("active", voiceMode);
+    modeTextBtn.setAttribute("aria-selected", String(!voiceMode));
+    modeVoiceBtn.setAttribute("aria-selected", String(voiceMode));
+    voiceControls.hidden = !voiceMode;
+    voiceOnlyEls.forEach((el) => {
+      el.hidden = !voiceMode;
+    });
+    textEl.placeholder = voiceMode
+      ? "تكلّمي أو اكتبي… أتابع يومك وأرد بصوت دافئ"
+      : "اكتبي هنا مثل Cursor…";
+    history = load();
+    renderAll();
+    setStatus(voiceMode ? "الرفيقة الصوتية جاهزة لتطمّن عليك." : "البوت النصي الشخصي جاهز.");
+    if (voiceMode) populateVoices();
+  }
+
   function clearChat() {
+    stopSpeech();
     history = [];
     save();
     renderAll();
     hidePolicy();
-    setStatus("تم مسح المحادثة المحلية.");
+    setStatus("تم مسح محادثة هذا الوضع. الذاكرة الشخصية ما زالت محفوظة محلياً.");
   }
 
   sendBtn.addEventListener("click", () => handleUserMessage(textEl.value));
   clearBtn.addEventListener("click", clearChat);
+  micBtn.addEventListener("click", toggleMic);
+  stopVoiceBtn.addEventListener("click", () => {
+    stopSpeech();
+    if (listening && recognition) recognition.stop();
+    setStatus("توقّف الصوت.");
+  });
+  modeTextBtn.addEventListener("click", () => setMode("text"));
+  modeVoiceBtn.addEventListener("click", () => setMode("voice"));
   textEl.addEventListener("keydown", (event) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
@@ -195,8 +555,8 @@
     }
   });
 
-  history = load();
-  renderAll();
-  setStatus("بوت محادثة نصية شخصية جاهز على هذا الجهاز.");
+  populateVoices();
+  speechSynthesis.onvoiceschanged = populateVoices;
+  setMode("text");
   textEl.focus();
 })();

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>بوت محادثة شخصي</title>
+  <title>بوتك الشخصي</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -11,9 +11,13 @@
     <header class="header">
       <h1>بوتك الشخصي</h1>
       <p class="subtitle">
-        محادثة نصية بالعربية، خاصة بك على هذا الجهاز.
-        المحادثات تُحفظ محلياً فقط، وليست للمحتوى الجنسي أو الصريح.
+        محادثة خاصة بك على هذا الجهاز: نصية مثل Cursor، أو صوتية أنثوية دافئة.
+        ليست للمحتوى الجنسي أو الصريح.
       </p>
+      <div class="mode-switch" role="tablist" aria-label="وضع المحادثة">
+        <button id="modeText" type="button" class="mode active" role="tab" aria-selected="true">نصي</button>
+        <button id="modeVoice" type="button" class="mode" role="tab" aria-selected="false">صوتي أنثوي</button>
+      </div>
     </header>
 
     <section id="chat" class="chat" aria-live="polite"></section>
@@ -22,13 +26,30 @@
     <textarea
       id="text"
       rows="4"
-      placeholder="اكتبي هنا مثل ما تكلمين Cursor…"
+      placeholder="اكتبي هنا مثل Cursor…"
     ></textarea>
+
+    <section id="voiceControls" class="controls voice-only" hidden>
+      <label class="control">
+        <span>الصوت الأنثوي</span>
+        <select id="voice"></select>
+      </label>
+      <label class="control">
+        <span>وضوح الأنوثة</span>
+        <input id="pitch" type="range" min="1.25" max="1.75" step="0.05" value="1.58" />
+      </label>
+      <label class="control">
+        <span>نعومة الإيقاع</span>
+        <input id="rate" type="range" min="0.72" max="0.98" step="0.02" value="0.82" />
+      </label>
+    </section>
 
     <p id="policyNote" class="policy" hidden></p>
 
     <div class="actions">
       <button id="send" type="button">أرسل</button>
+      <button id="mic" type="button" class="voice-only" hidden>تكلّمي</button>
+      <button id="stopVoice" type="button" class="secondary voice-only" hidden>إيقاف الصوت</button>
       <button id="clear" type="button" class="secondary">مسح المحادثة</button>
     </div>
 
