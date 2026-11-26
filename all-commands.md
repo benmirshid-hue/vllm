@@ -833,3 +833,27 @@ git clone https://github.com/heygen-com/hyperframes-launches.git
 git clone https://github.com/heygen-com/liveavatar-web-sdk.git
 git clone https://github.com/heygen-com/liveavatar-agent-skills.git
 ```
+
+---
+
+## 10) أسطول الوكلاء الذاتي (Planner / Coder / Reviewer / Sandbox)
+
+المحرك في `tools/agents-fleet/`. يكتب داخل `workspace\` فقط، ولا يستدعي Cursor CLI، ولا يفتح شبكة.
+
+```bat
+cd /d tools\agents-fleet
+run_agents_fleet.bat
+```
+
+```bat
+:: تشغيل الأسطول كاملاً من جذر المستودع
+python tools\agents-fleet\agents_fleet_engine.py
+python tools\agents-fleet\agents_fleet_engine.py --mode planner
+python tools\agents-fleet\agents_fleet_engine.py --mode coders
+python tools\agents-fleet\agents_fleet_engine.py --mode reviewer
+python tools\agents-fleet\agents_fleet_engine.py --mode sandbox
+python tools\agents-fleet\test_agents_fleet.py
+```
+
+المهمة الافتراضية تبني مصادقة سحابية مع `tenant_id` على كل سجل. التحقق عبر مستأجر آخر يرفع `IsolationError`.
+
